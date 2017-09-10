@@ -8,13 +8,13 @@
 ``` bash
 $ git init
 
-Initialized empty Git repository in /home/hhxie/pase/.git/
+Initialized empty Git repository in /home/XXX/pase/.git/
 ```
 
 连接仓库和 github 的账号.
 ``` bash
 $ git config --global user.name "pase2017"
-$ git config --global user.email pase2017@163.com
+$ git config --global user.email pase2017@XXX.com
 ```
 
 ##### 2. 查看版本库当前状态
@@ -203,20 +203,20 @@ $ git branch
 
 在创建分支时, 可以同时切换到创建的分支.
 ``` bash
-$ git checkout -b ycg
+$ git checkout -b XXX
 
-Switched to a new branch 'ycg'
+Switched to a new branch 'XXX'
 ```
 再次查看所有分支.
 ``` bash
 $ git branch
   dev
   master
-* ycg
+* XXX
 ```
 
 ##### 7. 在分支上工作
-创建了属于我自己的 ```ycg``` 分支后, 就可以自己 "偷偷" 工作了, 比如创建 ```README.md``` 文件, 然后添加并提交. 查看目录下的文件.
+创建了属于我自己的 ```XXX``` 分支后, 就可以自己 "偷偷" 工作了, 比如创建 ```README.md``` 文件, 然后添加并提交. 查看目录下的文件.
 ``` bash
 $ ls
 
@@ -244,7 +244,7 @@ $ git checkout dev
 
 Switched to branch 'dev'
 
-$ git merge ycg
+$ git merge XXX
 
 Updating f728e7e..a7f6518
 Fast-forward
@@ -337,3 +337,57 @@ README.md      pase.h         pase_cg.h      pase_mv.c      pase_parpack.c pase_
 所有文件已经到本地了.
 
 ##### 10. 本地提交修改至远程仓库.
+
+将自己的 ```SSH``` 公钥添加至 ```GitHub``` 的 ```SSH and GPG keys``` 里即可. 需要自己登录 ```GitHub```, 具体方法自行搜索即可.
+
+提交到远程仓库很简单 (再次提醒: **慎重**对 ```master``` 分支做修改, 尽量提交至 ```dev``` 分支).
+``` bash
+$ git push
+
+Counting objects: 3, done.
+Delta compression using up to 4 threads.
+Compressing objects: 100% (3/3), done.
+Writing objects: 100% (3/3), 3.48 KiB | 0 bytes/s, done.
+Total 3 (delta 1), reused 0 (delta 0)
+remote: Resolving deltas: 100% (1/1), completed with 1 local object.
+To pase.github.com:pase2017/pase.git
+   5844e91..a9b5e84  dev -> dev
+```
+
+##### 11. 使用多个 Github 账户
+
+如果有多个 ```GitHub``` 账户 (每个账户对应一个邮箱), 不同账户是无法添加相同的 ```SSH``` 公钥的. 为了将对不同账号下仓库的修改做相应地提交, 就需要进一步配置.
+
+首先需要生成多个公钥 (将邮箱和生成公钥的名字对应起来).
+``` bash
+$ ssh-keygen -t rsa -C [mail] -f [filename]
+```
+回车两次即可. 此时 ```~/.ssh/``` 文件夹下会出现不同的 ```.pub``` 结尾的公钥文件, 比如说 ```pase.pub``` 和 ```myamg.pub``` 对应不同 ```GitHub``` 账号下的两个仓库 ```pase``` 和 ```myamg```.
+
+编辑文件 ```~/.ssh/config```.
+``` bash
+Host pase.github.com
+  HostName github.com
+  PreferredAuthentications publickey
+  IdentityFile ~/.ssh/pase
+
+Host myamg.github.com
+  HostName github.com
+  PreferredAuthentications publickey
+  IdentityFile ~/.ssh/myamg
+```
+这里 ```Host``` 是自己取的名字, ```HostName``` 才是真正的域名.
+
+克隆仓库时针对不同的仓库进行 ( 注意 ```@``` 之后的部分 ).
+``` bash
+$ git clone git@pase.github.com:pase2017/pase.git
+
+Cloning into 'pase'...
+remote: Counting objects: 27, done.
+remote: Compressing objects: 100% (18/18), done.
+remote: Total 27 (delta 6), reused 27 (delta 6), pack-reused 0
+Receiving objects: 100% (27/27), 1.77 MiB | 267.00 KiB/s, done.
+Resolving deltas: 100% (6/6), done.
+```
+
+之后就可以按照前面讲的进行开发和提交了.
