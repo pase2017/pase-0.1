@@ -1,9 +1,9 @@
 [TOC]
 
-#### git 使用
+## git 使用
 简单介绍 git 的使用方法.
 
-##### 1. 创建仓库
+### 1. 创建仓库
 初始化仓库.
 ``` bash
 $ git init
@@ -17,7 +17,7 @@ $ git config --global user.name "pase2017"
 $ git config --global user.email pase2017@XXX.com
 ```
 
-##### 2. 查看版本库当前状态
+### 2. 查看版本库当前状态
 ``` bash
 $ git status
 
@@ -52,7 +52,7 @@ nothing added to commit but untracked files present (use "git add" to track)
 ```
 这是因为刚创建的代码仓库还是空的, 需要将原有的文件添加到仓库.
 
-##### 3. 添加文件到暂存区
+### 3. 添加文件到暂存区
 git 有个重要的概念叫 "暂存区", 用于将当前的文件改动提交到一个暂时性的区域.
 
 刚才 ```git status``` 命令的输出中表示所有文件都还没有被跟踪 (track), 因此我们需要将所有的文件先一次性提交.
@@ -112,7 +112,7 @@ $ git status
 ```
 这些文件其实跟我们的代码无关, 后面在讲怎么处理.
 
-##### 4. 提交暂存区
+### 4. 提交暂存区
 把暂存区的更改提交.
 ``` bash
 $ git commit -m "First commit: all files are commited to the master branch."
@@ -143,7 +143,7 @@ $ git commit -m "First commit: all files are commited to the master branch."
  create mode 100644 test/serPASE_ver01.o
 ```
 
-##### 5. 忽略文件
+### 5. 忽略文件
 有些文件可能存在于仓库中, 但不能提交. 比如缓存文件, 密码配置文件, 目标文件等. 此时可以在仓库的根目录下创建 ```.gitignore``` 文件, 然后输入需要忽略的文件名, 以后 ```git``` 就会自动忽略.
 
 Google 提供了一些配置好的 ```.gitignore``` 文件, 地址 [https://github.com/github/gitignore](https://github.com/github/gitignore)
@@ -176,7 +176,7 @@ nothing to commit (working directory clean)
 
 这说明所有需要的文件已经提交至仓库.
 
-##### 6. 创建分支
+### 6. 创建分支
 使用 git 进行多人协作开发时, 每个人都应该有自己的分支, 这样自己的改动只有自己能看到, 不会影响到别人. 刚才的命令输出中可以多次看到 ```On branch master```, 意思是当前位于主分支 ```matser```. 对主分支进行改动一定要慎重再慎重. 比较好的做法是, 主分支 ```matser``` 只用于大版本的更新, 分支 ```dev``` 用于小版本的更新, 个人的分支用于个人的更新. 分支 ```dev``` 还不存在, 因此需要首先创建.
 ``` bash
 $ git branch dev
@@ -215,7 +215,7 @@ $ git branch
 * XXX
 ```
 
-##### 7. 在分支上工作
+### 7. 在分支上工作
 创建了属于我自己的 ```XXX``` 分支后, 就可以自己 "偷偷" 工作了, 比如创建 ```README.md``` 文件, 然后添加并提交. 查看目录下的文件.
 ``` bash
 $ ls
@@ -261,7 +261,7 @@ libpase.a  pase_cg.c  pase_cg.o  pase_hypre.h  pase_mv.h  pase_parpack.c  pase_p
 ```
 文件 ```README.md``` 出现了.
 
-##### 8. 与 GitHub 远程仓库连接
+### 8. 与 GitHub 远程仓库连接
 已在 ```GitHub``` 上创建名为 ```pase``` 的仓库. 将本地的 ```master``` 分支与远程库 ```origin``` 连接起来.
 
 首先添加远程仓库.
@@ -291,7 +291,7 @@ $ git push origin master
 
 由于大家都要在 ```dev``` 分支的基础上工作, 因此该分支也需要与远程仓库连接起来. 但是个人的仓库一般不需要同步到远程, 视具体情况而定.
 
-##### 9. 从远程仓库克隆
+### 9. 从远程仓库克隆
 
 从远程仓库克隆代码到本地.
 ``` bash
@@ -336,7 +336,7 @@ README.md      pase.h         pase_cg.h      pase_mv.c      pase_parpack.c pase_
 ```
 所有文件已经到本地了.
 
-##### 10. 本地提交修改至远程仓库.
+### 10. 本地提交修改至远程仓库.
 
 将自己的 ```SSH``` 公钥添加至 ```GitHub``` 的 ```SSH and GPG keys``` 里即可. 需要自己登录 ```GitHub```, 具体方法自行搜索即可.
 
@@ -354,7 +354,7 @@ To pase.github.com:pase2017/pase.git
    5844e91..a9b5e84  dev -> dev
 ```
 
-##### 11. 使用多个 Github 账户
+### 11. 使用多个 Github 账户
 
 如果有多个 ```GitHub``` 账户 (每个账户对应一个邮箱), 不同账户是无法添加相同的 ```SSH``` 公钥的. 为了将对不同账号下仓库的修改做相应地提交, 就需要进一步配置.
 
