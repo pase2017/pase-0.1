@@ -43,6 +43,7 @@ int main (int argc, char *argv[])
    int local_size, extra;
 
    double h, h2;
+   double sum_error;
    int level, num_levels;
    //   int time_index; 
    int global_time_index;
@@ -189,28 +190,33 @@ int main (int argc, char *argv[])
       }
    }
 
+   /* Preliminaries: want at least one processor per row */
+   if (n*n < num_procs) n = sqrt(num_procs) + 1;
+   N = n*n; /* global number of rows */
+   h = 1.0/(n+1); /* mesh size*/
+   h2 = h*h;
+
+
+
    /*----------------------- Laplace精确特征值 ---------------------*/
    /* eigenvalues - allocate space */
    eigenvalues = hypre_CTAlloc (HYPRE_Real, block_size);
    {
-      int tmp_nn = (int) sqrt(block_size) + 2;
+      int tmp_nn = (int) sqrt(block_size) + 3;
       exact_eigenvalues = hypre_CTAlloc (HYPRE_Real, tmp_nn*tmp_nn);
       for (i = 0; i < tmp_nn; ++i) 
       {
 	 for (k = 0; k < tmp_nn; ++k) 
 	 {
-	    exact_eigenvalues[i*tmp_nn+k] = M_PI*M_PI*(pow(i+1, 2)+pow(k+1, 2));
+//	    exact_eigenvalues[i*tmp_nn+k] = M_PI*M_PI*(pow(i+1, 2)+pow(k+1, 2));
+	    exact_eigenvalues[i*tmp_nn+k] = ( 4*sin( (i+1)*M_PI/(2*(n+1)) )*sin( (i+1)*M_PI/(2*(n+1)) ) 
+		     + 4*sin( (k+1)*M_PI/(2*(n+1)) )*sin( (k+1)*M_PI/(2*(n+1)) ) );
 	 }
       }
       qsort(exact_eigenvalues, tmp_nn*tmp_nn, sizeof(double), cmp);
    }
 
 
-   /* Preliminaries: want at least one processor per row */
-   if (n*n < num_procs) n = sqrt(num_procs) + 1;
-   N = n*n; /* global number of rows */
-   h = 1.0/(n+1); /* mesh size*/
-   h2 = h*h;
 
 
    /* Each processor knows only of its own rows - the range is denoted by ilower
@@ -609,6 +615,7 @@ int main (int argc, char *argv[])
 
 	 if (level == 0)
 	 {
+	    sum_error = 0;
 	    for (idx_eig = 0; idx_eig < block_size; ++idx_eig)
 	    {
 	       double tmp_double;
@@ -619,10 +626,17 @@ int main (int argc, char *argv[])
 	       eigenvalues[idx_eig] = eigenvalues[idx_eig] / tmp_double;
 	       if (myid == 0)
 	       {
-		  printf ( "eig = %f, error = %f\n", 
-			eigenvalues[idx_eig]/h2, fabs(eigenvalues[idx_eig]/h2-exact_eigenvalues[idx_eig]) );
+		  printf ( "eig = %e, error = %e\n", 
+			eigenvalues[idx_eig]/h2, fabs(eigenvalues[idx_eig]-exact_eigenvalues[idx_eig])/h2 );
+		  sum_error += fabs(eigenvalues[idx_eig]-exact_eigenvalues[idx_eig])/h2;
 	       }
 	    }
+
+	    if (myid == 0)
+	    {
+	       printf ( "the sum of error = %e\n", sum_error );
+	    }
+
 	 }
 
 	 free((mv_TempMultiVector*) mv_MultiVectorGetData(eigenvectors));
@@ -682,12 +696,6 @@ int main (int argc, char *argv[])
 
 
 
-//   HYPRE_Real pre_sum_eigenvalues, cur_sum_eigenvalues;
-//   pre_sum_eigenvalues = 0;
-//   for ( idx_eig = 0; idx_eig < block_size; ++idx_eig)
-//   {
-//      pre_sum_eigenvalues += eigenvalues[idx_eig];
-//   }
 
 
    /* 基于上述运算, 得到最细空间的特征向量pvx */
@@ -776,20 +784,19 @@ int main (int argc, char *argv[])
 	 }
 
 
-	 hypre_PCGSetup(pcg_solver, parcsr_A_hh[level], par_b_hh[level], par_x_hh[level]);
-
 	 for ( idx_eig = 0; idx_eig < block_size; ++idx_eig)
 	 {
-
-	    PASE_ParVectorSetConstantValues(pvx_cur[idx_eig], 0.0);
-	    pvx_cur[idx_eig]->aux_h->data[idx_eig] = 1.0;
-//	    HYPRE_ParCSRMatrixMatvecT( 1.0, P_array[level-1], pvx_pre[idx_eig]->b_H, 0.0, pvx_cur[idx_eig]->b_H );
-//	    hypre_SeqVectorCopy(pvx_pre[idx_eig]->aux_h, pvx_cur[idx_eig]->aux_h);
-
-	    PASE_ParCSRMatrixMatvec ( eigenvalues[idx_eig], parcsr_B_hh[level], pvx_cur[idx_eig], 0.0, par_b_hh[level] );
-	    hypre_PCGSolve(pcg_solver, parcsr_A_hh[level], par_b_hh[level], pvx_cur[idx_eig]);
-
+	    HYPRE_ParCSRMatrixMatvec ( 1.0, P_array[level], pvx_pre[idx_eig]->b_H, 0.0, pvx_cur[idx_eig]->b_H );
+	    hypre_SeqVectorCopy(pvx_pre[idx_eig]->aux_h, pvx_cur[idx_eig]->aux_h);
+//	    PASE_ParVectorSetConstantValues(pvx_cur[idx_eig], 0.0);
+//	    pvx_cur[idx_eig]->aux_h->data[idx_eig] = 1.0;
 	 }
+
+	 HYPRE_LOBPCGSetMaxIter(lobpcg_solver, 2);
+	 PASE_LOBPCGSetup (lobpcg_solver, parcsr_A_hh[level], par_b_hh[level], par_x_hh[level]);
+	 PASE_LOBPCGSetupB(lobpcg_solver, parcsr_B_hh[level], par_x_hh[level]);
+	 HYPRE_LOBPCGSolve(lobpcg_solver, constraints_Hh, eigenvectors_cur, eigenvalues );
+
 
 	 for (idx_eig = 0; idx_eig < block_size; ++idx_eig)
 	 {
@@ -813,18 +820,30 @@ int main (int argc, char *argv[])
 	       parcsr_B_hh[num_levels-2], pvx_pre, U_array[num_levels-1], par_x_hh[num_levels-2] );
       }
 
+
+      for ( idx_eig = 0; idx_eig < block_size; ++idx_eig)
+      {
+//	 HYPRE_ParCSRMatrixMatvec ( 1.0, P_array[num_levels-2], pvx_pre[idx_eig]->b_H, 0.0, pvx_cur[idx_eig]->b_H );
+//	 hypre_SeqVectorCopy(pvx_pre[idx_eig]->aux_h, pvx_Hh[idx_eig]->aux_h);
+	 PASE_ParVectorSetConstantValues(pvx_Hh[idx_eig], 0.0);
+	 pvx_Hh[idx_eig]->aux_h->data[idx_eig] = 1.0;
+      }
+
+
+
       /* 求特征值问题 */
       printf ( "LOBPCG solve A_Hh U_Hh = lambda_Hh B_Hh U_Hh\n" );
-//      PASE_LOBPCGSetup (lobpcg_solver, parcsr_A_Hh, par_b_Hh, par_x_Hh);
-//      PASE_LOBPCGSetupB(lobpcg_solver, parcsr_B_Hh, par_x_Hh);
+      HYPRE_LOBPCGSetMaxIter(lobpcg_solver, 1000);
+      PASE_LOBPCGSetup (lobpcg_solver, parcsr_A_Hh, par_b_Hh, par_x_Hh);
+      PASE_LOBPCGSetupB(lobpcg_solver, parcsr_B_Hh, par_x_Hh);
       HYPRE_LOBPCGSolve(lobpcg_solver, constraints_Hh, eigenvectors_Hh, eigenvalues );
       /* 所得eigenvectors_Hh如何得到细空间上的特征向量 */
 
 
 //      for (idx_eig = 0; idx_eig < block_size; ++idx_eig)
 //      {
-//	 printf ( "eig = %f, error = %f\n", 
-//	       eigenvalues[idx_eig]/h2, fabs(eigenvalues[idx_eig]/h2-exact_eigenvalues[idx_eig]) );
+//	 printf ( "eig = %e, error = %e\n", 
+//	       eigenvalues[idx_eig]/h2, fabs(eigenvalues[idx_eig]-exact_eigenvalues[idx_eig])/h2 );
 //      }
 //      printf ( "--------------------------------------------------\n" );
 
@@ -846,6 +865,7 @@ int main (int argc, char *argv[])
       {
 	 PASE_ParVectorGetParVector( Q_array[0], block_size, pvx, pvx_pre[idx_eig], pvx_h[idx_eig] );
       }
+      sum_error = 0;
       for (idx_eig = 0; idx_eig < block_size; ++idx_eig)
       {
 	 double tmp_double;
@@ -856,10 +876,16 @@ int main (int argc, char *argv[])
 	 eigenvalues[idx_eig] = eigenvalues[idx_eig] / tmp_double;
 	 if (myid == 0)
 	 {
-	    printf ( "eig = %f, error = %f\n", 
-		  eigenvalues[idx_eig]/h2, fabs(eigenvalues[idx_eig]/h2-exact_eigenvalues[idx_eig]) );
+	    printf ( "eig = %e, error = %e\n", 
+		  eigenvalues[idx_eig]/h2, fabs(eigenvalues[idx_eig]-exact_eigenvalues[idx_eig])/h2 );
+	    sum_error += fabs(eigenvalues[idx_eig]-exact_eigenvalues[idx_eig])/h2;
 	 }
       }
+      if (myid == 0)
+      {
+	 printf ( "the sum of error = %e\n", sum_error ); 
+      }
+
 
 
       printf ( "V-cycle from H to h\n" );
@@ -875,17 +901,20 @@ int main (int argc, char *argv[])
 	    pvx_cur = (PASE_ParVector*)(tmp -> vector);
 	 }
 
-	 hypre_PCGSetup(pcg_solver, parcsr_A_hh[level], par_b_hh[level], par_x_hh[level]);
 
 	 for ( idx_eig = 0; idx_eig < block_size; ++idx_eig)
 	 {
-	    /* TODO: 将H空间直接做投影, h空间直接复制. 是否正确? */
 	    HYPRE_ParCSRMatrixMatvec ( 1.0, P_array[level], pvx_pre[idx_eig]->b_H, 0.0, pvx_cur[idx_eig]->b_H );
 	    hypre_SeqVectorCopy(pvx_pre[idx_eig]->aux_h, pvx_cur[idx_eig]->aux_h);
-	    PASE_ParCSRMatrixMatvec ( eigenvalues[idx_eig], parcsr_B_hh[level], pvx_cur[idx_eig], 0.0, par_b_hh[level] );
-	    /* Now setup and solve! */
-	    hypre_PCGSolve(pcg_solver, parcsr_A_hh[level], par_b_hh[level], pvx_cur[idx_eig]);
+//	    PASE_ParVectorSetConstantValues(pvx_cur[idx_eig], 0.0);
+//	    pvx_cur[idx_eig]->aux_h->data[idx_eig] = 1.0;
 	 }
+
+	 HYPRE_LOBPCGSetMaxIter(lobpcg_solver, 2);
+	 PASE_LOBPCGSetup (lobpcg_solver, parcsr_A_hh[level], par_b_hh[level], par_x_hh[level]);
+	 PASE_LOBPCGSetupB(lobpcg_solver, parcsr_B_hh[level], par_x_hh[level]);
+	 HYPRE_LOBPCGSolve(lobpcg_solver, constraints_Hh, eigenvectors_cur, eigenvalues );
+
 
 	 if (level < num_levels-2)
 	 {
@@ -940,7 +969,7 @@ int main (int argc, char *argv[])
    }
 
 
-
+   sum_error = 0;
    for (idx_eig = 0; idx_eig < block_size; ++idx_eig)
    {
       double tmp_double;
@@ -951,10 +980,20 @@ int main (int argc, char *argv[])
       eigenvalues[idx_eig] = eigenvalues[idx_eig] / tmp_double;
       if (myid == 0)
       {
-	 printf ( "eig = %f, error = %f\n", 
-	       eigenvalues[idx_eig]/h2, fabs(eigenvalues[idx_eig]/h2-exact_eigenvalues[idx_eig]) );
+	 printf ( "eig = %e, error = %e\n", 
+	       eigenvalues[idx_eig]/h2, fabs(eigenvalues[idx_eig]-exact_eigenvalues[idx_eig])/h2 );
+	 sum_error += fabs(eigenvalues[idx_eig]-exact_eigenvalues[idx_eig])/h2;
       }
    }
+
+
+   if (myid == 0)
+   {
+      printf ( "the sum of error = %e\n", sum_error ); 
+   }
+
+
+
 
 
    for ( idx_eig = 0; idx_eig < block_size; ++idx_eig)

@@ -321,7 +321,7 @@ int main (int argc, char *argv[])
    PASE_ParVector    x_hh;
    PASE_ParVectorCreate( MPI_COMM_WORLD, N_h, block_size, x_h[0], NULL, &x_hh );
    (x_hh->aux_h->data)[0] = 2.0;
-//   PASE_ParVectorPrint(x_hh, "x_hh");
+   PASE_ParVectorPrint(x_hh, "x_hh");
 
    PASE_ParVector    b_hh;
    PASE_ParVectorCreate( MPI_COMM_WORLD, N_h, block_size, b_h[0], NULL, &b_hh );
@@ -330,7 +330,7 @@ int main (int argc, char *argv[])
 
    PASE_ParCSRMatrix A_hhh;
    PASE_ParCSRMatrixCreateByPASE_ParCSRMatrix( MPI_COMM_WORLD, block_size, A_h, NULL, A_hh, &x_hh, &A_hhh, workspace_h, b_hh );
-//   PASE_ParCSRMatrixPrint(A_hhh, "A_hhh");
+   PASE_ParCSRMatrixPrint(A_hhh, "A_hhh");
 
 
    (x_hh->aux_h->data)[0] = 1.0;
