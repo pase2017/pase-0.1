@@ -1,7 +1,5 @@
 [TOC]
 
-# PASE: Parallel Auxiliary Space Eigenvalue solver
-
 # 1. PASE or PASES
 
 把 `PASE` 改为 `PASES` 会不会更明确我们软件包的意图? 最后的 `"S"` 可以有两种含义: `Solver` 和 `Smoother`, 即从 ` Parallel Auxillary Space Eigen-solver` 改为 `Parallel Auxillary Space Eigen Solver/Smoother`.
@@ -9,7 +7,19 @@
 # 2. PASE_PARAMETER
 
 ``` c
+/* 基本数据类型的封装 */
+typedef int       PASE_INT;
+typedef double    PASE_DOUBLE;
+typedef double    PASE_REAL;
+typedef PASE_REAL PASE_SCALAR;
+
+/* 枚举类型只是为了向开发人员和用户说明 PASE_COARSEN_TYPE 的取值范围.
+ * 为了外部接口实现方便, 实际并不使用该类型, 
+ * 而是使用 PASE_INT (即 int) 类型的变量指定粗化策略, 如 PASE_INT coarse_type.
+ * 其余枚举类型的意图也是如此.
+ */
 typedef enum { CLJP = 1, FALGOUT = 2, PMHIS = 3 } PASE_COARSEN_TYPE;
+typedef enum { HYPRE = 1 } EXTERNAL_PACKAGE;
 
 typedef struct PASE_PARAMETER_ {
   /* amg_parameter */
@@ -19,7 +29,10 @@ typedef struct PASE_PARAMETER_ {
    */
   PASE_INT coarse_type; // CLJP, falgout, ...
   
+  /* 外部软件包, 用于提供实际的矩阵和向量的数据结构与操作 */
+  PASE_INT external_package; // 1: HYPRE
   
+   
   /* linear smoother/solver */
   /**
    * 1. 线性解法器/光滑子类型
@@ -28,7 +41,7 @@ typedef struct PASE_PARAMETER_ {
    * 2. 求解参数
    *    最大光滑次数, 收敛阈值 等等.
    */
-  PASE_int linear_smoother;      // 光滑.
+  PASE_INT linear_smoother;      // 光滑.
   PASE_INT linear_solver;        // 求解. 可用于最粗层网格的求解.
   PASE_INT linear_smoother_pre;  // 前光滑. 如无特别指定, 则默认与 linear_smoother 相同
   PASE_INT linear_smoother_post; // 后光滑. 如无特别指定, 则默认与 linear_smoother 相同
@@ -53,14 +66,18 @@ PASE_INT PASE_Paramater_GetLinearSmoother(void);
 # 3. PASE_MULTIGRID
 
 ``` c
-typedef PASE_DOUBLE PASE_SCALAR;
-
 typedef struct PASE_MATRIX_ {
   void *matrix_data;   
   PASE_INT nrow; // 行数
-  PASE_INT ncol; // 列数
-  
+  PASE_INT ncol; // 列数  
 } PASE_MATRIX;
+
+/**
+ * @brief 通过此函数进行外部矩阵类型到 PASE_MATRIX 的转换.
+ *        例如对于 HYPRE 矩阵, 可设置 external_package 为 HYPRE.
+ */
+PASE_MATRIX *CreatePaseMatrix(void *mat_data, PASE_PARAMETER param);
+
 typedef struct PASE_VECTOR_ {
   void *vector_data;
   PASE_INT nrow; // 行数. PASE_VECTOR 均为列向量
