@@ -77,15 +77,26 @@ typedef struct PASE_MATRIX_ {
  *        例如对于 HYPRE 矩阵, 可设置 external_package 为 HYPRE.
  */
 PASE_MATRIX *CreatePaseMatrix(void *mat_data, PASE_PARAMETER param);
+/* 拷贝 PASE_MATRIX 变量 */
+PASE_MATRIX *CopyPaseMatrix(PASE_MATRIX *pase_mat);
+
+/* 销毁 PASE_MATRIX 变量 */
+void DestroyPaseMatrix(PASE_MATRIX *A);
 
 typedef struct PASE_VECTOR_ {
   void *vector_data;
   PASE_INT nrow; // 行数. PASE_VECTOR 均为列向量
 } PASE_VECTOR;
 
+typedef struct PASE_MULTI_VECTOR_ {
+  PASE_INT size; // 多重向量个数
+  PASE_VECTOR *vector; // 指向 size 个 PASE_VECTOR 变量
+  // PASE_VECTOR **vector; // 指向 size 个 PASE_VECTOR * 变量
+} PASE_MULTI_VECTOR;
+
 /*
- * aux matrix = [mat   vec  ]
- *              [vecT  block]
+ * aux matrix = [mat   vec    ]
+ *              [vecT  block2d]
  */
 typedef struct PASE_AUX_MATRIX_ {
   PASE_MATRIX *mat;
@@ -94,26 +105,40 @@ typedef struct PASE_AUX_MATRIX_ {
   PASE_SCALAR *block2d;
 } PASE_AUX_MATRIX;
 
+/*
+ * aux vector = [vec    ]
+ *              [block1d]
+ */
 typedef struct PASE_AUX_VECTOR_ {
   PASE_VECTOR *vec;
   PASE_SCALAR *block1d;
 } PASE_AUX_VECTOR;
 
+typedef struct PASE_MULTI_AUX_VECTOR_ {
+  PASE_INT size;
+  PASE_AUX_VECTOR *aux_vector;
+  // PASE_AUX_VECTOR **aux_vector;
+} PASE_MULTI_AUX_VECTOR;
+
 typedef struct PASE_MULTIGRID_ {
   PASE_INT max_level;
   PASE_INT actual_level;
   
-  PASE_MATRIX *A; // A_0 (细) ---->> A_n (粗)
-  PASE_MATRIX *B; // B_0 (细) ---->> B_n (粗)
-  PASE_MATRIX *P; // 相邻网格层扩张算子 I_{k+1}^{k}, k = 0,\cdots,n-1
-  PASE_MATRIX *R; // 相邻网格层限制算子 I_{k}^{k+1}, k = 0,\cdots,n-1
+  PASE_MATRIX **A; // A_0 (细) ---->> A_n (粗)
+  PASE_MATRIX **B; // B_0 (细) ---->> B_n (粗)
   
-  PASE_MATRIX *LP; // long term prolongation, 某层到最细层的扩张算子
-  PASE_MATRIX *LR; // long term restriction, 最细层到某层的限制算子
+  PASE_MATRIX **P; // 相邻网格层扩张算子 I_{k+1}^{k}, k = 0,\cdots,n-1
+  PASE_MATRIX **R; // 相邻网格层限制算子 I_{k}^{k+1}, k = 0,\cdots,n-1
   
-  PASE_AUX_MATRIX aux_A; // 辅助空间矩阵
-  PASE_AUX_MATRIX aux_B; // 辅助空间矩阵
+  PASE_MATRIX **LP; // long term prolongation, 某层到最细层的扩张算子
+  PASE_MATRIX **LR; // long term restriction, 最细层到某层的限制算子
+  
+  PASE_AUX_MATRIX **aux_A; // 辅助空间矩阵
+  PASE_AUX_MATRIX **aux_B; // 辅助空间矩阵
 } PASE_MULTIGRID;
+
+PASE_MULTIGRID *CreatePaseMultigrid(PASE_MATRIX *A, PASE_MATRIX *B, PASE_PARAMETER param);
+void DestroyPaseMultigrid(PASE_MULTIGRID *pase_multigrid);
 
 /* 不同层向量之间的转移均通过如下函数进行 */
 void PASE_Multigrid_VectorTransfer(PASE_MULTIGRID mg, 
@@ -129,3 +154,12 @@ void PASE_Multigrid_VectorTransfer(PASE_MULTIGRID mg,
    */
 }
 ```
+# 4. PASE_EigenSolver
+
+``` c
+/* 特征值求解器 */
+void PASE_EigenSolver(PASE_MATRIX *A, PASE_MATRIX *B, 
+                      PASE_VECTOR *eval, PASE_MULTI_VECTOR *evec, 
+                      PASE_PARAMETER param);
+```
+
