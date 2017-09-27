@@ -19,8 +19,8 @@
 #include <math.h>
 #include "pase_pcg.h"
 
-HYPRE_Int
-pase_ParKrylovCommInfo( void   *A, HYPRE_Int *my_id, HYPRE_Int *num_procs)
+PASE_Int
+pase_ParKrylovCommInfo( void   *A, PASE_Int *my_id, PASE_Int *num_procs)
 {
    MPI_Comm comm = ((pase_ParCSRMatrix *)A)->comm;
    hypre_MPI_Comm_size(comm,num_procs);
@@ -38,14 +38,14 @@ pase_ParKrylovCreateVector( void *vvector )
 
    return ( (void *) x_Hh );
 }
-HYPRE_Int
+PASE_Int
 pase_ParKrylovDestroyVector( void *vvector )
 {
    pase_ParVector *vector = (pase_ParVector *) vvector;
 
    return( PASE_ParVectorDestroy( vector ) );
 }
-HYPRE_Int
+PASE_Int
 pase_ParKrylovMatvec( void   *matvec_data,
                       HYPRE_Complex  alpha,
                       void   *A,
@@ -59,40 +59,40 @@ pase_ParKrylovMatvec( void   *matvec_data,
                                       beta,
                                       (pase_ParVector *) y ) );
 }
-HYPRE_Real
+PASE_Real
 pase_ParKrylovInnerProd( void *x, void *y )
 {
-   HYPRE_Real prod;
+   PASE_Real prod;
    PASE_ParVectorInnerProd( (pase_ParVector *) x, (pase_ParVector *) y, &prod ); 
    return prod;
 }
-HYPRE_Int
+PASE_Int
 pase_ParKrylovCopyVector( void *x, void *y )
 {
    return ( PASE_ParVectorCopy( (pase_ParVector *) x, (pase_ParVector *) y ) );
 }
-HYPRE_Int
+PASE_Int
 pase_ParKrylovClearVector( void *x )
 {
    return ( PASE_ParVectorSetConstantValues( (pase_ParVector *) x, 0.0 ) );
 }
-HYPRE_Int
+PASE_Int
 pase_ParKrylovScaleVector( HYPRE_Complex  alpha, void *x )
 {
    return ( PASE_ParVectorScale( alpha, (pase_ParVector *) x ) );
 }
-HYPRE_Int
+PASE_Int
 pase_ParKrylovAxpy( HYPRE_Complex alpha, void *x, void *y )
 {
    return ( PASE_ParVectorAxpy( alpha, (pase_ParVector *) x, (pase_ParVector *) y ) );
 }
-HYPRE_Int
+PASE_Int
 pase_ParKrylovIdentity( void *vdata, void *A, void *b, void *x )
 {
    return( pase_ParKrylovCopyVector( b, x ) );
 }
-HYPRE_Int
-pase_ParSetRandomValues( void* v, HYPRE_Int seed ) 
+PASE_Int
+pase_ParSetRandomValues( void* v, PASE_Int seed ) 
 {
 
   PASE_ParVectorSetRandomValues( (pase_ParVector *)v, seed );
@@ -102,7 +102,7 @@ pase_ParSetRandomValues( void* v, HYPRE_Int seed )
 
 
 /* 这里是否需要都将函数名封装成pase呢? */
-HYPRE_Int
+PASE_Int
 PASE_ParCSRPCGCreate( MPI_Comm comm, HYPRE_Solver *solver )
 {
    hypre_PCGFunctions * pcg_functions;
@@ -127,7 +127,7 @@ PASE_ParCSRPCGCreate( MPI_Comm comm, HYPRE_Solver *solver )
    return hypre_error_flag;
 }
 
-HYPRE_Int
+PASE_Int
 PASE_ParCSRPCGDestroy( HYPRE_Solver solver )
 {
    hypre_PCGData *pcg_data = (hypre_PCGData *)solver;
@@ -174,7 +174,7 @@ PASE_ParCSRPCGDestroy( HYPRE_Solver solver )
 
 
 
-HYPRE_Int PASE_ParCSRSetupInterpreter( mv_InterfaceInterpreter* i)
+PASE_Int PASE_ParCSRSetupInterpreter( mv_InterfaceInterpreter* i)
 {
   /* Vector part */
 
@@ -209,7 +209,7 @@ HYPRE_Int PASE_ParCSRSetupInterpreter( mv_InterfaceInterpreter* i)
 
   return 0;
 }
-HYPRE_Int PASE_ParCSRSetupMatvec( HYPRE_MatvecFunctions* mv)
+PASE_Int PASE_ParCSRSetupMatvec( HYPRE_MatvecFunctions* mv)
 {
   mv->MatvecCreate = hypre_ParKrylovMatvecCreate;
   mv->Matvec = pase_ParKrylovMatvec;
