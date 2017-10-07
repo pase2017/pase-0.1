@@ -70,6 +70,7 @@ HYPRE_Int PASE_ParCSRMatrixCreate( MPI_Comm comm ,
    for (col = 0; col < block_size; ++col)
    {
       (*matrix)->aux_hH[col] = hypre_ParVectorCreate(comm, (*matrix)->N_H, partitioning);
+      //printf("size =%d , num = %d\n", (*matrix)->aux_hH[col]->local_vector->size, (*matrix)->aux_hH[col]->local_vector->num_vectors);
       hypre_ParVectorInitialize((*matrix)->aux_hH[col]);
       hypre_ParVectorOwnsPartitioning((*matrix)->aux_hH[col]) = 0;
    }
@@ -107,6 +108,7 @@ HYPRE_Int PASE_ParCSRMatrixCreate( MPI_Comm comm ,
       for ( col = 0; col < block_size; ++col)
       {
 	 matrix_data[row*block_size+col] = hypre_ParVectorInnerProd(workspace_h, u_h[col]);
+	 //printf("data[%d] = %f\n", row*block_size+col, matrix_data[row*block_size+col]);
       }
 
       if (P==NULL)

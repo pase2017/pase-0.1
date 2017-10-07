@@ -54,7 +54,7 @@ typedef struct
    //PASE_Int    (*Precond)(void *vdata , void *A , void *b , void *x);
    //PASE_Int    (*PrecondSetup)(void *vdata , void *A , void *b , void *x);
 
-   PASE_Int    (*DireSolver)(PASE_Solver solver);
+   PASE_Int    (*DirSolver)(PASE_Solver solver);
    PASE_Int    (*PreSmooth)(PASE_Solver solver);
    PASE_Int    (*PostSmooth)(PASE_Solver solver);
    PASE_Int    (*PreSmoothInAux)(PASE_Solver solver);
@@ -64,49 +64,34 @@ typedef struct
 
 typedef struct
 {
-   PASE_Int 	 block_size;
-   PASE_Int      pre_iter;
-   PASE_Int      post_iter;
-   PASE_Int      max_level;
-   PASE_Int      cur_level;
-   //PASE_Int 	 owns_uH;
-   void    **A;
-   void    **M;
-   void    **P;
-   void    **Ap;
-   void    **Mp;
-   void    ***u;
+   PASE_Int 	block_size;
+   PASE_Int     pre_iter;
+   PASE_Int     post_iter;
+   PASE_Int 	max_iter;
+   PASE_Int     max_level;
+   PASE_Int     cur_level;
+   PASE_Real   	rtol;
+   PASE_Real   	atol;
+   PASE_Real    *r_norm;
+   PASE_Real	R_norm;
+   PASE_Real  	*u_norm;
+   void    	**A;
+   void    	**M;
+   void    	**P;
+   void    	**Ap;
+   void    	**Mp;
+   void    	***u;
+   void    	**r;
    PASE_Complex **eigenvalues;
    pase_MGFunctions *functions;
 
+   PASE_Complex *exact_eigenvalues;
 
-   PASE_Real   tol;
-   PASE_Real   atolf;
-   PASE_Real   cf_tol;
-   PASE_Real   a_tol;
-   PASE_Real   rtol;
-   PASE_Int      max_iter;
-   PASE_Int      two_norm;
-   PASE_Int      rel_change;
-   PASE_Int      recompute_residual;
-   PASE_Int      recompute_residual_p;
-   PASE_Int      stop_crit;
-   PASE_Int      converged;
+   PASE_Int     converged;
 
-   void    *r; /* ...contains the residual.  This is currently kept permanently.
-                  If that is ever changed, it still must be kept if logging>1 */
-   PASE_Int      owns_matvec_data;  /* normally 1; if 0, don't delete it */
-   void    *matvec_data;
-   void    *precond_data;
-
-   /* log info (always logged) */
-   PASE_Int      num_iterations;
-   PASE_Real   rel_residual_norm;
-
+   PASE_Int     num_iter;
    PASE_Int     print_level; /* printing when print_level>0 */
-   PASE_Int     logging;  /* extra computations for logging when logging>0 */
-   PASE_Real  *norms;
-   PASE_Real  *rel_norms;
+   //PASE_Int     logging;  /* extra computations for logging when logging>0 */
 
 } pase_MGData;
 
@@ -125,7 +110,7 @@ pase_MGFunctions *pase_MGFunctionsCreate(
    PASE_Int    (*ClearVector)   ( void *x ),
    PASE_Int    (*ScaleVector)   ( PASE_Complex alpha, void *x ),
    PASE_Int    (*Axpy)          ( PASE_Complex alpha, void *x, void *y ),
-   PASE_Int    (*DireSolver)    ( PASE_Solver solver ),
+   PASE_Int    (*DirSolver)    ( PASE_Solver solver ),
    PASE_Int    (*PreSmooth)     ( PASE_Solver solver ),
    PASE_Int    (*PostSmooth)    ( PASE_Solver solver ),
    PASE_Int    (*PreSmoothInAux)( PASE_Solver solver ),
@@ -138,21 +123,34 @@ PASE_Int PASE_MGAddLevel( PASE_Solver solver,
 	                 HYPRE_ParCSRMatrix* A,
 			 HYPRE_ParCSRMatrix* M,
 			 HYPRE_ParCSRMatrix* P,
-			 PASE_Int n);
+			 PASE_Int n,
+			 PASE_Int flag);
 PASE_Int PASE_ParCSRMGInit( MPI_Comm comm,
 			    PASE_Solver solver,
 			    HYPRE_ParVector* u,
 			    PASE_Int block_size,
-			    PASE_Int seed);
+			    PASE_Int* seed);
 PASE_Int PASE_ParCSRMGSolve( PASE_Solver solver);
+PASE_Int pase_ParCSRMGIteration( PASE_Solver solver);
 PASE_Int pase_ParCSRMGPreSmooth( PASE_Solver solver);
 PASE_Int pase_ParCSRMGPostSmooth( PASE_Solver solver);
 PASE_Int pase_ParCSRMGAuxMatrixCreate( PASE_Solver solver);
 PASE_Int pase_ParCSRMGPostCorrection( PASE_Solver solver);
-PASE_Int pase_ParCSRMGDireSolver(PASE_Solver solver);
+PASE_Int pase_ParCSRMGRestart( PASE_Solver solver);
+PASE_Int PASE_ParCSRMGDestroy( PASE_Solver solver);
+PASE_Int PASE_MGSetMaxIter( PASE_Solver solver, PASE_Int max_iter);
+PASE_Int PASE_MGSetPreIter( PASE_Solver solver, PASE_Int pre_iter);
+PASE_Int PASE_MGSetPostIter( PASE_Solver solver, PASE_Int post_iter);
+PASE_Int PASE_MGSetBlockSize( PASE_Solver solver, PASE_Int block_size);
+PASE_Int PASE_MGSetPrintLevel( PASE_Solver solver, PASE_Int print_level);
+PASE_Int PASE_MGSetATol( PASE_Solver solver, PASE_Int atol);
+PASE_Int PASE_MGSetRTol( PASE_Solver solver, PASE_Int rtol);
+PASE_Int PASE_MGSetExactEigenvalues( PASE_Solver solver, PASE_Complex* exact_eigenvalues);
+PASE_Int pase_ParCSRMGErrorEstimate( PASE_Solver solver);
+
+PASE_Int pase_ParCSRMGDirSolver(PASE_Solver solver);
 PASE_Int pase_ParCSRMGSmootherCG(PASE_Solver solver);
 PASE_Int pase_ParCSRMGInAuxSmootherCG(PASE_Solver solver);
-PASE_Int PASE_ParCSRMGDestroy( PASE_Solver solver);
 #ifdef __cplusplus
 }
 #endif
