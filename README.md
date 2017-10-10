@@ -66,17 +66,48 @@ PASE_INT PASE_Paramater_GetLinearSmoother(void);
 # 3. PASE_MULTIGRID
 
 ``` c
-typedef struct PASE_MATRIX_ {
+typedef struct PASE_MATRIX_PRIVATE_ {
+  PASE_INT internal_type; // 1: HYPRE
   void *matrix_data;   
   PASE_INT nrow; // 行数
-  PASE_INT ncol; // 列数  
-} PASE_MATRIX;
+  PASE_INT ncol; // 列数
+  PASE_MATRIX_OPERATORS ops;
+} PASE_MATRIX_PRIVATE;
+typedef PASE_MATRIX_PRIVATE * PASE_MATRIX;
+
+/* C = A * B */
+void PASE_Matrix_multiply(A, B, C)
+{
+    // 1. 检查 A, B, C 的 internal_type 是否一致
+    // 2. A->ops->multiply(A, B, C)
+}
+
+typedef struct PASE_MATRIX_OPERATORS_PRIVATE_ {
+    void multiply(void *, void *, void*);
+} PASE_MATRIX_OPERATORS_PRIVATE;
+typedef PASE_MATRIX_OPERATORS_PRIVATE * PASE_MATRIX_OPERATORS;
 
 /**
  * @brief 通过此函数进行外部矩阵类型到 PASE_MATRIX 的转换.
  *        例如对于 HYPRE 矩阵, 可设置 external_package 为 HYPRE.
  */
-PASE_MATRIX *CreatePaseMatrix(void *mat_data, PASE_PARAMETER param);
+PASE_MATRIX PASE_Create_matrix(void *mat_data, PASE_PARAMETER param, PASE_MATRIX_OPERATORS ops);
+PASE_MATRIX PASE_Create_matrix(void *mat_data, PASE_PARAMETER param)
+{
+    PASE_MATRIX A = (PASE_MATRIX)PASE_Malloc(sizeof(PASE_MATRIX));
+    if(NULL != ops) {
+        A->ops = ops;
+    } else {
+        if(param.matrix_internal_type == HYPRE_MATRIX_)  {
+            A->ops = PASE_Set_hypre_matrix_operators();
+        }
+    }
+    A->matrix_data = matrix_data;
+    // ......
+}
+
+void PASE_Destroy_matrix(PASE_MATRIX *A);
+
 /* 拷贝 PASE_MATRIX 变量 */
 PASE_MATRIX *CopyPaseMatrix(PASE_MATRIX *pase_mat);
 
