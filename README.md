@@ -71,7 +71,7 @@ typedef struct PASE_MATRIX_PRIVATE_ {
   void *matrix_data;   
   PASE_INT nrow; // 行数
   PASE_INT ncol; // 列数
-  PASE_MATRIX_OPERATORS ops;
+  PASE_MATRIX_OPERATOR ops;
 } PASE_MATRIX_PRIVATE;
 typedef PASE_MATRIX_PRIVATE * PASE_MATRIX;
 
@@ -82,10 +82,10 @@ void PASE_Matrix_multiply(A, B, C)
     // 2. A->ops->multiply(A, B, C)
 }
 
-typedef struct PASE_MATRIX_OPERATORS_PRIVATE_ {
+typedef struct PASE_MATRIX_OPERATOR_PRIVATE_ {
     void multiply(void *, void *, void*);
-} PASE_MATRIX_OPERATORS_PRIVATE;
-typedef PASE_MATRIX_OPERATORS_PRIVATE * PASE_MATRIX_OPERATORS;
+} PASE_MATRIX_OPERATOR_PRIVATE;
+typedef PASE_MATRIX_OPERATOR_PRIVATE * PASE_MATRIX_OPERATOR;
 
 /**
  * @brief 通过此函数进行外部矩阵类型到 PASE_MATRIX 的转换.
@@ -166,6 +166,8 @@ typedef struct PASE_MULTIGRID_ {
   
   PASE_AUX_MATRIX **aux_A; // 辅助空间矩阵
   PASE_AUX_MATRIX **aux_B; // 辅助空间矩阵
+  
+  PASE_MULTIGRID_OPERATOR ops;
 } PASE_MULTIGRID;
 
 PASE_MULTIGRID *CreatePaseMultigrid(PASE_MATRIX *A, PASE_MATRIX *B, PASE_PARAMETER param);
