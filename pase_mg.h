@@ -72,22 +72,19 @@ typedef struct
    PASE_Int     cur_level;
    PASE_Real   	rtol;
    PASE_Real   	atol;
-   PASE_Real    *r_norm;
-   PASE_Real	R_norm;
-   PASE_Real  	*u_norm;
+   PASE_Real    r_norm;
    void    	**A;
    void    	**M;
    void    	**P;
    void    	**Ap;
    void    	**Mp;
    void    	***u;
-   void    	**r;
    PASE_Complex **eigenvalues;
    pase_MGFunctions *functions;
 
    PASE_Complex *exact_eigenvalues;
 
-   PASE_Int     converged;
+   PASE_Int     num_converged;
 
    PASE_Int     num_iter;
    PASE_Int     print_level; /* printing when print_level>0 */
@@ -143,8 +140,8 @@ PASE_Int PASE_MGSetPreIter( PASE_Solver solver, PASE_Int pre_iter);
 PASE_Int PASE_MGSetPostIter( PASE_Solver solver, PASE_Int post_iter);
 PASE_Int PASE_MGSetBlockSize( PASE_Solver solver, PASE_Int block_size);
 PASE_Int PASE_MGSetPrintLevel( PASE_Solver solver, PASE_Int print_level);
-PASE_Int PASE_MGSetATol( PASE_Solver solver, PASE_Int atol);
-PASE_Int PASE_MGSetRTol( PASE_Solver solver, PASE_Int rtol);
+PASE_Int PASE_MGSetATol( PASE_Solver solver, PASE_Real atol);
+PASE_Int PASE_MGSetRTol( PASE_Solver solver, PASE_Real rtol);
 PASE_Int PASE_MGSetExactEigenvalues( PASE_Solver solver, PASE_Complex* exact_eigenvalues);
 PASE_Int pase_ParCSRMGErrorEstimate( PASE_Solver solver);
 

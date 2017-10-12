@@ -106,20 +106,17 @@ void *pase_MGCreate( pase_MGFunctions *mg_functions)
     mg_data->cur_level 	= -1;
     mg_data->rtol	= 1e-8;
     mg_data->atol	= 1e-5;
-    mg_data->R_norm	= 0;
-    mg_data->r_norm	= NULL;
-    mg_data->u_norm	= NULL;
+    mg_data->r_norm	= 0;
     mg_data->A 		= NULL;
     mg_data->M 		= NULL;
     mg_data->P 		= NULL;
     mg_data->Ap 	= NULL;
     mg_data->Mp 	= NULL;
     mg_data->u 		= NULL;
-    mg_data->r		= NULL;
     mg_data->eigenvalues= NULL;
 
     mg_data->exact_eigenvalues	= NULL;
-    mg_data->converged 		= 0;
+    mg_data->num_converged	= 0;
     mg_data->num_iter		= 0;
     mg_data->print_level	= 1;
 
@@ -416,12 +413,7 @@ PASE_Int PASE_ParCSRMGSolve( PASE_Solver solver)
        pase_ParCSRMGErrorEstimate( solver);
        pase_ParCSRMGRestart( solver);
    }
-   while( mg_solver->max_iter > mg_solver->num_iter && mg_solver->R_norm > mg_solver->atol);
-
-   if( mg_solver->max_iter > mg_solver->num_iter)
-   {
-       mg_solver->converged = 1;
-   }
+   while( mg_solver->max_iter > mg_solver->num_iter && mg_solver->num_converged < mg_solver->block_size);
 
    return 0;
 }
@@ -612,26 +604,26 @@ PASE_Int pase_ParCSRMGPostCorrection(PASE_Solver solver)
  */
 PASE_Int pase_ParCSRMGAuxMatrixCreate(PASE_Solver solver)
 {
-    PASE_Int	i, j, k, l; 
-    pase_MGData* data 		= (pase_MGData*)solver;
-    PASE_Int cur_level 		= data->cur_level;
-    PASE_Int max_level 		= data->max_level;
-    PASE_Int block_size 	= data->block_size;
-    PASE_Int num_nonzeros 	= block_size*block_size;
-    HYPRE_ParCSRMatrix* A 	= (HYPRE_ParCSRMatrix*)data->A;
-    HYPRE_ParCSRMatrix* P 	= (HYPRE_ParCSRMatrix*)data->P;
-    pase_ParCSRMatrix** Ap 	= (pase_ParCSRMatrix**)data->Ap;
-    pase_ParVector*** u 	= (pase_ParVector***)data->u;
+    PASE_Int i, j, k, l; 
+    pase_MGData*        data 	     = (pase_MGData*)solver;
+    PASE_Int            cur_level    = data->cur_level;
+    PASE_Int            max_level    = data->max_level;
+    PASE_Int            block_size   = data->block_size;
+    PASE_Int            num_nonzeros = block_size*block_size;
+    HYPRE_ParCSRMatrix  *A 	     = (HYPRE_ParCSRMatrix*)data->A;
+    HYPRE_ParCSRMatrix  *P 	     = (HYPRE_ParCSRMatrix*)data->P;
+    pase_ParCSRMatrix   **Ap 	     = (pase_ParCSRMatrix**)data->Ap;
+    pase_ParVector      ***u 	     = (pase_ParVector***)data->u;
 
     //printf("cur_level = %d, max_level = %d\n", cur_level, max_level);
-    HYPRE_ParCSRMatrix A0 	= A[cur_level-1];
-    HYPRE_ParCSRMatrix A1 	= A[cur_level];
+    HYPRE_ParCSRMatrix  A0 	     = A[cur_level-1];
+    HYPRE_ParCSRMatrix  A1 	     = A[cur_level];
     //printf("N_H of A0 = %d, N_H of A1 = %d\n", A0->global_num_rows, A1->global_num_rows);
-    HYPRE_ParCSRMatrix P0 	= P[cur_level-1];
-    pase_ParCSRMatrix* Ap0 	= NULL;
-    pase_ParCSRMatrix* Ap1 	= Ap[cur_level];
-    pase_ParVector** U 		= u[cur_level];
-    HYPRE_ParVector* u_h 	= hypre_CTAlloc(HYPRE_ParVector, block_size); 
+    HYPRE_ParCSRMatrix  P0 	= P[cur_level-1];
+    pase_ParCSRMatrix   *Ap0 	= NULL;
+    pase_ParCSRMatrix   *Ap1 	= Ap[cur_level];
+    pase_ParVector      **U 	= u[cur_level];
+    HYPRE_ParVector     *u_h 	= hypre_CTAlloc(HYPRE_ParVector, block_size); 
 
     for( i=0; i<block_size; i++)
     {
@@ -669,7 +661,7 @@ PASE_Int pase_ParCSRMGAuxMatrixCreate(PASE_Solver solver)
        {
 	   for( j=0; j<block_size; j++)
 	   {
-	       hypre_ParCSRMatrixMatvecT( U[j]->aux_h->data[i], P0, b1[j], 1.0, b0[i]);
+	       hypre_ParCSRMatrixMatvecT( U[i]->aux_h->data[j], P0, b1[j], 1.0, b0[i]);
 	   }
        }
        /* aux_hh[cur_level-1] += 2*U^T*aux_hH[cur_level]*Z + Z^T*aux_hh[cur_level]*Z */
@@ -695,6 +687,7 @@ PASE_Int pase_ParCSRMGAuxMatrixCreate(PASE_Solver solver)
 	      } 
 	   }
        }
+       free(uTb);
     }
 
     HYPRE_ParCSRMatrix *M 	= (HYPRE_ParCSRMatrix*)data->M;
@@ -703,7 +696,6 @@ PASE_Int pase_ParCSRMGAuxMatrixCreate(PASE_Solver solver)
     HYPRE_ParCSRMatrix M1  	= NULL;
     pase_ParCSRMatrix *Mp0 	= NULL;
     pase_ParCSRMatrix *Mp1 	= NULL;
-    if( M!=NULL && Mp!=NULL)
     {
 	M0 	= M[cur_level-1];
 	M1  	= M[cur_level];
@@ -722,7 +714,7 @@ PASE_Int pase_ParCSRMGAuxMatrixCreate(PASE_Solver solver)
 	    {
 		for( j=0; j<block_size; j++)
 		{
-		    hypre_ParCSRMatrixMatvecT( U[j]->aux_h->data[i], P0, beta1[j], 1.0, beta0[i]);
+		    hypre_ParCSRMatrixMatvecT( U[i]->aux_h->data[j], P0, beta1[j], 1.0, beta0[i]);
 		}
 	    }
 	    /* aux_hh[cur_level-1] += 2*U^T*aux_hH[cur_level]*Z + Z^T*aux_hh[cur_level]*Z */
@@ -749,6 +741,7 @@ PASE_Int pase_ParCSRMGAuxMatrixCreate(PASE_Solver solver)
 		    } 
 		}
 	    }
+	    free(uTbeta);
 	}
     }
     hypre_TFree( u_h);
@@ -773,12 +766,11 @@ PASE_Int pase_ParCSRMGRestart( PASE_Solver solver)
    PASE_Int max_level 		= mg_solver->max_level;
    PASE_Int max_iter 		= mg_solver->max_iter;
    PASE_Int block_size		= mg_solver->block_size;
-   PASE_Real R_norm		= mg_solver->R_norm;
-   PASE_Real atol		= mg_solver->atol;
+   PASE_Real num_converged	= mg_solver->num_converged;
    PASE_Int num_iter		= mg_solver->num_iter;
 
    //printf("max_iter = %d, num_iter = %d, R_norm = %f, atol = %f!\n", max_iter, num_iter, R_norm, atol);
-   if(max_iter > num_iter && R_norm > atol)
+   if(max_iter > num_iter && block_size > num_converged)
    {
 	printf("Destroy memory for next iteration...\n");
         if( mg_solver->Ap != NULL)
@@ -887,26 +879,6 @@ PASE_Int PASE_ParCSRMGDestroy( PASE_Solver solver)
 	    hypre_TFreeF( data->eigenvalues, functions);
 	    data->eigenvalues = NULL;
 	}
-	if( data->r != NULL)
-	{
-	    hypre_ParVector **r = (hypre_ParVector**) data->r;
-	    for( j=0; j<block_size; j++)
-	    {
-		HYPRE_ParVectorDestroy( r[j]);
-	    }
-	    hypre_TFreeF( r, functions);
-	    data->r = NULL;
-	}
-	if( data->r_norm != NULL)
-	{
-	    hypre_TFreeF( data->r_norm, functions); 
-	    data->r_norm = NULL;
-	}
-	if( data->u_norm != NULL)
-	{
-	    hypre_TFreeF( data->u_norm, functions); 
-	    data->u_norm = NULL;
-	}
 	hypre_TFreeF( data, functions);
 	hypre_TFreeF( functions, functions);
     }
@@ -960,14 +932,14 @@ PASE_Int PASE_MGSetPrintLevel( PASE_Solver solver, PASE_Int print_level)
     return 0;
 }
 
-PASE_Int PASE_MGSetATol( PASE_Solver solver, PASE_Int atol)
+PASE_Int PASE_MGSetATol( PASE_Solver solver, PASE_Real atol)
 {
     pase_MGData *mg_solver 	= (pase_MGData *)solver;
     mg_solver->atol		= atol;
     return 0;
 }
 
-PASE_Int PASE_MGSetRTol( PASE_Solver solver, PASE_Int rtol)
+PASE_Int PASE_MGSetRTol( PASE_Solver solver, PASE_Real rtol)
 {
     pase_MGData *mg_solver 	= (pase_MGData *)solver;
     mg_solver->rtol		= rtol;
@@ -986,13 +958,9 @@ PASE_Int PASE_MGSetExactEigenvalues( PASE_Solver solver, PASE_Complex* exact_eig
  */
 PASE_Int pase_ParCSRMGErrorEstimate( PASE_Solver solver)
 {
-    PASE_Int i			= 0;
-    PASE_Real R_norm		= 0;
-
     pase_MGData* mg_solver 	= (pase_MGData*) solver;
     PASE_Int max_level		= mg_solver->max_level;
     PASE_Int block_size		= mg_solver->block_size; 
-    hypre_ParVector** r		= (hypre_ParVector**) mg_solver->r;    
     pase_ParVector*** u		= (pase_ParVector***) mg_solver->u;	
     pase_ParVector** u0		= u[max_level];
     PASE_Complex* eigenvalues 	= mg_solver->eigenvalues[max_level];
@@ -1006,55 +974,52 @@ PASE_Int pase_ParCSRMGErrorEstimate( PASE_Solver solver)
 	M0 = M[max_level];
     }
 
-    if( r == NULL)
-    {
-	r = hypre_CTAlloc( hypre_ParVector*, block_size);
-	PASE_Int N_H  		= u0[0]->N_H;
-	PASE_Int *partitioning 	= u0[0]->b_H->partitioning;
-	for( i=0; i<block_size; i++)
-	{
-	    r[i] = hypre_ParVectorCreate(MPI_COMM_WORLD, N_H, partitioning);
-	    hypre_ParVectorInitialize( r[i]);
-	    hypre_ParVectorSetPartitioningOwner( r[i], 0);
-	}
-    }
-    if( mg_solver->u_norm == NULL)
-    {
-	mg_solver->u_norm = hypre_CTAlloc( PASE_Real, block_size);
-    }
-    if( mg_solver->r_norm == NULL)
-    {
-	mg_solver->r_norm = hypre_CTAlloc( PASE_Real, block_size);
-    }
+    PASE_Int N_H  		= u0[0]->N_H;
+    PASE_Int *partitioning 	= u0[0]->b_H->partitioning;
+    HYPRE_ParVector r = hypre_ParVectorCreate(MPI_COMM_WORLD, N_H, partitioning);
+    hypre_ParVectorInitialize( r);
+    hypre_ParVectorSetPartitioningOwner( r, 0);
 
     /* 计算最细层的残差：r = Au - kMu */
-    for( i=0; i<block_size; i++)
+    PASE_Real atol = mg_solver->atol;
+    //PASE_Real rtol = mg_solver->rtol;
+    PASE_Int flag 	= 0;
+    PASE_Int i		= 0;
+    PASE_Real r_norm 	= 0;
+    while( mg_solver->num_converged < block_size && flag == 0)
     {
 	//printf("A0 have %d rows amd %d cols, u0[0] has %d rows\n", A0->global_num_rows, A0->global_num_cols, u0[i]->b_H->global_size);
-	hypre_ParCSRMatrixMatvec( 1.0, A0, u0[i]->b_H, 0.0, r[i]);
+	i = mg_solver->num_converged;
+	hypre_ParCSRMatrixMatvec( 1.0, A0, u0[i]->b_H, 0.0, r);
 	if( M0 != NULL)
 	{
-	    hypre_ParCSRMatrixMatvec( -eigenvalues[i], M0, u0[i]->b_H, 1.0, r[i]); 
+	    hypre_ParCSRMatrixMatvec( -eigenvalues[i], M0, u0[i]->b_H, 1.0, r); 
 	}
 	else
 	{
-	    hypre_ParVectorAxpy( -eigenvalues[i], u0[i]->b_H, r[i]);
+	    hypre_ParVectorAxpy( -eigenvalues[i], u0[i]->b_H, r);
 	}
-	mg_solver->u_norm[i] 	= 1;
-	mg_solver->u_norm[i] 	= hypre_ParVectorInnerProd( u0[i]->b_H, u0[i]->b_H);
-	mg_solver->u_norm[i] 	= sqrt(mg_solver->u_norm[i]);
-	mg_solver->r_norm[i] 	= hypre_ParVectorInnerProd( r[i], r[i]);
-	R_norm 			+= mg_solver->r_norm[i];
-	mg_solver->r_norm[i] 	= sqrt(mg_solver->r_norm[i]);
+	//u_norm 	= hypre_ParVectorInnerProd( u0[i]->b_H, u0[i]->b_H);
+	//u_norm 	= sqrt(u_norm);
+	r_norm 	= hypre_ParVectorInnerProd( r, r);
+	r_norm	= sqrt(r_norm);
+	mg_solver->r_norm = r_norm;
+	if( r_norm < atol)
+	{
+	    mg_solver->num_converged ++;
+	}
+	else
+	{
+	    flag = 1;
+	}
     }
-    mg_solver->R_norm 		= sqrt(R_norm);
-    mg_solver->r 		= (void**) r;
+    hypre_ParVectorDestroy(r);
 
     if( mg_solver->print_level > 0)
     {
 	//printf("eigenvalues[0] = %.16f, exact_eigenvalues[0] = %.16f\n", mg_solver->eigenvalues[max_level][0], mg_solver->exact_eigenvalues[0]);
 	PASE_Real error = fabs(mg_solver->eigenvalues[max_level][0] - mg_solver->exact_eigenvalues[0]);	
-	printf("iter = %d, error of eigen[0] = %1.6e, the norm of residul = %1.6e\n", mg_solver->num_iter, error, mg_solver->R_norm);
+	printf("iter = %d, error of eigen[0] = %1.6e, the num of converged = %d, the norm of residul = %1.6e\n", mg_solver->num_iter, error, mg_solver->num_converged, mg_solver->r_norm);
     }	
     return 0;
 }
@@ -1065,10 +1030,10 @@ PASE_Int pase_ParCSRMGErrorEstimate( PASE_Solver solver)
 PASE_Int pase_ParCSRMGDirSolver( PASE_Solver solver)
 {
     HYPRE_Solver lobpcg_solver 	= NULL; 
-    int maxIterations 		= 1000; 	/* maximum number of iterations */
+    int maxIterations 		= 5000; 	/* maximum number of iterations */
     int pcgMode 		= 1;    	/* use rhs as initial guess for inner pcg iterations */
     int verbosity 		= 0;    	/* print iterations info */
-    double tol 			= 1.e-7;	/* absolute tolerance (all eigenvalues) */
+    double tol 			= 1.e-30;	/* absolute tolerance (all eigenvalues) */
     int lobpcgSeed 		= 77;
 
     PASE_Int i;
@@ -1191,7 +1156,7 @@ PASE_Int pase_ParCSRMGSmootherCG( PASE_Solver solver)
     HYPRE_ParCSRPCGCreate( MPI_COMM_WORLD, &cg_solver);
     /* Set some parameters */
     HYPRE_PCGSetMaxIter( cg_solver, mg_solver->pre_iter); /* max iterations */
-    HYPRE_PCGSetTol( cg_solver, 1.0e-20); 
+    HYPRE_PCGSetTol( cg_solver, 1.0e-50); 
     HYPRE_PCGSetTwoNorm( cg_solver, 1); /* use the two norm as the st    opping criteria */
     HYPRE_PCGSetPrintLevel( cg_solver, 0); 
     HYPRE_PCGSetLogging( cg_solver, 1); /* needed to get run info lat    er */
@@ -1285,7 +1250,7 @@ PASE_Int pase_ParCSRMGInAuxSmootherCG( PASE_Solver solver)
     HYPRE_Solver cg_solver 	= NULL;
     PASE_ParCSRPCGCreate( MPI_COMM_WORLD, &cg_solver);
     HYPRE_PCGSetMaxIter( cg_solver, mg_solver->pre_iter); 	/* max iterations */
-    HYPRE_PCGSetTol( cg_solver, 1e-20); 			/* conv. tolerance */
+    HYPRE_PCGSetTol( cg_solver, 1e-50); 			/* conv. tolerance */
     HYPRE_PCGSetTwoNorm( cg_solver, 1); 			/* use the two norm as the st    opping criteria */
     HYPRE_PCGSetPrintLevel( cg_solver, 0); 			/* prints out the iteratio    n info */
     HYPRE_PCGSetLogging( cg_solver, 1); 			/* needed to get run info lat    er */

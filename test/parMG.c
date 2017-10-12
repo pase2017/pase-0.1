@@ -351,15 +351,22 @@ int main (int argc, char *argv[])
    /*求解特征值问题的MG方法*/
    {
        HYPRE_Solver mg_solver 	= NULL;
-       HYPRE_Int mg_level 	= 3;		/*MG迭代的网格层数*/
-       PASE_Int flag 		= 1;		/*添加AMG矩阵,由细(0)到粗(mg_level)*/
+       HYPRE_ParVector* init_v	= NULL;		/*可以给定初始向量*/
+       HYPRE_Int mg_level 	= 5;		/*MG迭代的网格层数*/
        PASE_Int max_iter	= 5;		/*MG迭代的最大迭代次数*/
-       PASE_Int pre_iter	= 1;		/*前光滑的最大次数*/
+       PASE_Int pre_iter	= 500;		/*前光滑的最大次数*/
        PASE_Int	post_iter	= 1;		/*后光滑的最大次数*/
        PASE_Int block_size	= 2;		/*求解的特征值个数*/
-       PASE_Int mg_seed[2]	= {1, 100};	/*初始向量的随机种子*/
-       PASE_Int print_level   	= 1; 		/*0:不打印； 1:打印每次MG迭代后的结果； 2:打印每步光滑过程的结果 */
-       HYPRE_ParVector* init_v	= NULL;		/*可以给定初始向量*/
+       PASE_Int print_level   	= 2; 		/*0:不打印； 1:打印每次MG迭代后的结果； 2:打印每步光滑过程的结果 */
+       PASE_Real atol		= 1e-10;
+       PASE_Int *mg_seed	= NULL;		/*初始向量的随机种子*/
+       PASE_Int flag 		= 1;		/*添加AMG矩阵,由细(0)到粗(mg_level)*/
+
+       mg_seed = hypre_CTAlloc( PASE_Int, block_size);
+       for( i=0; i<block_size; i++)
+       {
+	   mg_seed[i] = i;
+       }
 
        printf("MG create...\n");
        PASE_ParCSRMGCreate(&mg_solver);
@@ -372,12 +379,14 @@ int main (int argc, char *argv[])
        PASE_MGSetBlockSize( mg_solver, block_size);
        PASE_MGSetExactEigenvalues( mg_solver, exact_eigenvalues);
        PASE_MGSetPrintLevel( mg_solver, print_level);
+       PASE_MGSetATol( mg_solver, atol);
        PASE_ParCSRMGInit( MPI_COMM_WORLD, mg_solver, init_v, block_size, mg_seed); 
        printf("MG solve...\n");
        PASE_ParCSRMGSolve(mg_solver);
        printf("Free memory...\n");
        PASE_ParCSRMGDestroy(mg_solver);
        printf("End of MG!!!!!!!!!!!!!!!!!!!\n");
+       free(mg_seed);
    }
 
    /* Clean up */
