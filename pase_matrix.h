@@ -4,11 +4,6 @@
 #define PASE_Malloc malloc
 #define PASE_Free free
 
-#ifdef COMPLEX_FEILD
-#define PASE_SCALAR complex
-#else
-#define PASE_SCALAR double
-#endif
 
 /* 矩阵相关操作函数集合 */
 typedef struct PASE_MATRIX_OPERATOR_PRIVATE_ {
