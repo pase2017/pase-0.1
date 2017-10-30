@@ -353,12 +353,12 @@ int main (int argc, char *argv[])
        HYPRE_Solver mg_solver 	= NULL;
        HYPRE_ParVector* init_v	= NULL;		/*可以给定初始向量*/
        HYPRE_Int mg_level 	= 5;		/*MG迭代的网格层数*/
-       PASE_Int max_iter	= 5;		/*MG迭代的最大迭代次数*/
-       PASE_Int pre_iter	= 500;		/*前光滑的最大次数*/
+       PASE_Int max_iter	= 30;		/*MG迭代的最大迭代次数*/
+       PASE_Int pre_iter	= 1;		/*前光滑的最大次数*/
        PASE_Int	post_iter	= 1;		/*后光滑的最大次数*/
-       PASE_Int block_size	= 2;		/*求解的特征值个数*/
-       PASE_Int print_level   	= 2; 		/*0:不打印； 1:打印每次MG迭代后的结果； 2:打印每步光滑过程的结果 */
-       PASE_Real atol		= 1e-10;
+       PASE_Int block_size	= 50;		/*求解的特征值个数*/
+       PASE_Int print_level   	= 1; 		/*0:不打印； 1:打印每次MG迭代后的结果； 2:打印每步光滑过程的结果 */
+       PASE_Real atol		= 1e-6;
        PASE_Int *mg_seed	= NULL;		/*初始向量的随机种子*/
        PASE_Int flag 		= 1;		/*添加AMG矩阵,由细(0)到粗(mg_level)*/
 
@@ -382,6 +382,7 @@ int main (int argc, char *argv[])
        PASE_MGSetATol( mg_solver, atol);
        PASE_ParCSRMGInit( MPI_COMM_WORLD, mg_solver, init_v, block_size, mg_seed); 
        printf("MG solve...\n");
+       PASE_Get_initial_vector(mg_solver);
        PASE_ParCSRMGSolve(mg_solver);
        printf("Free memory...\n");
        PASE_ParCSRMGDestroy(mg_solver);

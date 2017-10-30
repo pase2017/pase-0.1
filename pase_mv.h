@@ -124,6 +124,49 @@ HYPRE_Int PASE_ParCSRMatrixMatvec ( HYPRE_Real alpha, PASE_ParCSRMatrix A, PASE_
 HYPRE_Int PASE_ParCSRMatrixMatvecT( HYPRE_Real alpha, PASE_ParCSRMatrix A, PASE_ParVector x, HYPRE_Real beta, PASE_ParVector y );
 
 
+
+
+
+HYPRE_Int
+PASE_ParCSRMatrixSetAuxSpaceByPASE_ParCSRMatrix( MPI_Comm comm , 
+				   PASE_ParCSRMatrix  matrix, 
+                                   HYPRE_Int block_size,
+                                   HYPRE_ParCSRMatrix P,
+                                   PASE_ParCSRMatrix A_h, 
+				   PASE_ParVector*   u_h, 
+				   HYPRE_ParVector    workspace_H, 
+				   PASE_ParVector    workspace_hH
+				   );
+
+HYPRE_Int
+PASE_ParCSRMatrixCreateByPASE_ParCSRMatrix( MPI_Comm comm , 
+                                   HYPRE_Int block_size,
+                                   HYPRE_ParCSRMatrix A_H, 
+                                   HYPRE_ParCSRMatrix P,
+                                   PASE_ParCSRMatrix A_h, 
+				   PASE_ParVector*   u_h, 
+				   PASE_ParCSRMatrix* matrix, 
+				   HYPRE_ParVector    workspace_H, 
+				   PASE_ParVector    workspace_hH
+				   );
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 /* 注意向量的类型 */
 HYPRE_Int PASE_ParCSRMatrixMatvec_HYPRE_ParVector ( HYPRE_Real alpha, PASE_ParCSRMatrix A, HYPRE_ParVector x, HYPRE_Real beta, HYPRE_ParVector y );
 

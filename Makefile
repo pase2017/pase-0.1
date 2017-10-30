@@ -73,6 +73,7 @@ $(LIB): $(OBJS)
 	   @echo 'Creating library $(LIB)'
 	   @$(ARCH) $(ARCHFLAGS) $(LIB)  $(OBJS)
 	   @$(RANLIB) $(LIB)
+	   @$(RM) *.o
 
 
 clean:

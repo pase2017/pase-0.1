@@ -18,6 +18,7 @@
 #include <stdlib.h>
 #include <math.h>
 #include "pase_mg.h"
+#include "pase_hypre.h"
 #include "pase_pcg.h"
 
 /**
@@ -47,17 +48,17 @@ pase_MGFunctions *pase_MGFunctionsCreate(
    PASE_Int     (*DestroyVector) ( void *vector ),
    void *       (*MatvecCreate)  ( void *A, void *x ),
    PASE_Int     (*Matvec)        ( void *matvec_data, HYPRE_Complex alpha, void *A, void *x, HYPRE_Complex beta, void *y ),
-   HYPRE_Int    (*MatvecDestroy) ( void *matvec_data ),
+   PASE_Int    (*MatvecDestroy) ( void *matvec_data ),
    HYPRE_Real   (*InnerProd)     ( void *x, void *y ),
-   HYPRE_Int    (*CopyVector)    ( void *x, void *y ),
-   HYPRE_Int    (*ClearVector)   ( void *x ),
-   HYPRE_Int    (*ScaleVector)   ( HYPRE_Complex alpha, void *x ),
-   HYPRE_Int    (*Axpy)          ( HYPRE_Complex alpha, void *x, void *y ),
-   HYPRE_Int    (*DirSolver)    ( PASE_Solver solver ),
-   HYPRE_Int    (*PreSmooth)     ( PASE_Solver solver ),
-   HYPRE_Int    (*PostSmooth)    ( PASE_Solver solver ),
-   HYPRE_Int    (*PreSmoothInAux)( PASE_Solver solver ),
-   HYPRE_Int    (*PostSmoothInAux)( PASE_Solver solver )
+   PASE_Int    (*CopyVector)    ( void *x, void *y ),
+   PASE_Int    (*ClearVector)   ( void *x ),
+   PASE_Int    (*ScaleVector)   ( HYPRE_Complex alpha, void *x ),
+   PASE_Int    (*Axpy)          ( HYPRE_Complex alpha, void *x, void *y ),
+   PASE_Int    (*DirSolver)    ( PASE_Solver solver ),
+   PASE_Int    (*PreSmooth)     ( PASE_Solver solver ),
+   PASE_Int    (*PostSmooth)    ( PASE_Solver solver ),
+   PASE_Int    (*PreSmoothInAux)( PASE_Solver solver ),
+   PASE_Int    (*PostSmoothInAux)( PASE_Solver solver )
     ) 
 {
     pase_MGFunctions *mg_functions;
@@ -166,7 +167,7 @@ PASE_Int PASE_MGAddLevel( PASE_Solver solver,
 	                 HYPRE_ParCSRMatrix* A, 
 			 HYPRE_ParCSRMatrix* M, 
 			 HYPRE_ParCSRMatrix* P,
-			 HYPRE_Int n,
+			 PASE_Int n,
 			 PASE_Int flag)
 {
     PASE_Int i 		= 0;
@@ -429,21 +430,23 @@ PASE_Int pase_ParCSRMGIteration( PASE_Solver solver)
    {
        printf("cur_level = %d, max_level = %d\n", data->cur_level, data->max_level);
        /*前光滑*/
-       printf("PreSmoothing..........\n");
+       //printf("PreSmoothing..........\n");
        pase_ParCSRMGPreSmooth( solver);
-       printf("Creating AuxMatrix..........\n");
-       pase_ParCSRMGAuxMatrixCreate( solver);
+       PASE_Orth(solver);
+       //printf("Creating AuxMatrix..........\n");
+       //pase_ParCSRMGAuxMatrixCreate( solver);
+       pase_MGAuxMatrixCreate( solver);
        
        /*粗空间校正*/
-       printf("Correction on low-dim space\n");
+       //printf("Correction on low-dim space\n");
        data->cur_level--;
        pase_ParCSRMGIteration( solver);
        data->cur_level++;
 
        /*后光滑*/
-       printf("PostCorrecting..........\n");
+       //printf("PostCorrecting..........\n");
        pase_ParCSRMGPostCorrection( solver);
-       printf("PostSmoothing..........\n");
+       //printf("PostSmoothing..........\n");
        pase_ParCSRMGPostSmooth( solver);
    }
    else if( cur_level==0 && max_level>0)
@@ -500,7 +503,7 @@ PASE_Int pase_ParCSRMGPostSmooth( PASE_Solver solver)
 /*
  * 把辅助粗空间的向量投影到(辅助)细空间
  */
-PASE_Int pase_ParCSRMGPostCorrection(PASE_Solver solver)
+PASE_Int pase_ParCSRMGPostCorrection( PASE_Solver solver)
 {
     PASE_Int i, j;
     pase_MGData* data          	= (pase_MGData*) solver;
@@ -602,7 +605,7 @@ PASE_Int pase_ParCSRMGPostCorrection(PASE_Solver solver)
 /*
  * 构造辅助粗空间
  */
-PASE_Int pase_ParCSRMGAuxMatrixCreate(PASE_Solver solver)
+PASE_Int pase_ParCSRMGAuxMatrixCreate( PASE_Solver solver)
 {
     PASE_Int i, j, k, l; 
     pase_MGData*        data 	     = (pase_MGData*)solver;
@@ -744,11 +747,89 @@ PASE_Int pase_ParCSRMGAuxMatrixCreate(PASE_Solver solver)
 	    free(uTbeta);
 	}
     }
+	printf("beta[0] = %e, alpha[0] = %e\n", Ap0->aux_hh->data[0], Mp0->aux_hh->data[0]);
+	printf("b[0] = %e, b[1] = %e\n", Ap0->aux_hH[0]->local_vector->data[0], Ap0->aux_hH[0]->local_vector->data[1]);
+	printf("a[0] = %e, a[1] = %e\n", Mp0->aux_hH[0]->local_vector->data[0], Mp0->aux_hH[0]->local_vector->data[1]);
     hypre_TFree( u_h);
     HYPRE_ParVectorDestroy( workspace_H);
     HYPRE_ParVectorDestroy( workspace_h);
     PASE_Complex* eigenvalues0 = data->eigenvalues[cur_level-1];
     PASE_Complex* eigenvalues1 = data->eigenvalues[cur_level];
+    for( i=0; i<block_size; i++)
+    {
+	eigenvalues0[i] = eigenvalues1[i];
+    }
+    return 0;
+}
+
+PASE_Int pase_MGAuxMatrixCreate( PASE_Solver solver)
+{
+    pase_MGData*        mg_solver    = (pase_MGData*)solver;
+    PASE_Int            cur_level    = mg_solver->cur_level;
+    PASE_Int            max_level    = mg_solver->max_level;
+    PASE_Int            block_size   = mg_solver->block_size;
+    HYPRE_ParCSRMatrix  *A 	     = (HYPRE_ParCSRMatrix*)mg_solver->A;
+    HYPRE_ParCSRMatrix  *M 	= (HYPRE_ParCSRMatrix*)mg_solver->M;
+    HYPRE_ParCSRMatrix  *P 	     = (HYPRE_ParCSRMatrix*)mg_solver->P;
+    pase_ParCSRMatrix   **Ap 	     = (pase_ParCSRMatrix**)mg_solver->Ap;
+    pase_ParCSRMatrix   **Mp 	= (pase_ParCSRMatrix**)mg_solver->Mp;
+    pase_ParVector      ***u 	     = (pase_ParVector***)mg_solver->u;
+
+    HYPRE_ParCSRMatrix  A0 	     = A[cur_level-1];
+    HYPRE_ParCSRMatrix  A1 	     = A[cur_level];
+    HYPRE_ParCSRMatrix  M0 	= M[cur_level-1];
+    HYPRE_ParCSRMatrix  M1  	= M[cur_level];
+    HYPRE_ParCSRMatrix  P0 	= P[cur_level-1];
+    pase_ParCSRMatrix   *Ap0 	= NULL;
+    pase_ParCSRMatrix   *Ap1 	= Ap[cur_level];
+    pase_ParVector      **u1 	= u[cur_level];
+    pase_ParVector      **u0 	= u[cur_level-1]; 
+    pase_ParCSRMatrix   *Mp0 	= NULL;
+    pase_ParCSRMatrix   *Mp1 	= Mp[cur_level];
+
+    PASE_Int* partitioning_H 	= u0[0]->b_H->partitioning;
+    PASE_Int N_H 		= u0[0]->b_H->global_size;
+    HYPRE_ParVector workspace_H = hypre_ParVectorCreate( MPI_COMM_WORLD, N_H, partitioning_H); 
+    hypre_ParVectorInitialize( workspace_H);
+    hypre_ParVectorSetPartitioningOwner( workspace_H, 0);
+    PASE_Int *partitioning_h = u1[0]->b_H->partitioning;
+    PASE_Int  N_h            = u1[0]->b_H->global_size;
+
+    PASE_Int i = 0;
+    if(cur_level == max_level)
+    {
+        HYPRE_ParVector workspace_h = hypre_ParVectorCreate( MPI_COMM_WORLD, N_h, partitioning_h); 
+        hypre_ParVectorInitialize( workspace_h);
+        hypre_ParVectorSetPartitioningOwner( workspace_h, 0);
+
+        HYPRE_ParVector     *u_h 	= hypre_CTAlloc(HYPRE_ParVector, block_size); 
+        for( i=0; i<block_size; i++)
+        {
+            u_h[i] = u1[i]->b_H;
+        }
+        PASE_ParCSRMatrixCreate( MPI_COMM_WORLD, block_size, A0, P0, A1, u_h, &Ap0, workspace_H, workspace_h);  
+        PASE_ParCSRMatrixCreate( MPI_COMM_WORLD, block_size, M0, P0, M1, u_h, &Mp0, workspace_H, workspace_h);  
+        hypre_TFree( u_h);
+        HYPRE_ParVectorDestroy( workspace_h);
+    }
+    else
+    {
+	PASE_ParVector workspace_hH;
+      	PASE_ParVectorCreate( MPI_COMM_WORLD, N_h, block_size, NULL, partitioning_h, &workspace_hH);
+	PASE_ParCSRMatrixCreateByPASE_ParCSRMatrix( MPI_COMM_WORLD, block_size, A0, P0, Ap1, u1, &Ap0, workspace_H, workspace_hH);
+	PASE_ParCSRMatrixCreateByPASE_ParCSRMatrix( MPI_COMM_WORLD, block_size, M0, P0, Mp1, u1, &Mp0, workspace_H, workspace_hH);
+	PASE_ParVectorDestroy( workspace_hH);
+	//printf("beta[0] = %e, alpha[0] = %e\n", Ap0->aux_hh->data[0], Mp0->aux_hh->data[0]);
+	//printf("b[0] = %e, b[1] = %e\n", Ap0->aux_hH[0]->local_vector->data[0], Ap0->aux_hH[0]->local_vector->data[1]);
+	//printf("a[0] = %e, a[1] = %e\n", Mp0->aux_hH[0]->local_vector->data[0], Mp0->aux_hH[0]->local_vector->data[1]);
+    }
+    Ap[cur_level-1] = (void*)Ap0;
+    Mp[cur_level-1] = (void*)Mp0;
+
+    HYPRE_ParVectorDestroy( workspace_H);
+
+    PASE_Complex* eigenvalues0 = mg_solver->eigenvalues[cur_level-1];
+    PASE_Complex* eigenvalues1 = mg_solver->eigenvalues[cur_level];
     for( i=0; i<block_size; i++)
     {
 	eigenvalues0[i] = eigenvalues1[i];
@@ -1033,7 +1114,7 @@ PASE_Int pase_ParCSRMGDirSolver( PASE_Solver solver)
     int maxIterations 		= 5000; 	/* maximum number of iterations */
     int pcgMode 		= 1;    	/* use rhs as initial guess for inner pcg iterations */
     int verbosity 		= 0;    	/* print iterations info */
-    double tol 			= 1.e-30;	/* absolute tolerance (all eigenvalues) */
+    double tol 			= 1.e-10;	/* absolute tolerance (all eigenvalues) */
     int lobpcgSeed 		= 77;
 
     PASE_Int i;
@@ -1059,8 +1140,8 @@ PASE_Int pase_ParCSRMGDirSolver( PASE_Solver solver)
     eigenvectors_Hh = mv_MultiVectorCreateFromSampleVector( interpreter_Hh, block_size, u0[0]);
     mv_MultiVectorSetRandom( eigenvectors_Hh, lobpcgSeed);
     PASE_ParVector x 		= NULL;
-    HYPRE_Int N_H 		= u0[0]->b_H->global_size;
-    HYPRE_Int *partitioning 	= u0[0]->b_H->partitioning;
+    PASE_Int N_H 		= u0[0]->b_H->global_size;
+    PASE_Int *partitioning 	= u0[0]->b_H->partitioning;
     PASE_ParVectorCreate( MPI_COMM_WORLD, N_H, block_size, NULL, partitioning, &x);
      
     HYPRE_LOBPCGCreate( interpreter_Hh, &matvec_fn_Hh, &lobpcg_solver);
@@ -1162,9 +1243,10 @@ PASE_Int pase_ParCSRMGSmootherCG( PASE_Solver solver)
     HYPRE_PCGSetLogging( cg_solver, 1); /* needed to get run info lat    er */
            
     /* Setup and solve */
-    HYPRE_Int cur_level 		= mg_solver->cur_level;
-    HYPRE_Int block_size 		= mg_solver->block_size;
-    HYPRE_Int i 			= 0;
+    PASE_Int cur_level 		= mg_solver->cur_level;
+    PASE_Int block_size 		= mg_solver->block_size;
+    PASE_Int num_converged      = mg_solver->num_converged; 
+    PASE_Int i 			= 0;
     HYPRE_ParCSRMatrix* solver_A 	= (HYPRE_ParCSRMatrix*)mg_solver->A;
     HYPRE_ParCSRMatrix* solver_M 	= (HYPRE_ParCSRMatrix*)mg_solver->M;
     HYPRE_ParCSRMatrix A 		= solver_A[cur_level];
@@ -1185,7 +1267,7 @@ PASE_Int pase_ParCSRMGSmootherCG( PASE_Solver solver)
     rhs 			= hypre_ParVectorCreate( comm, N_h, partitioning);
     hypre_ParVectorInitialize( rhs);
     hypre_ParVectorSetPartitioningOwner( rhs, 0);
-    for( i=0; i<block_size; i++)
+    for( i=num_converged; i<block_size; i++)
     {
 #if 0
 	hypre_ParCSRMatrixMatvec( 1.0, A, u[i]->b_H, 0.0, rhs);
@@ -1256,9 +1338,10 @@ PASE_Int pase_ParCSRMGInAuxSmootherCG( PASE_Solver solver)
     HYPRE_PCGSetLogging( cg_solver, 1); 			/* needed to get run info lat    er */
  
     /* Now setup and solve! */
-    HYPRE_Int cur_level 	= mg_solver->cur_level;
-    HYPRE_Int block_size 	= mg_solver->block_size;
-    HYPRE_Int i 		= 0;
+    PASE_Int cur_level 	= mg_solver->cur_level;
+    PASE_Int block_size 	= mg_solver->block_size;
+    PASE_Int num_converged      = mg_solver->num_converged;
+    PASE_Int i			= 0;
     pase_ParCSRMatrix **solver_Ap 	= (pase_ParCSRMatrix**)mg_solver->Ap;
     pase_ParCSRMatrix **solver_Mp 	= (pase_ParCSRMatrix**)mg_solver->Mp;
     pase_ParCSRMatrix *Ap 	= solver_Ap[cur_level];
@@ -1277,7 +1360,7 @@ PASE_Int pase_ParCSRMGInAuxSmootherCG( PASE_Solver solver)
     PASE_Int *partitioning 	= u[0]->b_H->partitioning;
     PASE_ParVectorCreate( MPI_COMM_WORLD, N_H, block_size, NULL, partitioning, &rhs);
 
-    for( i=0; i<block_size; i++)
+    for( i=num_converged; i<block_size; i++)
     {
 #if 0
 	PASE_ParCSRMatrixMatvec( 1.0, Ap, u[i], 0.0, rhs);
@@ -1307,6 +1390,14 @@ PASE_Int pase_ParCSRMGInAuxSmootherCG( PASE_Solver solver)
 	hypre_PCGSetup( cg_solver, Ap, rhs, u[i]);
 	hypre_PCGSolve( cg_solver, Ap, rhs, u[i]);
 
+	//PASE_ParCSRMatrixMatvec( -1.0, Ap, u[i], 1.0, rhs);
+	//PASE_ParVectorInnerProd( rhs, rhs, &inner_A);
+	//PASE_ParVectorInnerProd( u[i], u[i], &inner_M);
+	//printf("the norm of residual after pcg is %.6f, the norm of u is %.6f\n", inner_A, inner_M);
+	//PASE_Int num;
+	//HYPRE_PCGGetNumIterations(cg_solver, &num);
+	//printf("the num of iteration is %d\n", num);
+
 	PASE_ParCSRMatrixMatvec( 1.0, Ap, u[i], 0.0, rhs);
 	PASE_ParVectorInnerProd( rhs, u[i], &inner_A);
 	if( Mp != NULL)
@@ -1335,3 +1426,158 @@ PASE_Int pase_ParCSRMGInAuxSmootherCG( PASE_Solver solver)
     return 0;
 }
 
+void 
+PASE_Orth(PASE_Solver solver)
+{
+    pase_MGData *mg_solver 	= (pase_MGData*)solver;
+    PASE_Int cur_level 	= mg_solver->cur_level;
+    PASE_Int max_level 	= mg_solver->max_level;
+    PASE_Int block_size	= mg_solver->block_size;
+    pase_ParVector ***solver_u 	= (pase_ParVector***)mg_solver->u;
+    pase_ParVector **u 		= solver_u[cur_level];
+    hypre_ParCSRMatrix **solver_M = (hypre_ParCSRMatrix**) mg_solver->M;
+    hypre_ParCSRMatrix *M = solver_M[cur_level];
+    pase_ParCSRMatrix **solver_Mp = (pase_ParCSRMatrix**) mg_solver->Ap;
+    pase_ParCSRMatrix *Mp = solver_Mp[cur_level];
+
+    PASE_Int i, j;
+    PASE_Real inner_ij, norm_i;
+
+    pase_ParVector *rhs 	= NULL;  
+    PASE_Int N_H		= u[0]->b_H->global_size;
+    PASE_Int *partitioning 	= u[0]->b_H->partitioning;
+    PASE_ParVectorCreate( MPI_COMM_WORLD, N_H, block_size, NULL, partitioning, &rhs);
+
+    if(cur_level == max_level) {
+	for(i=0; i<block_size; i++) {
+	   for(j=0; j<i; j++) {
+	       HYPRE_ParCSRMatrixMatvec(1.0, M, u[i]->b_H, 0.0, rhs->b_H); 
+	       inner_ij = hypre_ParVectorInnerProd(rhs->b_H, u[j]->b_H);
+	       hypre_ParVectorAxpy(-inner_ij, u[j]->b_H, u[i]->b_H);
+	   } 
+	   HYPRE_ParCSRMatrixMatvec(1.0, M, u[i]->b_H, 0.0, rhs->b_H); 
+	   norm_i = hypre_ParVectorInnerProd(rhs->b_H, u[i]->b_H);
+	   norm_i = sqrt(norm_i);
+	   //printf("norm[%d] = %.3f\n", i, norm_i);
+	   hypre_ParVectorScale( 1.0/norm_i, u[i]->b_H);
+	}
+	       //HYPRE_ParCSRMatrixMatvec(1.0, M, u[0]->b_H, 0.0, rhs->b_H); 
+	       //inner_ij = hypre_ParVectorInnerProd(rhs->b_H, u[1]->b_H);
+	       //printf("inner_ij = %.4f\n", inner_ij);
+    } else {
+	for(i=0; i<block_size; i++) {
+	   for(j=0; j<i; j++) {
+	       PASE_ParCSRMatrixMatvec(1.0, Mp, u[i], 0.0, rhs);
+	       PASE_ParVectorInnerProd(rhs, u[j], &inner_ij);
+	       PASE_ParVectorAxpy(-inner_ij, u[j], u[i]);
+	   } 
+	   PASE_ParCSRMatrixMatvec(1.0, Mp, u[i], 0.0, rhs);
+	   PASE_ParVectorInnerProd(rhs, u[i], &norm_i);
+	   norm_i = sqrt(norm_i);
+	   //printf("norm[%d] = %.3f\n", i, norm_i);
+	   PASE_ParVectorScale( 1.0/norm_i, u[i]);
+	}
+	       //PASE_ParCSRMatrixMatvec(1.0, Mp, u[0], 0.0, rhs);
+	       //PASE_ParVectorInnerProd(rhs, u[1], &inner_ij);
+	       //printf("inner_ij = %.4f\n", inner_ij);
+	   //PASE_ParCSRMatrixMatvec(1.0, Mp, u[0], 0.0, rhs);
+	   //PASE_ParVectorInnerProd(rhs, u[0], &norm_i);
+	   //norm_i = sqrt(norm_i);
+	   //printf("norm[0] = %.3f\n", norm_i);
+	   //PASE_ParCSRMatrixMatvec(1.0, Mp, u[1], 0.0, rhs);
+	   //PASE_ParVectorInnerProd(rhs, u[1], &norm_i);
+	   //norm_i = sqrt(norm_i);
+	   //printf("norm[1] = %.3f\n", norm_i);
+    }
+    PASE_ParVectorDestroy(rhs);
+}
+
+void PASE_Get_initial_vector(PASE_Solver solver)
+{
+    PASE_Int i;
+    pase_MGData *mg_solver 	= (pase_MGData*)solver;
+    PASE_Int max_level          = mg_solver->max_level;        
+    PASE_Int cur_level          = mg_solver->cur_level;        
+    PASE_Int block_size         = mg_solver->block_size;       
+    HYPRE_ParCSRMatrix *P       = (HYPRE_ParCSRMatrix*)mg_solver->P;
+    HYPRE_ParCSRMatrix *A       = (HYPRE_ParCSRMatrix*)mg_solver->A;
+    HYPRE_ParCSRMatrix *M       = (HYPRE_ParCSRMatrix*)mg_solver->M;
+    HYPRE_ParCSRMatrix A_H          = A[0];
+    HYPRE_ParCSRMatrix M_H          = M[0];
+    pase_ParVector ***solver_u 	= (pase_ParVector***)mg_solver->u;
+    pase_ParVector **u		= solver_u[0];
+
+    HYPRE_Solver lobpcg_solver 	= NULL; 
+    int maxIterations 		= 5000; 	/* maximum number of iterations */
+    int pcgMode 		= 1;    	/* use rhs as initial guess for inner pcg iterations */
+    int verbosity 		= 0;    	/* print iterations info */
+    double tol 			= 1.e-30;	/* absolute tolerance (all eigenvalues) */
+    int lobpcgSeed 		= 77;
+    HYPRE_Complex* eigenvalues 	= mg_solver->eigenvalues[max_level];
+    //eigenvalues = (HYPRE_Complex*)calloc(block_size, sizeof(HYPRE_Complex));
+    mv_MultiVectorPtr eigenvectors_Hh = NULL;
+    mv_MultiVectorPtr constraints_Hh  = NULL;
+    mv_InterfaceInterpreter* interpreter_Hh;
+    HYPRE_MatvecFunctions matvec_fn_Hh;
+    interpreter_Hh = hypre_CTAlloc( mv_InterfaceInterpreter, 1);
+    HYPRE_ParCSRSetupInterpreter( interpreter_Hh);
+    HYPRE_ParCSRSetupMatvec( &matvec_fn_Hh);
+    eigenvectors_Hh = mv_MultiVectorCreateFromSampleVector( interpreter_Hh, block_size, u[0]->b_H);
+    mv_MultiVectorSetRandom( eigenvectors_Hh, lobpcgSeed);
+     
+    HYPRE_LOBPCGCreate( interpreter_Hh, &matvec_fn_Hh, &lobpcg_solver);
+    HYPRE_LOBPCGSetMaxIter( lobpcg_solver, maxIterations);
+    HYPRE_LOBPCGSetPrecondUsageMode( lobpcg_solver, pcgMode);
+    HYPRE_LOBPCGSetTol( lobpcg_solver, tol);
+    HYPRE_LOBPCGSetPrintLevel( lobpcg_solver, verbosity);
+
+    HYPRE_LOBPCGSetup( lobpcg_solver, (HYPRE_Matrix)A_H, (HYPRE_Vector)(u[0]->b_H), (HYPRE_Vector)(u[0]->b_H));
+    HYPRE_LOBPCGSetupB( lobpcg_solver, (HYPRE_Matrix)M_H, (HYPRE_Vector)(u[0]->b_H));
+    HYPRE_LOBPCGSolve( lobpcg_solver, constraints_Hh, eigenvectors_Hh, eigenvalues);
+
+    if( mg_solver->print_level > 1)
+    {
+	printf("Cur_level %d", cur_level);
+	for( i=0; i<block_size; i++)
+	{
+	    printf(", eigen[%d] = %.16f", i, eigenvalues[i]);
+	}
+	printf(".\n");
+    }
+
+    mv_TempMultiVector* tmp = (mv_TempMultiVector*) mv_MultiVectorGetData(eigenvectors_Hh);
+    HYPRE_ParVector *u_H = (HYPRE_ParVector*)(tmp -> vector);
+    HYPRE_ParVector u_h = NULL; 
+    PASE_Int j;
+    for(j=1; j<=max_level; j++) {
+	MPI_Comm comm = A[j]->comm;
+	PASE_Int N_h  = A[j]->global_num_rows;
+	PASE_Int *partitioning = NULL;
+	HYPRE_ParCSRMatrixGetRowPartitioning(A[j], &partitioning);
+        for(i=0; i<block_size; i++) {
+            HYPRE_ParVectorCreate(comm, N_h, partitioning, &u_h);
+	    hypre_ParVectorInitialize(u_h);
+	    if(i == 0) {
+		hypre_ParVectorSetPartitioningOwner(u_h, 1);
+	    } else {
+		hypre_ParVectorSetPartitioningOwner(u_h, 0);
+	    }
+	    HYPRE_ParCSRMatrixMatvec(1.0, P[j-1], u_H[i], 0.0, u_h); 
+	    HYPRE_ParVectorDestroy(u_H[i]);
+	    u_H[i] = u_h;
+	    u_h    = NULL;
+        }
+    }
+
+    for( i=0; i<block_size; i++)
+    {
+	HYPRE_ParVectorDestroy( solver_u[max_level][i]->b_H );
+	solver_u[max_level][i]->b_H = u_H[i];
+    }
+    hypre_TFreeF( u_H, mg_solver->functions);
+    free( (mv_TempMultiVector*) mv_MultiVectorGetData(eigenvectors_Hh));
+    hypre_TFree( eigenvectors_Hh);
+    hypre_TFree( interpreter_Hh);
+
+    HYPRE_LOBPCGDestroy( lobpcg_solver);
+}

@@ -132,6 +132,7 @@ PASE_Int pase_ParCSRMGIteration( PASE_Solver solver);
 PASE_Int pase_ParCSRMGPreSmooth( PASE_Solver solver);
 PASE_Int pase_ParCSRMGPostSmooth( PASE_Solver solver);
 PASE_Int pase_ParCSRMGAuxMatrixCreate( PASE_Solver solver);
+PASE_Int pase_MGAuxMatrixCreate(PASE_Solver solver); 
 PASE_Int pase_ParCSRMGPostCorrection( PASE_Solver solver);
 PASE_Int pase_ParCSRMGRestart( PASE_Solver solver);
 PASE_Int PASE_ParCSRMGDestroy( PASE_Solver solver);
@@ -148,6 +149,8 @@ PASE_Int pase_ParCSRMGErrorEstimate( PASE_Solver solver);
 PASE_Int pase_ParCSRMGDirSolver(PASE_Solver solver);
 PASE_Int pase_ParCSRMGSmootherCG(PASE_Solver solver);
 PASE_Int pase_ParCSRMGInAuxSmootherCG(PASE_Solver solver);
+void PASE_Orth(PASE_Solver solver);
+void PASE_Get_initial_vector(PASE_Solver solver);
 #ifdef __cplusplus
 }
 #endif

@@ -70,7 +70,6 @@ HYPRE_Int PASE_ParCSRMatrixCreate( MPI_Comm comm ,
    for (col = 0; col < block_size; ++col)
    {
       (*matrix)->aux_hH[col] = hypre_ParVectorCreate(comm, (*matrix)->N_H, partitioning);
-      //printf("size =%d , num = %d\n", (*matrix)->aux_hH[col]->local_vector->size, (*matrix)->aux_hH[col]->local_vector->num_vectors);
       hypre_ParVectorInitialize((*matrix)->aux_hH[col]);
       hypre_ParVectorOwnsPartitioning((*matrix)->aux_hH[col]) = 0;
    }
@@ -108,7 +107,6 @@ HYPRE_Int PASE_ParCSRMatrixCreate( MPI_Comm comm ,
       for ( col = 0; col < block_size; ++col)
       {
 	 matrix_data[row*block_size+col] = hypre_ParVectorInnerProd(workspace_h, u_h[col]);
-	 //printf("data[%d] = %f\n", row*block_size+col, matrix_data[row*block_size+col]);
       }
 
       if (P==NULL)
@@ -389,6 +387,7 @@ HYPRE_Int PASE_ParCSRMatrixMatvec_HYPRE_Vector ( HYPRE_Real alpha, PASE_ParCSRMa
    return 0;
 }
 
+
 HYPRE_Int PASE_ParVectorCreate(    MPI_Comm comm , 
                                    HYPRE_Int N_H,
                                    HYPRE_Int block_size,
@@ -441,6 +440,143 @@ HYPRE_Int PASE_ParVectorDestroy( PASE_ParVector vector )
    vector->N_H = 0;
 
    hypre_TFree(vector);
+   return 0;
+}
+
+
+HYPRE_Int
+PASE_ParCSRMatrixSetAuxSpaceByPASE_ParCSRMatrix( MPI_Comm comm , 
+				   PASE_ParCSRMatrix  matrix, 
+                                   HYPRE_Int block_size,
+                                   HYPRE_ParCSRMatrix P,
+                                   PASE_ParCSRMatrix A_h, 
+				   PASE_ParVector*   u_h, 
+				   HYPRE_ParVector    workspace_H, 
+				   PASE_ParVector    workspace_hH
+				   )
+{
+   HYPRE_Int row, col;
+   HYPRE_Real* matrix_data = matrix->aux_hh->data;
+   for (row = 0; row < block_size; ++row)
+   {
+      /* y = alpha*A*x + beta*y */
+      PASE_ParCSRMatrixMatvec(1.0, A_h, u_h[row], 0.0, workspace_hH);
+      for ( col = 0; col < block_size; ++col)
+      {
+	 PASE_ParVectorInnerProd(workspace_hH, u_h[col], &matrix_data[row*block_size+col] );
+      }
+      if ( P == NULL )
+      {
+	 hypre_ParVectorCopy(workspace_hH->b_H, matrix->aux_hH[row]);
+      } else {
+	 hypre_ParCSRMatrixMatvecT(1.0, P, workspace_hH->b_H, 0.0, matrix->aux_hH[row]);
+      }
+   }
+   return 0;
+}
+
+
+/**
+ * @brief 以PASE_ParCSRMatrix为细空间矩阵进行粗空间PASE_ParCSRMatrix的生成
+ *
+ * A_h * u_h[i] 是PASE_ParVector, 它的b_H部分投影到粗空间生成A_H的aux_hH[i]部分
+ * u_h[j] A_h * u_h[i] 生车A_H的aux_hh部分
+ *
+ * @param comm
+ * @param block_size
+ * @param P
+ * @param A_h
+ * @param u_h
+ * @param matrix
+ * @param workspace_H
+ * @param workspace_hH
+ *
+ * @return 
+ */
+HYPRE_Int 
+PASE_ParCSRMatrixCreateByPASE_ParCSRMatrix( MPI_Comm comm , 
+                                   HYPRE_Int block_size,
+                                   HYPRE_ParCSRMatrix A_H, 
+                                   HYPRE_ParCSRMatrix P,
+                                   PASE_ParCSRMatrix A_h, 
+				   PASE_ParVector*   u_h, 
+				   PASE_ParCSRMatrix* matrix, 
+				   HYPRE_ParVector    workspace_H, 
+				   PASE_ParVector    workspace_hH
+				   )
+{
+
+   HYPRE_Int row, col;
+   /* calloc并返回一个(pase_ParCSRMatrix *)的指针 */
+   (*matrix) = hypre_CTAlloc(pase_ParCSRMatrix, 1);
+   /* 是否需要为调用成员给出一个宏 */
+   (*matrix)->comm = comm;
+   (*matrix)->N_H = A_H->global_num_rows;
+   (*matrix)->block_size = block_size;
+   (*matrix)->A_H = A_H;
+   /* 这个成员其实没有用 */
+   (*matrix)->A_h = NULL;
+   (*matrix)->P   = P;
+   
+   (*matrix)->aux_hH = hypre_CTAlloc(HYPRE_ParVector, block_size);
+
+
+   HYPRE_Int *partitioning;
+   partitioning = hypre_ParVectorPartitioning(workspace_H);
+   /* 创建并行向量 */
+   for (col = 0; col < block_size; ++col)
+   {
+      (*matrix)->aux_hH[col] = hypre_ParVectorCreate(comm, (*matrix)->N_H, partitioning);
+      hypre_ParVectorInitialize((*matrix)->aux_hH[col]);
+      hypre_ParVectorOwnsPartitioning((*matrix)->aux_hH[col]) = 0;
+   }
+
+   (*matrix)->aux_Hh = (*matrix)->aux_hH;
+
+   HYPRE_Int   num_nonzeros = block_size*block_size;
+   (*matrix)->aux_hh = hypre_CSRMatrixCreate(block_size, block_size, num_nonzeros);
+   hypre_CSRMatrixInitialize( (*matrix)->aux_hh );
+
+
+   HYPRE_Int*  matrix_i = (*matrix)->aux_hh->i;
+   /*第row行的非零元列号 matrix_j[ matrix_i[row] ]到matrix_j[ matrix_i[row+1] ] */
+   HYPRE_Int*  matrix_j = (*matrix)->aux_hh->j;
+   HYPRE_Real* matrix_data = (*matrix)->aux_hh->data;
+
+
+   for (row = 0; row < block_size+1; ++row)
+   {
+      matrix_i[row] = row*block_size;
+   }
+
+   for ( row = 0; row < block_size; ++row)
+   {
+      for ( col = 0; col < block_size; ++col)
+      {
+	 matrix_j[col+row*block_size] = col;
+      }
+   }
+
+   for (row = 0; row < block_size; ++row)
+   {
+      /* y = alpha*A*x + beta*y */
+      PASE_ParCSRMatrixMatvec(1.0, A_h, u_h[row], 0.0, workspace_hH);
+//      PASE_ParCSRMatrixPrint(A_h, "workspace_A_h");
+//      PASE_ParVectorPrint(u_h[row], "workspace_u_h");
+//      PASE_ParVectorPrint(workspace_hH, "workspace_hH");
+      for ( col = 0; col < block_size; ++col)
+      {
+	 PASE_ParVectorInnerProd(workspace_hH, u_h[col], &matrix_data[row*block_size+col] );
+      }
+
+      if (P==NULL)
+      {
+	 hypre_ParVectorCopy( workspace_hH->b_H, (*matrix)->aux_hH[row] );
+      } else {
+	 hypre_ParCSRMatrixMatvecT(1.0, P, workspace_hH->b_H, 0.0, (*matrix)->aux_hH[row]);
+      }
+   }
+
    return 0;
 }
 
