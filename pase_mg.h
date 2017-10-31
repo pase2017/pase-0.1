@@ -151,6 +151,9 @@ PASE_Int pase_ParCSRMGSmootherCG(PASE_Solver solver);
 PASE_Int pase_ParCSRMGInAuxSmootherCG(PASE_Solver solver);
 void PASE_Orth(PASE_Solver solver);
 void PASE_Get_initial_vector(PASE_Solver solver);
+PASE_Int PASE_Cg(PASE_Solver solver);
+PASE_Int PASE_Vector_inner_production_general_hypre(HYPRE_ParCSRMatrix A, HYPRE_ParVector x, HYPRE_ParVector y, PASE_Real *prod);
+PASE_Int PASE_Vector_inner_production_general(PASE_ParCSRMatrix A, PASE_ParVector x, PASE_ParVector y, PASE_Real *prod);
 #ifdef __cplusplus
 }
 #endif
