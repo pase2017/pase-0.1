@@ -353,12 +353,12 @@ int main (int argc, char *argv[])
        HYPRE_Solver mg_solver 	= NULL;
        HYPRE_ParVector* init_v	= NULL;		/*可以给定初始向量*/
        HYPRE_Int mg_level 	= 5;		/*MG迭代的网格层数*/
-       PASE_Int max_iter	= 30;		/*MG迭代的最大迭代次数*/
+       PASE_Int max_iter	= 40;		/*MG迭代的最大迭代次数*/
        PASE_Int pre_iter	= 1;		/*前光滑的最大次数*/
        PASE_Int	post_iter	= 1;		/*后光滑的最大次数*/
-       PASE_Int block_size	= 50;		/*求解的特征值个数*/
+       PASE_Int block_size	= 30;		/*求解的特征值个数*/
        PASE_Int print_level   	= 1; 		/*0:不打印； 1:打印每次MG迭代后的结果； 2:打印每步光滑过程的结果 */
-       PASE_Real atol		= 1e-6;
+       PASE_Real atol		= 1e-12;
        PASE_Int *mg_seed	= NULL;		/*初始向量的随机种子*/
        PASE_Int flag 		= 1;		/*添加AMG矩阵,由细(0)到粗(mg_level)*/
 

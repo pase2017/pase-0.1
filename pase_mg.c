@@ -17,6 +17,7 @@
  */
 #include <stdlib.h>
 #include <math.h>
+#include <string.h>
 #include "pase_mg.h"
 #include "pase_hypre.h"
 #include "pase_pcg.h"
@@ -1115,11 +1116,11 @@ PASE_Int pase_ParCSRMGErrorEstimate( PASE_Solver solver)
 PASE_Int pase_ParCSRMGDirSolver( PASE_Solver solver)
 {
     HYPRE_Solver lobpcg_solver 	= NULL; 
-    int maxIterations 		= 5000; 	/* maximum number of iterations */
+    int maxIterations 		= 100; 	/* maximum number of iterations */
     int pcgMode 		= 1;    	/* use rhs as initial guess for inner pcg iterations */
     int verbosity 		= 0;    	/* print iterations info */
     double tol 			= 1.e-10;	/* absolute tolerance (all eigenvalues) */
-    int lobpcgSeed 		= 77;
+    //int lobpcgSeed 		= 77;
 
     PASE_Int i;
     pase_MGData *mg_solver 	= (pase_MGData *)solver;
@@ -1142,7 +1143,18 @@ PASE_Int pase_ParCSRMGDirSolver( PASE_Solver solver)
     PASE_ParCSRSetupInterpreter( interpreter_Hh);
     PASE_ParCSRSetupMatvec( &matvec_fn_Hh);
     eigenvectors_Hh = mv_MultiVectorCreateFromSampleVector( interpreter_Hh, block_size, u0[0]);
-    mv_MultiVectorSetRandom( eigenvectors_Hh, lobpcgSeed);
+    //mv_MultiVectorSetRandom( eigenvectors_Hh, lobpcgSeed);
+    /* 给定初始值*/
+    mv_TempMultiVector* tmp = (mv_TempMultiVector*) mv_MultiVectorGetData(eigenvectors_Hh);
+    u[cur_level] = (PASE_ParVector*)(tmp -> vector);
+    for(i=0; i<block_size; i++) {
+	PASE_ParVectorSetConstantValues(u[cur_level][i], 0.0);
+	PASE_Complex *aux_data = u[cur_level][i]->aux_h->data;
+	aux_data[i] = 1.0;
+    }
+    hypre_ParVectorSetPartitioningOwner( u0[0]->b_H, 0);
+    hypre_ParVectorSetPartitioningOwner( u[cur_level][0]->b_H, 1);
+
     PASE_ParVector x 		= NULL;
     PASE_Int N_H 		= u0[0]->b_H->global_size;
     PASE_Int *partitioning 	= u0[0]->b_H->partitioning;
@@ -1169,6 +1181,21 @@ PASE_Int pase_ParCSRMGDirSolver( PASE_Solver solver)
     }
     HYPRE_LOBPCGSolve( lobpcg_solver, constraints_Hh, eigenvectors_Hh, eigenvalues);
 
+    /* 如果特征值算的不对，打印矩阵 */
+    PASE_Real error = fabs(eigenvalues[0]-mg_solver->exact_eigenvalues[0]);
+    char pre[10] = "aux_Hh";
+    char file_vec[20];
+    if(error > 1e-5) {
+	printf("The first eigenvalue is %.10e\n", eigenvalues[0]);
+	HYPRE_ParCSRMatrixPrint(Ap0->A_H, "A_H.txt");
+	for(i=0; i<block_size; i++) {
+	    sprintf(file_vec, "%s%d.txt", pre, i);
+	    HYPRE_ParVectorPrint(Ap0->aux_Hh[i], file_vec);
+	}
+	hypre_CSRMatrixPrint(Ap0->aux_hh, "aux_hh.txt");
+	exit(-1);
+    }
+
 #if 0
     PASE_Real inner_A, inner_M;
 	PASE_ParCSRMatrixMatvec( 1.0, Ap0, u0[0], 0.0, x);
@@ -1185,10 +1212,6 @@ PASE_Int pase_ParCSRMGDirSolver( PASE_Solver solver)
 	printf("eigenvalues[%d] = %.16f, inner_A = %.30f, inner_M = %.20f,  u0[0]->b_H->data[0] = %.20f\n", 0, inner_A/inner_M, inner_A, inner_M, u0[0]->aux_h->data[0]);
 #endif
 
-    mv_TempMultiVector* tmp = (mv_TempMultiVector*) mv_MultiVectorGetData(eigenvectors_Hh);
-    u[cur_level] = (PASE_ParVector*)(tmp -> vector);
-    hypre_ParVectorSetPartitioningOwner( u0[0]->b_H, 0);
-    hypre_ParVectorSetPartitioningOwner( u[cur_level][0]->b_H, 1);
 
 #if 0
     PASE_Real inner_A, inner_M;
@@ -1512,10 +1535,10 @@ void PASE_Get_initial_vector(PASE_Solver solver)
     pase_ParVector **u		= solver_u[0];
 
     HYPRE_Solver lobpcg_solver 	= NULL; 
-    int maxIterations 		= 5000; 	/* maximum number of iterations */
+    int maxIterations 		= 100; 	/* maximum number of iterations */
     int pcgMode 		= 1;    	/* use rhs as initial guess for inner pcg iterations */
     int verbosity 		= 0;    	/* print iterations info */
-    double tol 			= 1.e-30;	/* absolute tolerance (all eigenvalues) */
+    double tol 			= 1.e-5;	/* absolute tolerance (all eigenvalues) */
     int lobpcgSeed 		= 77;
     HYPRE_Complex* eigenvalues 	= mg_solver->eigenvalues[max_level];
     //eigenvalues = (HYPRE_Complex*)calloc(block_size, sizeof(HYPRE_Complex));
