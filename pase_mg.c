@@ -1116,7 +1116,7 @@ PASE_Int pase_ParCSRMGErrorEstimate( PASE_Solver solver)
 PASE_Int pase_ParCSRMGDirSolver( PASE_Solver solver)
 {
     HYPRE_Solver lobpcg_solver 	= NULL; 
-    int maxIterations 		= 100; 	/* maximum number of iterations */
+    int maxIterations 		= 1000; 	/* maximum number of iterations */
     int pcgMode 		= 1;    	/* use rhs as initial guess for inner pcg iterations */
     int verbosity 		= 0;    	/* print iterations info */
     double tol 			= 1.e-10;	/* absolute tolerance (all eigenvalues) */
@@ -1181,20 +1181,6 @@ PASE_Int pase_ParCSRMGDirSolver( PASE_Solver solver)
     }
     HYPRE_LOBPCGSolve( lobpcg_solver, constraints_Hh, eigenvectors_Hh, eigenvalues);
 
-    /* 如果特征值算的不对，打印矩阵 */
-    PASE_Real error = fabs(eigenvalues[0]-mg_solver->exact_eigenvalues[0]);
-    char pre[10] = "aux_Hh";
-    char file_vec[20];
-    if(error > 1e-5) {
-	printf("The first eigenvalue is %.10e\n", eigenvalues[0]);
-	HYPRE_ParCSRMatrixPrint(Ap0->A_H, "A_H.txt");
-	for(i=0; i<block_size; i++) {
-	    sprintf(file_vec, "%s%d.txt", pre, i);
-	    HYPRE_ParVectorPrint(Ap0->aux_Hh[i], file_vec);
-	}
-	hypre_CSRMatrixPrint(Ap0->aux_hh, "aux_hh.txt");
-	exit(-1);
-    }
 
 #if 0
     PASE_Real inner_A, inner_M;
@@ -1237,6 +1223,26 @@ PASE_Int pase_ParCSRMGDirSolver( PASE_Solver solver)
 	    printf(", eigen[%d] = %.16f", i, eigenvalues[i]);
 	}
 	printf(".\n");
+    }
+
+    /* 如果特征值算的不对，打印矩阵 */
+    PASE_Real error = fabs(eigenvalues[0]-mg_solver->exact_eigenvalues[0]);
+    char pre_A[10] = "A_aux_Hh";
+    char pre_M[10] = "M_aux_Hh";
+    char file_vec[20];
+    if(error > 1e-5) {
+	printf("The first eigenvalue is %.10e\n", eigenvalues[0]);
+	HYPRE_ParCSRMatrixPrint(Ap0->A_H, "A_H.txt");
+	HYPRE_ParCSRMatrixPrint(Mp0->A_H, "M_H.txt");
+	for(i=0; i<block_size; i++) {
+	    sprintf(file_vec, "%s%d.txt", pre_A, i);
+	    HYPRE_ParVectorPrint(Ap0->aux_Hh[i], file_vec);
+	    sprintf(file_vec, "%s%d.txt", pre_M, i);
+	    HYPRE_ParVectorPrint(Mp0->aux_Hh[i], file_vec);
+	}
+	hypre_CSRMatrixPrint(Ap0->aux_hh, "A_aux_hh.txt");
+	hypre_CSRMatrixPrint(Mp0->aux_hh, "M_aux_hh.txt");
+	exit(-1);
     }
 
     for( i=0; i<block_size; i++)
@@ -1524,7 +1530,6 @@ void PASE_Get_initial_vector(PASE_Solver solver)
     PASE_Int i;
     pase_MGData *mg_solver 	= (pase_MGData*)solver;
     PASE_Int max_level          = mg_solver->max_level;        
-    PASE_Int cur_level          = mg_solver->cur_level;        
     PASE_Int block_size         = mg_solver->block_size;       
     HYPRE_ParCSRMatrix *P       = (HYPRE_ParCSRMatrix*)mg_solver->P;
     HYPRE_ParCSRMatrix *A       = (HYPRE_ParCSRMatrix*)mg_solver->A;
@@ -1564,7 +1569,7 @@ void PASE_Get_initial_vector(PASE_Solver solver)
 
     if( mg_solver->print_level > 1)
     {
-	printf("Cur_level %d", cur_level);
+	printf("Get initial vector");
 	for( i=0; i<block_size; i++)
 	{
 	    printf(", eigen[%d] = %.16f", i, eigenvalues[i]);
@@ -1719,7 +1724,7 @@ PASE_Cg(PASE_Solver solver)
 	    eigenvalues[j] = inner_A / inner_M;
 	}
     }
-#if 0
+#if 1
     if( mg_solver->print_level > 1)
     {
         printf("Cur_level %d", cur_level);
