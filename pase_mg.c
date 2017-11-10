@@ -453,6 +453,7 @@ PASE_Int pase_ParCSRMGIteration( PASE_Solver solver)
        pase_ParCSRMGPostCorrection( solver);
        //printf("PostSmoothing..........\n");
        pase_ParCSRMGPostSmooth( solver);
+       PASE_Orth(solver);
    }
    else if( cur_level==0 && max_level>0)
    {
@@ -814,6 +815,17 @@ PASE_Int pase_MGAuxMatrixCreate( PASE_Solver solver)
         }
         PASE_ParCSRMatrixCreate( MPI_COMM_WORLD, block_size, A0, P0, A1, u_h, &Ap0, workspace_H, workspace_h);  
         PASE_ParCSRMatrixCreate( MPI_COMM_WORLD, block_size, M0, P0, M1, u_h, &Mp0, workspace_H, workspace_h);  
+	
+#if 0
+	PASE_Real norm_b, norm_a;
+	for(i=0; i<block_size; i++) {
+	    HYPRE_ParVectorInnerProd(Ap0->aux_Hh[i], Ap0->aux_Hh[i], &norm_b);
+	    HYPRE_ParVectorInnerProd(Mp0->aux_Hh[i], Mp0->aux_Hh[i], &norm_a);
+	    printf("i = %d, norm_b = %.12e, beta = %.12e\n", i, norm_b, Ap0->aux_hh->data[i*block_size+i]);
+	    printf("i = %d, norm_a = %.12e, alpha = %.12e\n", i, norm_a, Mp0->aux_hh->data[i*block_size+i]);
+	}
+#endif
+
         hypre_TFree( u_h);
         HYPRE_ParVectorDestroy( workspace_h);
     }
@@ -824,9 +836,18 @@ PASE_Int pase_MGAuxMatrixCreate( PASE_Solver solver)
 	PASE_ParCSRMatrixCreateByPASE_ParCSRMatrix( MPI_COMM_WORLD, block_size, A0, P0, Ap1, u1, &Ap0, workspace_H, workspace_hH);
 	PASE_ParCSRMatrixCreateByPASE_ParCSRMatrix( MPI_COMM_WORLD, block_size, M0, P0, Mp1, u1, &Mp0, workspace_H, workspace_hH);
 	PASE_ParVectorDestroy( workspace_hH);
+#if 0
+	PASE_Real norm_b, norm_a;
+	for(i=0; i<block_size; i++) {
+	    HYPRE_ParVectorInnerProd(Ap0->aux_Hh[i], Ap0->aux_Hh[i], &norm_b);
+	    HYPRE_ParVectorInnerProd(Mp0->aux_Hh[i], Mp0->aux_Hh[i], &norm_a);
+	    printf("i = %d, norm_b = %.12e, norm_beta = %.12e\n", i, norm_b, Ap0->aux_hh->data[i*block_size+i]);
+	    printf("i = %d, norm_a = %.12e, norm_alpha = %.12e\n", i, norm_a, Mp0->aux_hh->data[i*block_size+i]);
+	}
 	//printf("beta[0] = %e, alpha[0] = %e\n", Ap0->aux_hh->data[0], Mp0->aux_hh->data[0]);
 	//printf("b[0] = %e, b[1] = %e\n", Ap0->aux_hH[0]->local_vector->data[0], Ap0->aux_hH[0]->local_vector->data[1]);
 	//printf("a[0] = %e, a[1] = %e\n", Mp0->aux_hH[0]->local_vector->data[0], Mp0->aux_hH[0]->local_vector->data[1]);
+#endif
     }
     Ap[cur_level-1] = (void*)Ap0;
     Mp[cur_level-1] = (void*)Mp0;
@@ -1116,7 +1137,7 @@ PASE_Int pase_ParCSRMGErrorEstimate( PASE_Solver solver)
 PASE_Int pase_ParCSRMGDirSolver( PASE_Solver solver)
 {
     HYPRE_Solver lobpcg_solver 	= NULL; 
-    int maxIterations 		= 1000; 	/* maximum number of iterations */
+    int maxIterations 		= 800; 	/* maximum number of iterations */
     int pcgMode 		= 1;    	/* use rhs as initial guess for inner pcg iterations */
     int verbosity 		= 0;    	/* print iterations info */
     double tol 			= 1.e-10;	/* absolute tolerance (all eigenvalues) */
@@ -1182,6 +1203,14 @@ PASE_Int pase_ParCSRMGDirSolver( PASE_Solver solver)
     HYPRE_LOBPCGSolve( lobpcg_solver, constraints_Hh, eigenvectors_Hh, eigenvalues);
 
 
+    //PASE_ParCSRMatrixMatvec(-eigenvalues[0], Mp0, u[cur_level][0], 0.0, x);
+    //PASE_ParCSRMatrixMatvec(1.0, Ap0, u[cur_level][0], 1.0, x);
+    //PASE_Real norm_residual;
+    //PASE_ParVectorInnerProd(x, x, &norm_residual);
+    //norm_residual = sqrt(norm_residual);
+    //printf("the norm of residual after lobpcg is %.8ef\n", norm_residual);  
+
+
 #if 0
     PASE_Real inner_A, inner_M;
 	PASE_ParCSRMatrixMatvec( 1.0, Ap0, u0[0], 0.0, x);
@@ -1227,21 +1256,23 @@ PASE_Int pase_ParCSRMGDirSolver( PASE_Solver solver)
 
     /* 如果特征值算的不对，打印矩阵 */
     PASE_Real error = fabs(eigenvalues[0]-mg_solver->exact_eigenvalues[0]);
-    char pre_A[10] = "A_aux_Hh";
-    char pre_M[10] = "M_aux_Hh";
-    char file_vec[20];
+    //char pre_A[10] = "A_aux_Hh";
+    //char pre_M[10] = "M_aux_Hh";
+    //char file_vec[20];
     if(error > 1e-5) {
 	printf("The first eigenvalue is %.10e\n", eigenvalues[0]);
-	HYPRE_ParCSRMatrixPrint(Ap0->A_H, "A_H.txt");
-	HYPRE_ParCSRMatrixPrint(Mp0->A_H, "M_H.txt");
-	for(i=0; i<block_size; i++) {
-	    sprintf(file_vec, "%s%d.txt", pre_A, i);
-	    HYPRE_ParVectorPrint(Ap0->aux_Hh[i], file_vec);
-	    sprintf(file_vec, "%s%d.txt", pre_M, i);
-	    HYPRE_ParVectorPrint(Mp0->aux_Hh[i], file_vec);
-	}
-	hypre_CSRMatrixPrint(Ap0->aux_hh, "A_aux_hh.txt");
-	hypre_CSRMatrixPrint(Mp0->aux_hh, "M_aux_hh.txt");
+	PASE_Matrix_print(Ap0, "A");
+	PASE_Matrix_print(Mp0, "M");
+	//HYPRE_ParCSRMatrixPrint(Ap0->A_H, "A_H.txt");
+	//HYPRE_ParCSRMatrixPrint(Mp0->A_H, "M_H.txt");
+	//for(i=0; i<block_size; i++) {
+	//    sprintf(file_vec, "%s%d.txt", pre_A, i);
+	//    HYPRE_ParVectorPrint(Ap0->aux_Hh[i], file_vec);
+	//    sprintf(file_vec, "%s%d.txt", pre_M, i);
+	//    HYPRE_ParVectorPrint(Mp0->aux_Hh[i], file_vec);
+	//}
+	//hypre_CSRMatrixPrint(Ap0->aux_hh, "A_aux_hh.txt");
+	//hypre_CSRMatrixPrint(Mp0->aux_hh, "M_aux_hh.txt");
 	exit(-1);
     }
 
@@ -1470,8 +1501,15 @@ PASE_Orth(PASE_Solver solver)
     pase_ParVector **u 		= solver_u[cur_level];
     hypre_ParCSRMatrix **solver_M = (hypre_ParCSRMatrix**) mg_solver->M;
     hypre_ParCSRMatrix *M = solver_M[cur_level];
-    pase_ParCSRMatrix **solver_Mp = (pase_ParCSRMatrix**) mg_solver->Ap;
+    pase_ParCSRMatrix **solver_Mp = (pase_ParCSRMatrix**) mg_solver->Mp;
     pase_ParCSRMatrix *Mp = solver_Mp[cur_level];
+
+    hypre_ParCSRMatrix **solver_A = (hypre_ParCSRMatrix**) mg_solver->A;
+    hypre_ParCSRMatrix *A = solver_A[cur_level];
+    pase_ParCSRMatrix **solver_Ap = (pase_ParCSRMatrix**) mg_solver->Ap;
+    pase_ParCSRMatrix *Ap = solver_Ap[cur_level];
+
+    PASE_Complex *eigenvalues = mg_solver->eigenvalues[cur_level];
 
     PASE_Int i, j;
     PASE_Real inner_ij, norm_i;
@@ -1493,6 +1531,7 @@ PASE_Orth(PASE_Solver solver)
 	   norm_i = sqrt(norm_i);
 	   //printf("norm[%d] = %.3f\n", i, norm_i);
 	   hypre_ParVectorScale( 1.0/norm_i, u[i]->b_H);
+	   PASE_Vector_inner_production_general_hypre(A, u[i]->b_H, u[i]->b_H, &(eigenvalues[i]));
 	}
 	       //HYPRE_ParCSRMatrixMatvec(1.0, M, u[0]->b_H, 0.0, rhs->b_H); 
 	       //inner_ij = hypre_ParVectorInnerProd(rhs->b_H, u[1]->b_H);
@@ -1509,6 +1548,7 @@ PASE_Orth(PASE_Solver solver)
 	   norm_i = sqrt(norm_i);
 	   //printf("norm[%d] = %.3f\n", i, norm_i);
 	   PASE_ParVectorScale( 1.0/norm_i, u[i]);
+	   PASE_Vector_inner_production_general(Ap, u[i], u[i], &(eigenvalues[i]));
 	}
 	       //PASE_ParCSRMatrixMatvec(1.0, Mp, u[0], 0.0, rhs);
 	       //PASE_ParVectorInnerProd(rhs, u[1], &inner_ij);
@@ -1601,10 +1641,19 @@ void PASE_Get_initial_vector(PASE_Solver solver)
         }
     }
 
+#if 0
+    char filename[20];
+    char filepre[20] = "Init_vec";
+#endif
     for( i=0; i<block_size; i++)
     {
 	HYPRE_ParVectorDestroy( solver_u[max_level][i]->b_H );
 	solver_u[max_level][i]->b_H = u_H[i];
+#if 0
+	sprintf(filename, "%s_%d", filepre, i);
+	HYPRE_ParVectorPrint(u_H[i],filename); 
+	printf("eigenvalues[%d] = %.12e\n", i, eigenvalues[i]);
+#endif
     }
     hypre_TFreeF( u_H, mg_solver->functions);
     free( (mv_TempMultiVector*) mv_MultiVectorGetData(eigenvectors_Hh));
@@ -1649,14 +1698,19 @@ PASE_Cg(PASE_Solver solver)
     PASE_Real tmp;
     PASE_Real tol = 1e-10;
     PASE_Real inner_A, inner_M;
+    //printf("\n");
+    //printf("cur_level = %d\n", cur_level);
     if(cur_level == max_level) {
 	for(j=mg_solver->num_converged; j<block_size; j++) {
+	    HYPRE_ParVectorInnerProd(u[j]->b_H, u[j]->b_H, &inner_A);
+	    //printf("for j = %d, inner_prod of u is %.12e, eigenvalues = %.12e\n", j, inner_A, eigenvalues[j]);
 	    HYPRE_ParCSRMatrixMatvec(eigenvalues[j], M, u[j]->b_H, 0.0, residual->b_H);
 	    HYPRE_ParVectorInnerProd(residual->b_H, residual->b_H, &bnorm);
 	    bnorm = sqrt(bnorm);
 	    HYPRE_ParCSRMatrixMatvec(-1.0, A, u[j]->b_H, 1.0, residual->b_H);
 	    HYPRE_ParVectorInnerProd(residual->b_H, residual->b_H, &rho);
 	    rnorm = sqrt(rho);
+	    //printf("before Cg, rnorm = %.12e, bnorm = %.12e, rnorm/bnorm = %.12e\n", rnorm, bnorm, rnorm/bnorm);
 	    if(rnorm/bnorm < tol) {
 	        continue;
 	    }
@@ -1678,6 +1732,8 @@ PASE_Cg(PASE_Solver solver)
 		HYPRE_ParVectorInnerProd(residual->b_H, residual->b_H, &rho);
 		rnorm = sqrt(rho);
 
+	        //printf("after Cg, rnorm = %.12e, bnorm = %.12e, rnorm/bnorm = %.12e\n", rnorm, bnorm, rnorm/bnorm);
+
 	        if(rnorm/bnorm < tol) {
 	            continue;
 	        }
@@ -1685,15 +1741,19 @@ PASE_Cg(PASE_Solver solver)
 	    PASE_Vector_inner_production_general_hypre(A, u[j]->b_H, u[j]->b_H, &inner_A);
 	    PASE_Vector_inner_production_general_hypre(M, u[j]->b_H, u[j]->b_H, &inner_M);
 	    eigenvalues[j] = inner_A / inner_M;
+	    //printf("after Cg, eigenvalues[%d] = %.12e\n", j, eigenvalues[j]);
 	}
     } else {
 	for(j=mg_solver->num_converged; j<block_size; j++) {
+	    PASE_ParVectorInnerProd(u[j], u[j], &inner_A);
+	    //printf("for j = %d, inner_prod of u is %.12e, eigenvalues = %.12e\n", j, inner_A, eigenvalues[j]);
 	    PASE_ParCSRMatrixMatvec(eigenvalues[j], Mp, u[j], 0.0, residual);
 	    PASE_ParVectorInnerProd(residual, residual, &bnorm);
 	    bnorm = sqrt(bnorm);
 	    PASE_ParCSRMatrixMatvec(-1.0, Ap, u[j], 1.0, residual);
 	    PASE_ParVectorInnerProd(residual, residual, &rho);
 	    rnorm = sqrt(rho);
+	    //printf("before Cg, rnorm = %.12e, bnorm = %.12e, rnorm/bnorm = %.12e\n", rnorm, bnorm, rnorm/bnorm);
 	    if(rnorm/bnorm < tol) {
 	        continue;
 	    }
@@ -1715,6 +1775,7 @@ PASE_Cg(PASE_Solver solver)
 		PASE_ParVectorInnerProd(residual, residual, &rho);
 		rnorm = sqrt(rho);
 
+	        //printf("after Cg, rnorm = %.12e, bnorm = %.12e, rnorm/bnorm = %.12e\n", rnorm, bnorm, rnorm/bnorm);
 	        if(rnorm/bnorm < tol) {
 	            continue;
 	        }
@@ -1722,6 +1783,7 @@ PASE_Cg(PASE_Solver solver)
 	    PASE_Vector_inner_production_general(Ap, u[j], u[j], &inner_A);
 	    PASE_Vector_inner_production_general(Mp, u[j], u[j], &inner_M);
 	    eigenvalues[j] = inner_A / inner_M;
+	    //printf("after Cg, eigenvalues[%d] = %.12e\n", j, eigenvalues[j]);
 	}
     }
 #if 1
@@ -1773,4 +1835,37 @@ PASE_Vector_inner_production_general(PASE_ParCSRMatrix A, PASE_ParVector x, PASE
     PASE_ParVectorInnerProd(x, tmp, prod);
     PASE_ParVectorDestroy(tmp);
     return 0;
+}
+
+PASE_Int
+PASE_Matrix_print(PASE_ParCSRMatrix A, char *filepre)
+{
+    PASE_Int i;
+    char file_vec[20];
+    sprintf(file_vec, "%s_H.txt", filepre);
+    HYPRE_ParCSRMatrixPrint(A->A_H, file_vec); 
+
+    for(i=0; i<A->block_size; i++) {
+        sprintf(file_vec, "%s_aux_Hh_%d.txt", filepre, i);
+        HYPRE_ParVectorPrint(A->aux_Hh[i], file_vec);
+    }
+
+    sprintf(file_vec, "%s_aux_hh.txt", filepre);
+    hypre_CSRMatrixPrint(A->aux_hh, file_vec);
+
+    return 0;
+
+}
+
+PASE_Int
+PASE_Vector_print(PASE_ParVector x, char *filepre)
+{
+    char file_vec[20];
+    sprintf(file_vec, "%s_b_H.txt", filepre);
+    HYPRE_ParVectorPrint(x->b_H, file_vec); 
+    sprintf(file_vec, "%s_aux_h.txt", filepre);
+    hypre_SeqVectorPrint(x->aux_h, file_vec);
+
+    return 0;
+
 }

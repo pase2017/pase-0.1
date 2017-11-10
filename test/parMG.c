@@ -90,7 +90,7 @@ int main (int argc, char *argv[])
 
    /* Default problem parameters */
    n = 200;
-   max_levels = 5;
+   max_levels = 10;
    /* AMG第一层矩阵是原来的1/2, 之后都是1/4, 我们要求H空间的维数是所求特征值个数的8倍 */
    block_size = (int) n*n/pow(4, max_levels);
    printf ( "block_size = n*n/pow(4, max_levels)\n" );
@@ -150,6 +150,7 @@ int main (int argc, char *argv[])
    N = n*n; /* global number of rows */
    h = 1.0/(n+1); /* mesh size*/
    h2 = h*h;
+   printf("h2 = %.4e\n", h2);
 
    /*----------------------- Laplace精确特征值 ---------------------*/
    /* eigenvalues - allocate space */
@@ -165,6 +166,7 @@ int main (int argc, char *argv[])
 	 }
       }
       qsort(exact_eigenvalues, tmp_nn*tmp_nn, sizeof(double), cmp);
+      printf("exact_eigenvalue[0] = %.8e\n", exact_eigenvalues[0]);
    }
 
 
@@ -348,17 +350,26 @@ int main (int argc, char *argv[])
    N_H = hypre_ParCSRMatrixGlobalNumRows(A_array[num_levels-1]);
    printf ( "The dim of the coarsest space is %d.\n", N_H );
 
+   //HYPRE_ParCSRMatrixPrint(A_array[0], "./matrix/n50/A0");
+   //HYPRE_ParCSRMatrixPrint(A_array[1], "./matrix/n50/A1");
+   //HYPRE_ParCSRMatrixPrint(A_array[2], "./matrix/n50/A2");
+   //HYPRE_ParCSRMatrixPrint(B_array[0], "./matrix/n50/B0");
+   //HYPRE_ParCSRMatrixPrint(B_array[1], "./matrix/n50/B1");
+   //HYPRE_ParCSRMatrixPrint(B_array[2], "./matrix/n50/B2");
+   //HYPRE_ParCSRMatrixPrint(P_array[0], "./matrix/n50/P0");
+   //HYPRE_ParCSRMatrixPrint(P_array[1], "./matrix/n50/P1");
+   
    /*求解特征值问题的MG方法*/
    {
        HYPRE_Solver mg_solver 	= NULL;
        HYPRE_ParVector* init_v	= NULL;		/*可以给定初始向量*/
-       HYPRE_Int mg_level 	= 5;		/*MG迭代的网格层数*/
-       PASE_Int max_iter	= 40;		/*MG迭代的最大迭代次数*/
+       HYPRE_Int mg_level 	= 3;		/*MG迭代的网格层数*/
+       PASE_Int max_iter	= 1;		/*MG迭代的最大迭代次数*/
        PASE_Int pre_iter	= 1;		/*前光滑的最大次数*/
        PASE_Int	post_iter	= 1;		/*后光滑的最大次数*/
-       PASE_Int block_size	= 20;		/*求解的特征值个数*/
-       PASE_Int print_level   	= 2; 		/*0:不打印； 1:打印每次MG迭代后的结果； 2:打印每步光滑过程的结果 */
-       PASE_Real atol		= 1e-10;
+       PASE_Int block_size	= 3;		/*求解的特征值个数*/
+       PASE_Int print_level   	= 1; 		/*0:不打印； 1:打印每次MG迭代后的结果； 2:打印每步光滑过程的结果 */
+       PASE_Real atol		= 1e-9;
        PASE_Int *mg_seed	= NULL;		/*初始向量的随机种子*/
        PASE_Int flag 		= 1;		/*添加AMG矩阵,由细(0)到粗(mg_level)*/
 

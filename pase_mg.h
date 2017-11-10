@@ -154,6 +154,8 @@ void PASE_Get_initial_vector(PASE_Solver solver);
 PASE_Int PASE_Cg(PASE_Solver solver);
 PASE_Int PASE_Vector_inner_production_general_hypre(HYPRE_ParCSRMatrix A, HYPRE_ParVector x, HYPRE_ParVector y, PASE_Real *prod);
 PASE_Int PASE_Vector_inner_production_general(PASE_ParCSRMatrix A, PASE_ParVector x, PASE_ParVector y, PASE_Real *prod);
+PASE_Int PASE_Matrix_print(PASE_ParCSRMatrix A, char *filepre);
+PASE_Int PASE_Vector_print(PASE_ParVector x, char *filepre);
 #ifdef __cplusplus
 }
 #endif
