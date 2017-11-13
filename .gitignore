@@ -8,5 +8,5 @@
 /test/mv
 /test/cg
 /test/lobpcg
-/test/parPASE_ver[0-9]*
-/test/serPASE_ver[0-9]*
+/test/parPASE_ver[0-9]+
+/test/serPASE_ver[0-9]+
