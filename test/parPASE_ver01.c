@@ -534,6 +534,7 @@ int main (int argc, char *argv[])
 	    mv_TempMultiVector* tmp = 
 	       (mv_TempMultiVector*) mv_MultiVectorGetData(eigenvectors_Hh);
 	    pvx_Hh = (PASE_ParVector*)(tmp -> vector);
+	    /* TODO: 用aux的同步错误 */
 	    mv_MultiVectorSetRandom (eigenvectors_Hh, lobpcgSeed);
 
 	    HYPRE_LOBPCGCreate(interpreter_Hh, &matvec_fn_Hh, &lobpcg_solver);
@@ -786,13 +787,13 @@ int main (int argc, char *argv[])
 
 	 for ( idx_eig = 0; idx_eig < block_size; ++idx_eig)
 	 {
-	    HYPRE_ParCSRMatrixMatvec ( 1.0, P_array[level], pvx_pre[idx_eig]->b_H, 0.0, pvx_cur[idx_eig]->b_H );
+	    HYPRE_ParCSRMatrixMatvecT ( 1.0, P_array[level-1], pvx_pre[idx_eig]->b_H, 0.0, pvx_cur[idx_eig]->b_H );
 	    hypre_SeqVectorCopy(pvx_pre[idx_eig]->aux_h, pvx_cur[idx_eig]->aux_h);
 //	    PASE_ParVectorSetConstantValues(pvx_cur[idx_eig], 0.0);
 //	    pvx_cur[idx_eig]->aux_h->data[idx_eig] = 1.0;
 	 }
 
-	 HYPRE_LOBPCGSetMaxIter(lobpcg_solver, 2);
+	 HYPRE_LOBPCGSetMaxIter(lobpcg_solver, 20);
 	 PASE_LOBPCGSetup (lobpcg_solver, parcsr_A_hh[level], par_b_hh[level], par_x_hh[level]);
 	 PASE_LOBPCGSetupB(lobpcg_solver, parcsr_B_hh[level], par_x_hh[level]);
 	 HYPRE_LOBPCGSolve(lobpcg_solver, constraints_Hh, eigenvectors_cur, eigenvalues );
@@ -823,7 +824,7 @@ int main (int argc, char *argv[])
 
       for ( idx_eig = 0; idx_eig < block_size; ++idx_eig)
       {
-//	 HYPRE_ParCSRMatrixMatvec ( 1.0, P_array[num_levels-2], pvx_pre[idx_eig]->b_H, 0.0, pvx_cur[idx_eig]->b_H );
+//	 HYPRE_ParCSRMatrixMatvecT ( 1.0, P_array[num_levels-2], pvx_pre[idx_eig]->b_H, 0.0, pvx_cur[idx_eig]->b_H );
 //	 hypre_SeqVectorCopy(pvx_pre[idx_eig]->aux_h, pvx_Hh[idx_eig]->aux_h);
 	 PASE_ParVectorSetConstantValues(pvx_Hh[idx_eig], 0.0);
 	 pvx_Hh[idx_eig]->aux_h->data[idx_eig] = 1.0;
@@ -910,7 +911,7 @@ int main (int argc, char *argv[])
 //	    pvx_cur[idx_eig]->aux_h->data[idx_eig] = 1.0;
 	 }
 
-	 HYPRE_LOBPCGSetMaxIter(lobpcg_solver, 2);
+	 HYPRE_LOBPCGSetMaxIter(lobpcg_solver, 20);
 	 PASE_LOBPCGSetup (lobpcg_solver, parcsr_A_hh[level], par_b_hh[level], par_x_hh[level]);
 	 PASE_LOBPCGSetupB(lobpcg_solver, parcsr_B_hh[level], par_x_hh[level]);
 	 HYPRE_LOBPCGSolve(lobpcg_solver, constraints_Hh, eigenvectors_cur, eigenvalues );

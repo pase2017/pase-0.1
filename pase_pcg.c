@@ -127,6 +127,7 @@ PASE_ParCSRPCGCreate( MPI_Comm comm, HYPRE_Solver *solver )
    return hypre_error_flag;
 }
 
+/* TODO:貌似直接调用HYPRE的PCG销毁就行 */
 PASE_Int
 PASE_ParCSRPCGDestroy( HYPRE_Solver solver )
 {

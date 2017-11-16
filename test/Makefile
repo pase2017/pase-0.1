@@ -98,5 +98,5 @@ parPASE_ver01: parPASE_ver01.o
 # Clean up
 ########################################################################
 clean:
-	rm -f $(ALLPROGS:=.o)
+	rm -f $(ALLPROGS:=.o) cg lobpcg mv parPASE_ver01 serPASE_ver01
 	rm -f *\.[0-9] *\.aux
