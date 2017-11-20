@@ -433,7 +433,7 @@ int main (int argc, char *argv[])
    HYPRE_ParCSRPCGCreate(MPI_COMM_WORLD, &pcg_solver);
 
    /* Set some parameters (See Reference Manual for more parameters) */
-   HYPRE_PCGSetMaxIter(pcg_solver, 1000); /* max iterations */
+   HYPRE_PCGSetMaxIter(pcg_solver, 100); /* max iterations */
    HYPRE_PCGSetTol(pcg_solver, 1e-15); /* conv. tolerance */
    HYPRE_PCGSetTwoNorm(pcg_solver, 1); /* use the two norm as the stopping criteria */
    HYPRE_PCGSetPrintLevel(pcg_solver, 0); /* print solve info */
@@ -700,15 +700,16 @@ int main (int argc, char *argv[])
 
 
 
+   HYPRE_Solver pcg_solver_pase;
 
    /* Create solver */
-//   PASE_ParCSRPCGCreate(MPI_COMM_WORLD, &pcg_solver);
-//   /* Set some parameters (See Reference Manual for more parameters) */
-//   HYPRE_PCGSetMaxIter(pcg_solver, 1000); /* max iterations */
-//   HYPRE_PCGSetTol(pcg_solver, 1e-8); /* conv. tolerance */
-//   HYPRE_PCGSetTwoNorm(pcg_solver, 1); /* use the two norm as the stopping criteria */
-//   HYPRE_PCGSetPrintLevel(pcg_solver, 0); /* prints out the iteration info */
-//   HYPRE_PCGSetLogging(pcg_solver, 1); /* needed to get run info later */
+   PASE_ParCSRPCGCreate(MPI_COMM_WORLD, &pcg_solver_pase);
+   /* Set some parameters (See Reference Manual for more parameters) */
+   HYPRE_PCGSetMaxIter(pcg_solver_pase, 10); /* max iterations */
+   HYPRE_PCGSetTol(pcg_solver_pase, 1e-16); /* conv. tolerance */
+   HYPRE_PCGSetTwoNorm(pcg_solver_pase, 1); /* use the two norm as the stopping criteria */
+   HYPRE_PCGSetPrintLevel(pcg_solver_pase, 0); /* prints out the iteration info */
+   HYPRE_PCGSetLogging(pcg_solver_pase, 1); /* needed to get run info later */
 
    /* 最细+辅助矩阵向量 */
    PASE_ParCSRMatrix* parcsr_A_hh;
@@ -735,7 +736,7 @@ int main (int argc, char *argv[])
    int iter = 0;
 //   while (sum_error > 1E-6)
    residual = 1.0;
-   while (residual > 1E-12)
+   while (residual > 1E-8)
    {
       /* 从细到粗, 进行CG迭代 */
       printf ( "V-cycle from h to H\n" );
@@ -804,6 +805,19 @@ int main (int argc, char *argv[])
 //	    PASE_ParVectorSetConstantValues(pvx_cur[idx_eig], 0.0);
 //	    pvx_cur[idx_eig]->aux_h->data[idx_eig] = 1.0;
 	 }
+
+
+	 printf ( "Solve linear system A_hh x = lambda B_hh x using pase_pcg_solver.\n" );
+	 for (idx_eig = 0; idx_eig < block_size; ++idx_eig)
+	 {
+	    /* 生成右端项 y = alpha*A*x + beta*y */
+	    PASE_ParCSRMatrixMatvec ( eigenvalues[idx_eig], parcsr_B_hh[level], pvx_cur[idx_eig], 0.0, par_b_hh[level] );
+
+	    hypre_PCGSetup(pcg_solver_pase, parcsr_A_hh[level], par_b_hh[level], par_x_hh[level]);
+	    hypre_PCGSolve(pcg_solver_pase, parcsr_A_hh[level], par_b_hh[level], pvx_cur[idx_eig]);
+	 }
+
+
 
 	 HYPRE_LOBPCGSetMaxIter(lobpcg_solver, 10);
 	 PASE_LOBPCGSetup (lobpcg_solver, parcsr_A_hh[level], par_b_hh[level], par_x_hh[level]);
@@ -961,7 +975,7 @@ int main (int argc, char *argv[])
 	 eigenvalues[idx_eig] = eigenvalues[idx_eig] / tmp_double;
       }
 
-      for (idx_eig = 0; idx_eig < block_size-5; ++idx_eig)
+      for (idx_eig = 0; idx_eig < block_size; ++idx_eig)
       {
 	 HYPRE_ParCSRMatrixMatvec ( 1.0, B_array[0], pvx_h[idx_eig], 0.0, F_array[0] );
 	 HYPRE_ParVectorInnerProd (F_array[0], pvx_h[idx_eig], &tmp_double);
@@ -1164,6 +1178,7 @@ int main (int argc, char *argv[])
    HYPRE_ParCSRPCGDestroy(pcg_solver);
    HYPRE_BoomerAMGDestroy(precond);
 
+   HYPRE_ParCSRPCGDestroy(pcg_solver_pase);
 
 
    HYPRE_LOBPCGDestroy(lobpcg_solver);
