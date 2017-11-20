@@ -1,0 +1,2038 @@
+=============================================================
+PASE (Parallel Auxiliary Space Eigen-solver), parallel version
+Please contact liyu@lsec.cc.ac.cn, if there is any bugs.
+=============================================================
+block_size = n*n/pow(4, max_levels)
+The number of levels = 5
+The dim of the coarsest space is 739.
+Current level = 3
+Set A_Hh and B_Hh
+LOBPCG solve A_Hh U_Hh = lambda_Hh B_Hh U_Hh
+
+Solving generalized eigenvalue problem without preconditioning
+
+block size 50
+
+No constraints
+
+
+Initial Max. Residual   4.00837228075233e-01
+Iteration 1 	bsize 50 	maxres   1.50800410807811e-01
+Iteration 2 	bsize 50 	maxres   8.35323526223346e-02
+Iteration 3 	bsize 50 	maxres   4.63048301685934e-02
+Iteration 4 	bsize 50 	maxres   3.97327123361065e-02
+Iteration 5 	bsize 50 	maxres   3.29101151363501e-02
+
+Eigenvalue lambda   2.24552671019991e-04
+Eigenvalue lambda   5.53724871105069e-04
+Eigenvalue lambda   5.55348624035550e-04
+Eigenvalue lambda   8.91242456055900e-04
+Eigenvalue lambda   1.10560832052967e-03
+Eigenvalue lambda   1.11096125140731e-03
+Eigenvalue lambda   1.45289280588752e-03
+Eigenvalue lambda   1.45707817476864e-03
+Eigenvalue lambda   1.88579442109534e-03
+Eigenvalue lambda   1.89039735817313e-03
+Eigenvalue lambda   2.01538565296820e-03
+Eigenvalue lambda   2.23692583988813e-03
+Eigenvalue lambda   2.24902776787392e-03
+Eigenvalue lambda   2.83899657190863e-03
+Eigenvalue lambda   2.84688645427009e-03
+Eigenvalue lambda   2.90313193661416e-03
+Eigenvalue lambda   2.94187299951990e-03
+Eigenvalue lambda   3.25649038957699e-03
+Eigenvalue lambda   3.27149180157035e-03
+Eigenvalue lambda   3.64283691471569e-03
+Eigenvalue lambda   3.85601138644348e-03
+Eigenvalue lambda   3.90263506652797e-03
+Eigenvalue lambda   4.17530005014296e-03
+Eigenvalue lambda   4.19790135624732e-03
+Eigenvalue lambda   4.54001890966911e-03
+Eigenvalue lambda   4.62369046687585e-03
+Eigenvalue lambda   4.74839758344138e-03
+Eigenvalue lambda   4.78107399778591e-03
+Eigenvalue lambda   5.16023618209288e-03
+Eigenvalue lambda   5.18046431590467e-03
+Eigenvalue lambda   5.70637536730697e-03
+Eigenvalue lambda   5.72765198725114e-03
+Eigenvalue lambda   5.83604574538839e-03
+Eigenvalue lambda   6.05208332092810e-03
+Eigenvalue lambda   6.10513146756248e-03
+Eigenvalue lambda   6.17287831380479e-03
+Eigenvalue lambda   6.22727992557959e-03
+Eigenvalue lambda   6.78905774761717e-03
+Eigenvalue lambda   6.86972805367731e-03
+Eigenvalue lambda   7.24651033661619e-03
+Eigenvalue lambda   7.33029136487001e-03
+Eigenvalue lambda   7.50353090982079e-03
+Eigenvalue lambda   7.74718877502389e-03
+Eigenvalue lambda   7.84407208088320e-03
+Eigenvalue lambda   7.86869001064578e-03
+Eigenvalue lambda   8.09778033851595e-03
+Eigenvalue lambda   8.29923967789592e-03
+Eigenvalue lambda   8.68373959821167e-03
+Eigenvalue lambda   9.09442654253409e-03
+Eigenvalue lambda   9.29592300239497e-03
+Residual   3.47927454199169e-03
+Residual   3.03000727011373e-03
+Residual   3.83864016033719e-03
+Residual   4.26437651445896e-03
+Residual   3.15218391955881e-03
+Residual   4.57671335714291e-03
+Residual   5.36411536875405e-03
+Residual   5.78246217099391e-03
+Residual   3.44767930086308e-03
+Residual   4.90235681912812e-03
+Residual   4.45230922046487e-03
+Residual   4.79616734624562e-03
+Residual   6.61461542929538e-03
+Residual   7.47053402589825e-03
+Residual   8.10720124020474e-03
+Residual   5.07831683286207e-03
+Residual   1.04701732714114e-02
+Residual   4.86982943329929e-03
+Residual   7.02231043176512e-03
+Residual   6.31607192145789e-03
+Residual   5.20799966351108e-03
+Residual   9.95911401150044e-03
+Residual   8.02015051250576e-03
+Residual   9.25300706898852e-03
+Residual   7.60665656703646e-03
+Residual   1.20226044365343e-02
+Residual   1.20569345814060e-02
+Residual   1.30912504516837e-02
+Residual   8.40801256515147e-03
+Residual   9.32256809511987e-03
+Residual   1.06586673336221e-02
+Residual   1.08288011514458e-02
+Residual   1.09847881109773e-02
+Residual   9.86616591514151e-03
+Residual   1.24993093382958e-02
+Residual   1.54530398090410e-02
+Residual   1.71059769920858e-02
+Residual   1.34167718024947e-02
+Residual   1.55612957116865e-02
+Residual   1.17063358104639e-02
+Residual   1.38969623693694e-02
+Residual   1.24540908720956e-02
+Residual   1.54594931542142e-02
+Residual   1.20608276624181e-02
+Residual   2.47311873864494e-02
+Residual   2.26257884117463e-02
+Residual   2.60003727034616e-02
+Residual   1.51576619474424e-02
+Residual   2.26309773810677e-02
+Residual   3.29101151363501e-02
+
+5 iterations
+PCG solve A_h U = lambda_Hh B_h U_Hh
+Current level = 2
+Set A_Hh and B_Hh
+LOBPCG solve A_Hh U_Hh = lambda_Hh B_Hh U_Hh
+
+Solving generalized eigenvalue problem without preconditioning
+
+block size 50
+
+No constraints
+
+
+Initial Max. Residual   8.28122097900407e-03
+Iteration 1 	bsize 50 	maxres   7.32476535090032e-03
+Iteration 2 	bsize 50 	maxres   6.39295334001012e-03
+Iteration 3 	bsize 50 	maxres   4.32381316788280e-03
+Iteration 4 	bsize 50 	maxres   2.62323980806861e-03
+Iteration 5 	bsize 50 	maxres   1.38146515637601e-03
+
+Eigenvalue lambda   2.18147197181015e-04
+Eigenvalue lambda   5.45674712615382e-04
+Eigenvalue lambda   5.45718366236450e-04
+Eigenvalue lambda   8.74017013584299e-04
+Eigenvalue lambda   1.09215097320106e-03
+Eigenvalue lambda   1.09225256290972e-03
+Eigenvalue lambda   1.42179802233073e-03
+Eigenvalue lambda   1.42197484003386e-03
+Eigenvalue lambda   1.85846792435287e-03
+Eigenvalue lambda   1.85867695269247e-03
+Eigenvalue lambda   1.97190069694886e-03
+Eigenvalue lambda   2.18997773886994e-03
+Eigenvalue lambda   2.19031076180388e-03
+Eigenvalue lambda   2.74320250904932e-03
+Eigenvalue lambda   2.74367348862175e-03
+Eigenvalue lambda   2.84591184100107e-03
+Eigenvalue lambda   2.84636926651607e-03
+Eigenvalue lambda   3.17978063427030e-03
+Eigenvalue lambda   3.18039578764966e-03
+Eigenvalue lambda   3.51907465078099e-03
+Eigenvalue lambda   3.73725526436325e-03
+Eigenvalue lambda   3.73773194311333e-03
+Eigenvalue lambda   4.05639713563710e-03
+Eigenvalue lambda   4.05715062296181e-03
+Eigenvalue lambda   4.39313450100531e-03
+Eigenvalue lambda   4.39484139657853e-03
+Eigenvalue lambda   4.51855649707849e-03
+Eigenvalue lambda   4.52038456974319e-03
+Eigenvalue lambda   4.95553276918271e-03
+Eigenvalue lambda   4.95655430273858e-03
+Eigenvalue lambda   5.49231341667498e-03
+Eigenvalue lambda   5.49389955193166e-03
+Eigenvalue lambda   5.52644025234492e-03
+Eigenvalue lambda   5.74462260268026e-03
+Eigenvalue lambda   5.74944089323878e-03
+Eigenvalue lambda   5.83384533901338e-03
+Eigenvalue lambda   5.83613428656552e-03
+Eigenvalue lambda   6.40462887878458e-03
+Eigenvalue lambda   6.41101723882303e-03
+Eigenvalue lambda   6.76687541712436e-03
+Eigenvalue lambda   6.77715395434480e-03
+Eigenvalue lambda   7.16004194213108e-03
+Eigenvalue lambda   7.17677568213640e-03
+Eigenvalue lambda   7.20813250658076e-03
+Eigenvalue lambda   7.24883407175731e-03
+Eigenvalue lambda   7.50048201356422e-03
+Eigenvalue lambda   7.51754104013955e-03
+Eigenvalue lambda   8.09268528690916e-03
+Eigenvalue lambda   8.12716948661447e-03
+Eigenvalue lambda   8.26084948723789e-03
+Residual   4.77653159152203e-07
+Residual   1.56200002714121e-06
+Residual   7.28168812364971e-07
+Residual   2.71772481894931e-06
+Residual   2.09490746323473e-06
+Residual   2.60488102646169e-06
+Residual   6.35039780617211e-06
+Residual   6.48537423559083e-06
+Residual   7.61742391006253e-06
+Residual   6.68623300669575e-06
+Residual   9.89315048041155e-06
+Residual   1.33872775093484e-05
+Residual   1.59087069266070e-05
+Residual   3.32239905910025e-05
+Residual   3.35988388867591e-05
+Residual   1.30997471135049e-05
+Residual   2.78603645870832e-05
+Residual   3.02495071565842e-05
+Residual   2.63531332530140e-05
+Residual   5.26515554463030e-05
+Residual   6.41972363938682e-05
+Residual   5.49279009038359e-05
+Residual   5.39249154934975e-05
+Residual   6.49697615241563e-05
+Residual   5.84786538492862e-05
+Residual   8.50703362693285e-05
+Residual   8.36715052066721e-05
+Residual   1.06001985302833e-04
+Residual   7.88999566670599e-05
+Residual   1.10219784274430e-04
+Residual   9.84845973636698e-05
+Residual   9.80412300977477e-05
+Residual   1.10141977097659e-04
+Residual   1.08514175111572e-04
+Residual   1.97172477977036e-04
+Residual   8.77128259642080e-05
+Residual   1.86999969065459e-04
+Residual   1.60618428024925e-04
+Residual   2.96517765490117e-04
+Residual   2.49820677032999e-04
+Residual   3.27461076226401e-04
+Residual   1.91185533036894e-04
+Residual   5.12800360814569e-04
+Residual   2.71703766291863e-04
+Residual   7.93135531897508e-04
+Residual   1.72684216622966e-04
+Residual   4.04525219349332e-04
+Residual   4.54851493533992e-04
+Residual   1.38146515637601e-03
+Residual   9.04834136316234e-04
+
+5 iterations
+PCG solve A_h U = lambda_Hh B_h U_Hh
+Current level = 1
+Set A_Hh and B_Hh
+LOBPCG solve A_Hh U_Hh = lambda_Hh B_Hh U_Hh
+
+Solving generalized eigenvalue problem without preconditioning
+
+block size 50
+
+No constraints
+
+
+Initial Max. Residual   1.23393352257874e-03
+Iteration 1 	bsize 50 	maxres   2.10778429602298e-03
+Iteration 2 	bsize 50 	maxres   1.21007291438837e-03
+Iteration 3 	bsize 50 	maxres   4.88333341401578e-04
+Iteration 4 	bsize 49 	maxres   2.44268347118831e-04
+Iteration 5 	bsize 47 	maxres   2.00857568549083e-04
+
+Eigenvalue lambda   2.17986563796647e-04
+Eigenvalue lambda   5.45038254200903e-04
+Eigenvalue lambda   5.45038330318284e-04
+Eigenvalue lambda   8.72273160032118e-04
+Eigenvalue lambda   1.09026237003492e-03
+Eigenvalue lambda   1.09026241051134e-03
+Eigenvalue lambda   1.41780219756230e-03
+Eigenvalue lambda   1.41780288078822e-03
+Eigenvalue lambda   1.85386554647810e-03
+Eigenvalue lambda   1.85386584788728e-03
+Eigenvalue lambda   1.96384080030297e-03
+Eigenvalue lambda   2.18183321294477e-03
+Eigenvalue lambda   2.18183349482152e-03
+Eigenvalue lambda   2.72858293629788e-03
+Eigenvalue lambda   2.72858576205931e-03
+Eigenvalue lambda   2.83613780052396e-03
+Eigenvalue lambda   2.83613798538336e-03
+Eigenvalue lambda   3.16465449408499e-03
+Eigenvalue lambda   3.16465625596153e-03
+Eigenvalue lambda   3.49432575446253e-03
+Eigenvalue lambda   3.71232307728920e-03
+Eigenvalue lambda   3.71232338078623e-03
+Eigenvalue lambda   4.03745223067338e-03
+Eigenvalue lambda   4.03745315689586e-03
+Eigenvalue lambda   4.36664170591058e-03
+Eigenvalue lambda   4.36664564384805e-03
+Eigenvalue lambda   4.47934767483564e-03
+Eigenvalue lambda   4.47935448744483e-03
+Eigenvalue lambda   4.91542897188437e-03
+Eigenvalue lambda   4.91543641425368e-03
+Eigenvalue lambda   5.45827067267972e-03
+Eigenvalue lambda   5.45828096411235e-03
+Eigenvalue lambda   5.46602871008960e-03
+Eigenvalue lambda   5.68404286658361e-03
+Eigenvalue lambda   5.68407528772404e-03
+Eigenvalue lambda   5.78825926086522e-03
+Eigenvalue lambda   5.78832522734045e-03
+Eigenvalue lambda   6.33849671927782e-03
+Eigenvalue lambda   6.33862367936606e-03
+Eigenvalue lambda   6.67279850757386e-03
+Eigenvalue lambda   6.67360548774289e-03
+Eigenvalue lambda   7.09930618311652e-03
+Eigenvalue lambda   7.10087258796438e-03
+Eigenvalue lambda   7.10918903910416e-03
+Eigenvalue lambda   7.11136989994564e-03
+Eigenvalue lambda   7.43020726911261e-03
+Eigenvalue lambda   7.43083289349096e-03
+Eigenvalue lambda   7.95668300487417e-03
+Eigenvalue lambda   7.98418758003175e-03
+Eigenvalue lambda   8.07455604343275e-03
+Residual   2.74313081757627e-09
+Residual   1.00529692423798e-08
+Residual   1.05213479816254e-08
+Residual   8.33941293043908e-08
+Residual   1.03897973219978e-07
+Residual   1.27660835951681e-07
+Residual   3.95940873583499e-07
+Residual   3.85026999511124e-07
+Residual   5.36681490160391e-07
+Residual   4.52387666342024e-07
+Residual   1.15087889784888e-06
+Residual   1.19726379643067e-06
+Residual   1.08231965649574e-06
+Residual   2.13892861027125e-06
+Residual   2.19251445775120e-06
+Residual   1.48159890665394e-06
+Residual   1.65746499041249e-06
+Residual   2.83748068756062e-06
+Residual   2.61214276405153e-06
+Residual   3.88680174677006e-06
+Residual   4.13482661123584e-06
+Residual   4.35905503380791e-06
+Residual   3.59448089871868e-06
+Residual   3.24884881751193e-06
+Residual   4.89703527566173e-06
+Residual   4.67068089704604e-06
+Residual   6.77423113424790e-06
+Residual   6.22303655892760e-06
+Residual   7.14824273463299e-06
+Residual   6.06832877428489e-06
+Residual   6.52803225613607e-06
+Residual   6.78945362968475e-06
+Residual   9.65919115231292e-06
+Residual   9.54871469298763e-06
+Residual   1.25045479077209e-05
+Residual   7.62742252402163e-06
+Residual   8.32078732400275e-06
+Residual   1.01279871545309e-05
+Residual   2.65021596376055e-05
+Residual   1.28766692650634e-05
+Residual   2.19126553100644e-05
+Residual   1.05662701405758e-05
+Residual   5.22682212402300e-05
+Residual   1.52836020900150e-05
+Residual   8.32073650650617e-05
+Residual   1.65544954395933e-05
+Residual   3.10748447567889e-05
+Residual   1.45733606896086e-04
+Residual   3.52732966012951e-05
+Residual   2.00857568549083e-04
+
+5 iterations
+PCG solve A_h U = lambda_Hh B_h U_Hh
+Current level = 0
+Set A_Hh and B_Hh
+LOBPCG solve A_Hh U_Hh = lambda_Hh B_Hh U_Hh
+
+Solving generalized eigenvalue problem without preconditioning
+
+block size 50
+
+No constraints
+
+
+Initial Max. Residual   7.69355462883649e-04
+Iteration 1 	bsize 50 	maxres   1.15737362801432e-03
+Iteration 2 	bsize 50 	maxres   4.52882254858386e-04
+Iteration 3 	bsize 50 	maxres   1.98138514756853e-04
+Iteration 4 	bsize 49 	maxres   1.33320757929842e-04
+Iteration 5 	bsize 47 	maxres   1.94115235252617e-04
+
+Eigenvalue lambda   2.17873612597229e-04
+Eigenvalue lambda   5.44694413226504e-04
+Eigenvalue lambda   5.44694413226680e-04
+Eigenvalue lambda   8.71541911967649e-04
+Eigenvalue lambda   1.08941551213760e-03
+Eigenvalue lambda   1.08941551214465e-03
+Eigenvalue lambda   1.41630750492030e-03
+Eigenvalue lambda   1.41630750496844e-03
+Eigenvalue lambda   1.85206652802485e-03
+Eigenvalue lambda   1.85206652804759e-03
+Eigenvalue lambda   1.96114725007331e-03
+Eigenvalue lambda   2.17902080688333e-03
+Eigenvalue lambda   2.17902080696581e-03
+Eigenvalue lambda   2.72396435580278e-03
+Eigenvalue lambda   2.72396435683064e-03
+Eigenvalue lambda   2.83268887447983e-03
+Eigenvalue lambda   2.83268887489856e-03
+Eigenvalue lambda   3.15972322579748e-03
+Eigenvalue lambda   3.15972322758175e-03
+Eigenvalue lambda   3.48692678197146e-03
+Eigenvalue lambda   3.70480022429832e-03
+Eigenvalue lambda   3.70480023079085e-03
+Eigenvalue lambda   4.03133570767092e-03
+Eigenvalue lambda   4.03133571425063e-03
+Eigenvalue lambda   4.35846791021975e-03
+Eigenvalue lambda   4.35846792880271e-03
+Eigenvalue lambda   4.46794947352205e-03
+Eigenvalue lambda   4.46794954042942e-03
+Eigenvalue lambda   4.90370801556805e-03
+Eigenvalue lambda   4.90370804864385e-03
+Eigenvalue lambda   5.44807202024666e-03
+Eigenvalue lambda   5.44807216752754e-03
+Eigenvalue lambda   5.44921246809839e-03
+Eigenvalue lambda   5.66708613164364e-03
+Eigenvalue lambda   5.66708644982335e-03
+Eigenvalue lambda   5.77531998254680e-03
+Eigenvalue lambda   5.77532155050706e-03
+Eigenvalue lambda   6.32075789538863e-03
+Eigenvalue lambda   6.32076286394216e-03
+Eigenvalue lambda   6.64864445072427e-03
+Eigenvalue lambda   6.64869634653940e-03
+Eigenvalue lambda   7.08298511242142e-03
+Eigenvalue lambda   7.08319228388835e-03
+Eigenvalue lambda   7.08442502001212e-03
+Eigenvalue lambda   7.08468744924096e-03
+Eigenvalue lambda   7.41038433702693e-03
+Eigenvalue lambda   7.41047081592700e-03
+Eigenvalue lambda   7.91151652782871e-03
+Eigenvalue lambda   7.95709974442825e-03
+Eigenvalue lambda   8.02014480566331e-03
+Residual   3.81813155588381e-09
+Residual   7.75838433286769e-09
+Residual   8.29554786517907e-09
+Residual   1.97724279950901e-08
+Residual   3.92959959791958e-08
+Residual   3.44509438406793e-08
+Residual   4.17201804406297e-08
+Residual   4.68480976816805e-08
+Residual   8.82634630460309e-08
+Residual   7.90990988021171e-08
+Residual   6.50327544938122e-08
+Residual   8.71242892485565e-08
+Residual   9.35149665948524e-08
+Residual   1.54433331349813e-07
+Residual   1.40374576854866e-07
+Residual   1.89223846451405e-07
+Residual   1.59921790578290e-07
+Residual   1.70927723853209e-07
+Residual   1.98269025987512e-07
+Residual   2.51048308300565e-07
+Residual   2.91196552644980e-07
+Residual   2.56289055437247e-07
+Residual   3.59878319426214e-07
+Residual   3.67763544156451e-07
+Residual   3.13320450650952e-07
+Residual   3.12592643480315e-07
+Residual   4.03496605232468e-07
+Residual   4.91864585267681e-07
+Residual   4.39935260119523e-07
+Residual   3.98548895658363e-07
+Residual   8.51764182784735e-07
+Residual   9.67249816596662e-07
+Residual   5.61126930920826e-07
+Residual   5.48513555186893e-07
+Residual   1.71202660124930e-06
+Residual   8.95299692113139e-07
+Residual   9.02398153029230e-07
+Residual   1.44828054550933e-06
+Residual   5.50774124197715e-06
+Residual   1.58963921414395e-06
+Residual   3.29868357116736e-06
+Residual   2.20936522289703e-06
+Residual   2.01832721028019e-05
+Residual   1.85097557530490e-06
+Residual   2.86446830065418e-05
+Residual   5.74577578396479e-06
+Residual   1.05458113319973e-05
+Residual   1.55205540712118e-04
+Residual   7.57874781102680e-06
+Residual   1.94115235252617e-04
+
+5 iterations
+PCG solve A_h U = lambda_Hh B_h U_Hh
+compute residual and update eigenvalues
+residual = 5.933471e-09
+residual = 3.708423e-08
+residual = 3.708425e-08
+residual = 9.493928e-08
+residual = 1.483376e-07
+residual = 1.483379e-07
+residual = 2.507089e-07
+residual = 2.507110e-07
+residual = 4.286937e-07
+residual = 4.286969e-07
+residual = 4.806928e-07
+residual = 5.934186e-07
+residual = 5.934203e-07
+residual = 9.273494e-07
+residual = 9.274041e-07
+residual = 1.002856e-06
+residual = 1.002873e-06
+residual = 1.247800e-06
+residual = 1.247875e-06
+residual = 1.519923e-06
+residual = 1.715607e-06
+residual = 1.715887e-06
+residual = 2.031378e-06
+residual = 2.031660e-06
+residual = 2.374412e-06
+residual = 2.375238e-06
+residual = 2.496099e-06
+residual = 2.498886e-06
+residual = 3.006960e-06
+residual = 3.008467e-06
+residual = 3.716356e-06
+residual = 3.722406e-06
+residual = 3.719263e-06
+residual = 4.039382e-06
+residual = 4.051754e-06
+residual = 4.180744e-06
+residual = 4.243306e-06
+residual = 5.194719e-06
+residual = 5.362839e-06
+residual = 5.622733e-06
+num_conv = 0
+V-cycle from h to H
+level = 1
+Solve linear system A_hh x = lambda B_hh x using pase_pcg_solver.
+idx_eig = 0	1	2	3	4	5	6	7	8	9	10	11	12	13	14	15	16	17	18	19	20	21	22	23	24	25	26	27	28	29	30	31	32	33	34	35	36	37	38	39	40	41	42	43	44	45	46	47	48	49	
+LOBPCG for pase system A_hh x = lambda B_hh x
+
+Solving generalized eigenvalue problem without preconditioning
+
+block size 50
+
+No constraints
+
+
+Initial Max. Residual   9.96818979439473e-05
+Iteration 1 	bsize 40 	maxres   1.20093212235535e-03
+
+Eigenvalue lambda   2.17867679299554e-04
+Eigenvalue lambda   5.44657331667361e-04
+Eigenvalue lambda   5.44657331667730e-04
+Eigenvalue lambda   8.71446984035291e-04
+Eigenvalue lambda   1.08926719830464e-03
+Eigenvalue lambda   1.08926719830537e-03
+Eigenvalue lambda   1.41605685067639e-03
+Eigenvalue lambda   1.41605685067721e-03
+Eigenvalue lambda   1.85163795278200e-03
+Eigenvalue lambda   1.85163795278350e-03
+Eigenvalue lambda   1.96066671733262e-03
+Eigenvalue lambda   2.17842760517173e-03
+Eigenvalue lambda   2.17842760517274e-03
+Eigenvalue lambda   2.72303747187619e-03
+Eigenvalue lambda   2.72303747187940e-03
+Eigenvalue lambda   2.83168654720349e-03
+Eigenvalue lambda   2.83168654720564e-03
+Eigenvalue lambda   3.15847619965202e-03
+Eigenvalue lambda   3.15847619965868e-03
+Eigenvalue lambda   3.48540822658683e-03
+Eigenvalue lambda   3.70308606650704e-03
+Eigenvalue lambda   3.70308606656521e-03
+Eigenvalue lambda   4.02930622145517e-03
+Eigenvalue lambda   4.02930622148424e-03
+Eigenvalue lambda   4.35609587407864e-03
+Eigenvalue lambda   4.35609587421478e-03
+Eigenvalue lambda   4.46545682182171e-03
+Eigenvalue lambda   4.46545682275787e-03
+Eigenvalue lambda   4.90070574201721e-03
+Eigenvalue lambda   4.90070574291360e-03
+Eigenvalue lambda   5.44436651973538e-03
+Eigenvalue lambda   5.44436652377750e-03
+Eigenvalue lambda   5.44550542251612e-03
+Eigenvalue lambda   5.66307652267777e-03
+Eigenvalue lambda   5.66307653856802e-03
+Eigenvalue lambda   5.77115617892888e-03
+Eigenvalue lambda   5.77115626266591e-03
+Eigenvalue lambda   6.31576652046225e-03
+Eigenvalue lambda   6.31576698324813e-03
+Eigenvalue lambda   6.64312526311397e-03
+Eigenvalue lambda   6.64313269308976e-03
+Eigenvalue lambda   7.07671485895674e-03
+Eigenvalue lambda   7.07677125238205e-03
+Eigenvalue lambda   7.07814135444184e-03
+Eigenvalue lambda   7.07819636220776e-03
+Eigenvalue lambda   7.40351153554141e-03
+Eigenvalue lambda   7.40354171190886e-03
+Eigenvalue lambda   7.89364063328537e-03
+Eigenvalue lambda   7.94893835880353e-03
+Eigenvalue lambda   8.00059021751829e-03
+Residual   4.67337687729256e-11
+Residual   4.39996326178252e-10
+Residual   4.40353977310429e-10
+Residual   1.39983634798729e-09
+Residual   2.76173410356714e-09
+Residual   2.83895169412250e-09
+Residual   5.18881926761627e-09
+Residual   5.47376362363812e-09
+Residual   1.02934149209151e-08
+Residual   1.01852770980363e-08
+Residual   1.17467438452995e-08
+Residual   1.62368257049522e-08
+Residual   1.51035112945994e-08
+Residual   3.76214924663298e-08
+Residual   4.70840201567650e-08
+Residual   3.27090891479793e-08
+Residual   4.01072102993001e-08
+Residual   4.93701765160790e-08
+Residual   5.68368542767812e-08
+Residual   8.06651254760886e-08
+Residual   7.97517317416176e-08
+Residual   1.73390308209016e-07
+Residual   1.60472527182287e-07
+Residual   2.59573301918464e-07
+Residual   1.96650297326836e-07
+Residual   2.43237334834295e-07
+Residual   3.57417862365333e-07
+Residual   5.89373846049224e-07
+Residual   6.11178478513564e-07
+Residual   7.68795720852851e-07
+Residual   8.69371366729520e-07
+Residual   1.71480457250312e-06
+Residual   1.33928020910112e-06
+Residual   2.27815162238621e-06
+Residual   4.45403534949685e-06
+Residual   1.83734309910721e-06
+Residual   4.62051142506495e-06
+Residual   1.15193666879448e-05
+Residual   1.59034023487442e-05
+Residual   5.01381849692420e-06
+Residual   3.15969561407900e-05
+Residual   1.35029783078495e-05
+Residual   9.80083831240784e-05
+Residual   2.24130059567582e-05
+Residual   1.10396003035920e-04
+Residual   2.19374834277539e-05
+Residual   7.42266168511691e-05
+Residual   1.20093212235535e-03
+Residual   1.09048866040096e-04
+Residual   1.16883609731525e-03
+
+1 iterations
+Interpolate to 0 level
+level = 2
+Solve linear system A_hh x = lambda B_hh x using pase_pcg_solver.
+idx_eig = 0	1	2	3	4	5	6	7	8	9	10	11	12	13	14	15	16	17	18	19	20	21	22	23	24	25	26	27	28	29	30	31	32	33	34	35	36	37	38	39	40	41	42	43	44	45	46	47	48	49	
+LOBPCG for pase system A_hh x = lambda B_hh x
+
+Solving generalized eigenvalue problem without preconditioning
+
+block size 50
+
+No constraints
+
+
+Initial Max. Residual   2.13989581245833e-04
+Iteration 1 	bsize 42 	maxres   3.49738869398009e-03
+
+Eigenvalue lambda   2.17867679299554e-04
+Eigenvalue lambda   5.44657331667571e-04
+Eigenvalue lambda   5.44657331667651e-04
+Eigenvalue lambda   8.71446984036436e-04
+Eigenvalue lambda   1.08926719830469e-03
+Eigenvalue lambda   1.08926719830475e-03
+Eigenvalue lambda   1.41605685067770e-03
+Eigenvalue lambda   1.41605685067784e-03
+Eigenvalue lambda   1.85163795278338e-03
+Eigenvalue lambda   1.85163795278349e-03
+Eigenvalue lambda   1.96066671733566e-03
+Eigenvalue lambda   2.17842760517397e-03
+Eigenvalue lambda   2.17842760517598e-03
+Eigenvalue lambda   2.72303747188426e-03
+Eigenvalue lambda   2.72303747189059e-03
+Eigenvalue lambda   2.83168654722840e-03
+Eigenvalue lambda   2.83168654723313e-03
+Eigenvalue lambda   3.15847619967074e-03
+Eigenvalue lambda   3.15847619967695e-03
+Eigenvalue lambda   3.48540822663315e-03
+Eigenvalue lambda   3.70308606656308e-03
+Eigenvalue lambda   3.70308606670619e-03
+Eigenvalue lambda   4.02930622150607e-03
+Eigenvalue lambda   4.02930622185504e-03
+Eigenvalue lambda   4.35609587417763e-03
+Eigenvalue lambda   4.35609587437443e-03
+Eigenvalue lambda   4.46545682203324e-03
+Eigenvalue lambda   4.46545682384052e-03
+Eigenvalue lambda   4.90070574235814e-03
+Eigenvalue lambda   4.90070574394742e-03
+Eigenvalue lambda   5.44436651839888e-03
+Eigenvalue lambda   5.44436652162878e-03
+Eigenvalue lambda   5.44550542880569e-03
+Eigenvalue lambda   5.66307650562566e-03
+Eigenvalue lambda   5.66307657798470e-03
+Eigenvalue lambda   5.77115617433305e-03
+Eigenvalue lambda   5.77115619183449e-03
+Eigenvalue lambda   6.31576611439457e-03
+Eigenvalue lambda   6.31576725779930e-03
+Eigenvalue lambda   6.64312543271727e-03
+Eigenvalue lambda   6.64313156155246e-03
+Eigenvalue lambda   7.07671549594621e-03
+Eigenvalue lambda   7.07676507300997e-03
+Eigenvalue lambda   7.07814210314884e-03
+Eigenvalue lambda   7.07814247685082e-03
+Eigenvalue lambda   7.40350453374167e-03
+Eigenvalue lambda   7.40351090682613e-03
+Eigenvalue lambda   7.89449737955339e-03
+Eigenvalue lambda   7.94869525783658e-03
+Eigenvalue lambda   8.00307190802184e-03
+Residual   6.02546285033025e-11
+Residual   5.99254243884054e-10
+Residual   5.97072283758411e-10
+Residual   1.74366424425741e-09
+Residual   3.81495607533602e-09
+Residual   4.05385236193577e-09
+Residual   7.95346945769670e-09
+Residual   8.26425150553719e-09
+Residual   2.57614498770856e-08
+Residual   2.22759811587760e-08
+Residual   3.18879992625420e-08
+Residual   3.90901941026565e-08
+Residual   4.91602408963850e-08
+Residual   9.90963082834062e-08
+Residual   1.04791866387453e-07
+Residual   1.26807556687800e-07
+Residual   1.21766219571459e-07
+Residual   1.38926953925026e-07
+Residual   1.44161545838785e-07
+Residual   2.46327483826309e-07
+Residual   2.59501657605152e-07
+Residual   4.26506612017485e-07
+Residual   3.09918934453749e-07
+Residual   6.18228395809264e-07
+Residual   4.32041950488825e-07
+Residual   5.39208564425979e-07
+Residual   6.20098975089192e-07
+Residual   1.40312669047480e-06
+Residual   9.59006155304065e-07
+Residual   1.50789025445182e-06
+Residual   1.48963681737613e-06
+Residual   2.32298791799716e-06
+Residual   3.05875526590036e-06
+Residual   2.67532574929674e-06
+Residual   9.42345303869648e-06
+Residual   2.23857996637405e-06
+Residual   4.42124501725354e-06
+Residual   6.52018131726416e-06
+Residual   3.90924094123911e-05
+Residual   1.74563976148148e-05
+Residual   9.30553575455540e-05
+Residual   4.34990934949858e-05
+Residual   2.40872001677728e-04
+Residual   7.45757444349987e-05
+Residual   1.95604053213172e-05
+Residual   3.30267468133831e-05
+Residual   5.72102556638492e-05
+Residual   3.19767193981316e-03
+Residual   4.10174474510281e-04
+Residual   3.49738869398009e-03
+
+1 iterations
+Interpolate to 0 level
+level = 3
+Solve linear system A_hh x = lambda B_hh x using pase_pcg_solver.
+idx_eig = 0	1	2	3	4	5	6	7	8	9	10	11	12	13	14	15	16	17	18	19	20	21	22	23	24	25	26	27	28	29	30	31	32	33	34	35	36	37	38	39	40	41	42	43	44	45	46	47	48	49	
+LOBPCG for pase system A_hh x = lambda B_hh x
+
+Solving generalized eigenvalue problem without preconditioning
+
+block size 50
+
+No constraints
+
+
+Initial Max. Residual   9.01073963613328e-04
+Iteration 1 	bsize 39 	maxres   4.24449587729340e-03
+
+Eigenvalue lambda   2.17867679299554e-04
+Eigenvalue lambda   5.44657331667638e-04
+Eigenvalue lambda   5.44657331667667e-04
+Eigenvalue lambda   8.71446984036503e-04
+Eigenvalue lambda   1.08926719830468e-03
+Eigenvalue lambda   1.08926719830468e-03
+Eigenvalue lambda   1.41605685067770e-03
+Eigenvalue lambda   1.41605685067771e-03
+Eigenvalue lambda   1.85163795278219e-03
+Eigenvalue lambda   1.85163795278223e-03
+Eigenvalue lambda   1.96066671733356e-03
+Eigenvalue lambda   2.17842760517158e-03
+Eigenvalue lambda   2.17842760517176e-03
+Eigenvalue lambda   2.72303747187200e-03
+Eigenvalue lambda   2.72303747187298e-03
+Eigenvalue lambda   2.83168654719475e-03
+Eigenvalue lambda   2.83168654719706e-03
+Eigenvalue lambda   3.15847619963860e-03
+Eigenvalue lambda   3.15847619963928e-03
+Eigenvalue lambda   3.48540822655180e-03
+Eigenvalue lambda   3.70308606648001e-03
+Eigenvalue lambda   3.70308606651224e-03
+Eigenvalue lambda   4.02930622135893e-03
+Eigenvalue lambda   4.02930622145101e-03
+Eigenvalue lambda   4.35609587396994e-03
+Eigenvalue lambda   4.35609587401197e-03
+Eigenvalue lambda   4.46545682169696e-03
+Eigenvalue lambda   4.46545682201628e-03
+Eigenvalue lambda   4.90070574145144e-03
+Eigenvalue lambda   4.90070574222412e-03
+Eigenvalue lambda   5.44436652036130e-03
+Eigenvalue lambda   5.44436652216315e-03
+Eigenvalue lambda   5.44550542187032e-03
+Eigenvalue lambda   5.66307651072118e-03
+Eigenvalue lambda   5.66307653593834e-03
+Eigenvalue lambda   5.77115617973974e-03
+Eigenvalue lambda   5.77115620923036e-03
+Eigenvalue lambda   6.31576625740627e-03
+Eigenvalue lambda   6.31576668794713e-03
+Eigenvalue lambda   6.64312524430116e-03
+Eigenvalue lambda   6.64312906152099e-03
+Eigenvalue lambda   7.07671449339787e-03
+Eigenvalue lambda   7.07674813782038e-03
+Eigenvalue lambda   7.07813964019820e-03
+Eigenvalue lambda   7.07819917433461e-03
+Eigenvalue lambda   7.40350911214248e-03
+Eigenvalue lambda   7.40354746375734e-03
+Eigenvalue lambda   7.87688429015444e-03
+Eigenvalue lambda   7.94901699972286e-03
+Eigenvalue lambda   7.99115531065563e-03
+Residual   7.18553557879694e-12
+Residual   6.08463494900126e-11
+Residual   4.72290922288368e-11
+Residual   9.62279883085497e-10
+Residual   5.70693254333338e-10
+Residual   2.54925806086103e-09
+Residual   1.60116202567409e-09
+Residual   5.82868592052348e-09
+Residual   6.74568672223456e-09
+Residual   7.30389511005721e-09
+Residual   1.18160096585261e-08
+Residual   1.10308239164572e-08
+Residual   8.58785939263349e-09
+Residual   1.58040388185652e-08
+Residual   4.16743557471236e-08
+Residual   1.37890000765247e-08
+Residual   4.22953902492415e-08
+Residual   9.15289293480829e-08
+Residual   8.31465035059217e-08
+Residual   1.73791774738158e-07
+Residual   1.62980186299577e-07
+Residual   1.31210994193936e-07
+Residual   1.78894187114040e-07
+Residual   2.19746705230633e-07
+Residual   2.58957311620005e-07
+Residual   2.79702822437496e-07
+Residual   5.55894248374509e-07
+Residual   3.67177836872868e-07
+Residual   3.49003182426131e-07
+Residual   9.13820719687073e-07
+Residual   1.84824734780100e-06
+Residual   2.72019518964409e-06
+Residual   1.39477949553303e-06
+Residual   3.62082122327519e-06
+Residual   3.27674273683213e-06
+Residual   3.30465169127181e-06
+Residual   5.96708730706916e-06
+Residual   1.70030104688345e-05
+Residual   1.18266353820352e-05
+Residual   7.33540496422606e-06
+Residual   3.94452247167504e-05
+Residual   1.96558876609303e-05
+Residual   1.38211504155650e-04
+Residual   2.93039422026605e-05
+Residual   3.13473524301982e-04
+Residual   7.74096020502631e-05
+Residual   2.58301436273545e-04
+Residual   2.03456159224211e-03
+Residual   7.41941197358540e-04
+Residual   4.24449587729340e-03
+
+1 iterations
+Interpolate to 0 level
+Set A_Hh and B_Hh
+LOBPCG solve A_Hh U_Hh = lambda_Hh B_Hh U_Hh
+
+Solving generalized eigenvalue problem without preconditioning
+
+block size 50
+
+No constraints
+
+
+Initial Max. Residual   7.52030312173305e-03
+Iteration 1 	bsize 46 	maxres   1.17845359137253e-02
+Iteration 2 	bsize 44 	maxres   9.11382822161461e-03
+Iteration 3 	bsize 39 	maxres   5.86323040199273e-03
+Iteration 4 	bsize 36 	maxres   6.07438331782031e-03
+Iteration 5 	bsize 31 	maxres   7.18812458313882e-03
+Iteration 6 	bsize 30 	maxres   4.74421626378769e-03
+Iteration 7 	bsize 30 	maxres   2.91913171455485e-03
+Iteration 8 	bsize 30 	maxres   1.76634970515250e-03
+Iteration 9 	bsize 29 	maxres   1.13087034229235e-03
+Iteration 10 	bsize 28 	maxres   8.81728644306984e-04
+
+Eigenvalue lambda   2.17867679299554e-04
+Eigenvalue lambda   5.44657331667489e-04
+Eigenvalue lambda   5.44657331667531e-04
+Eigenvalue lambda   8.71446984036410e-04
+Eigenvalue lambda   1.08926719830459e-03
+Eigenvalue lambda   1.08926719830486e-03
+Eigenvalue lambda   1.41605685067763e-03
+Eigenvalue lambda   1.41605685067770e-03
+Eigenvalue lambda   1.85163795278210e-03
+Eigenvalue lambda   1.85163795278220e-03
+Eigenvalue lambda   1.96066671733366e-03
+Eigenvalue lambda   2.17842760517159e-03
+Eigenvalue lambda   2.17842760517188e-03
+Eigenvalue lambda   2.72303747187104e-03
+Eigenvalue lambda   2.72303747187326e-03
+Eigenvalue lambda   2.83168654719380e-03
+Eigenvalue lambda   2.83168654719636e-03
+Eigenvalue lambda   3.15847619963222e-03
+Eigenvalue lambda   3.15847619963324e-03
+Eigenvalue lambda   3.48540822652835e-03
+Eigenvalue lambda   3.70308606645489e-03
+Eigenvalue lambda   3.70308606649257e-03
+Eigenvalue lambda   4.02930622131061e-03
+Eigenvalue lambda   4.02930622140730e-03
+Eigenvalue lambda   4.35609587390704e-03
+Eigenvalue lambda   4.35609587395096e-03
+Eigenvalue lambda   4.46545682152165e-03
+Eigenvalue lambda   4.46545682192141e-03
+Eigenvalue lambda   4.90070574136038e-03
+Eigenvalue lambda   4.90070574186718e-03
+Eigenvalue lambda   5.44436651620668e-03
+Eigenvalue lambda   5.44436651861365e-03
+Eigenvalue lambda   5.44550542014498e-03
+Eigenvalue lambda   5.66307650446232e-03
+Eigenvalue lambda   5.66307652828845e-03
+Eigenvalue lambda   5.77115617268472e-03
+Eigenvalue lambda   5.77115619196732e-03
+Eigenvalue lambda   6.31576618814602e-03
+Eigenvalue lambda   6.31576658413761e-03
+Eigenvalue lambda   6.64312521308039e-03
+Eigenvalue lambda   6.64312832481773e-03
+Eigenvalue lambda   7.07671409171927e-03
+Eigenvalue lambda   7.07674204219764e-03
+Eigenvalue lambda   7.07813894411765e-03
+Eigenvalue lambda   7.07817643803042e-03
+Eigenvalue lambda   7.40350615980460e-03
+Eigenvalue lambda   7.40353347403353e-03
+Eigenvalue lambda   7.87580367220101e-03
+Eigenvalue lambda   7.94878949801021e-03
+Eigenvalue lambda   7.98843807008539e-03
+Residual   2.52953009409639e-10
+Residual   2.98134313620483e-09
+Residual   2.78846519482393e-09
+Residual   8.83504310936413e-09
+Residual   5.92060890101769e-09
+Residual   8.14138551517536e-09
+Residual   3.52902545341312e-09
+Residual   3.83499688943275e-09
+Residual   6.78395252856389e-09
+Residual   6.81620008008517e-09
+Residual   9.18211231756502e-09
+Residual   4.59175293705315e-09
+Residual   4.70100684852122e-09
+Residual   1.18420776178860e-08
+Residual   1.19179116410689e-08
+Residual   6.13297558481828e-09
+Residual   1.00054436307948e-08
+Residual   9.37548466766305e-09
+Residual   9.45043124080052e-09
+Residual   1.33298780960050e-08
+Residual   9.91916302197050e-09
+Residual   1.08317277514929e-08
+Residual   9.65496093347182e-09
+Residual   1.70798913763822e-08
+Residual   9.38665191548071e-09
+Residual   1.15934382481809e-08
+Residual   2.08257485160409e-08
+Residual   1.64946984902414e-08
+Residual   2.22707767822016e-08
+Residual   3.75479494999428e-08
+Residual   7.61482079831764e-08
+Residual   8.09996796228311e-08
+Residual   6.64571697193923e-08
+Residual   1.12168844699704e-07
+Residual   2.75903357765870e-07
+Residual   1.15800812742318e-07
+Residual   2.27694360232619e-07
+Residual   3.51766871781037e-07
+Residual   1.43637732824662e-06
+Residual   5.18555868043813e-07
+Residual   2.21750013251568e-06
+Residual   8.77713487340776e-07
+Residual   9.62149868662992e-06
+Residual   2.16243608244103e-06
+Residual   1.03102607539697e-05
+Residual   2.82862640014614e-06
+Residual   7.83926016914674e-06
+Residual   6.83205245735960e-04
+Residual   3.08829474822773e-05
+Residual   8.81728644306984e-04
+
+10 iterations
+pcg for 0 level 
+idx_eig = 
+0	1	2	3	4	5	6	7	8	9	10	11	12	13	14	15	16	17	18	19	20	21	22	23	24	25	26	27	28	29	30	31	32	33	34	35	36	37	38	39	40	41	42	43	44	45	46	47	48	49	
+compute residual and update eigenvalues
+num_conv = 27
+V-cycle from h to H
+level = 1
+Solve linear system A_hh x = lambda B_hh x using pase_pcg_solver.
+idx_eig = 27	28	29	30	31	32	33	34	35	36	37	38	39	40	41	42	43	44	45	46	47	48	49	
+LOBPCG for pase system A_hh x = lambda B_hh x
+
+Solving generalized eigenvalue problem without preconditioning
+
+block size 50
+
+No constraints
+
+
+Initial Max. Residual   7.67914897040172e-05
+Iteration 1 	bsize 14 	maxres   3.78058957838295e-04
+
+Eigenvalue lambda   2.17867679299557e-04
+Eigenvalue lambda   5.44657331667362e-04
+Eigenvalue lambda   5.44657331667639e-04
+Eigenvalue lambda   8.71446984035308e-04
+Eigenvalue lambda   1.08926719830148e-03
+Eigenvalue lambda   1.08926719830213e-03
+Eigenvalue lambda   1.41605685066977e-03
+Eigenvalue lambda   1.41605685066994e-03
+Eigenvalue lambda   1.85163795275879e-03
+Eigenvalue lambda   1.85163795275899e-03
+Eigenvalue lambda   1.96066671730386e-03
+Eigenvalue lambda   2.17842760512566e-03
+Eigenvalue lambda   2.17842760512717e-03
+Eigenvalue lambda   2.72303747176096e-03
+Eigenvalue lambda   2.72303747176154e-03
+Eigenvalue lambda   2.83168654706511e-03
+Eigenvalue lambda   2.83168654706583e-03
+Eigenvalue lambda   3.15847619943308e-03
+Eigenvalue lambda   3.15847619943456e-03
+Eigenvalue lambda   3.48540822621833e-03
+Eigenvalue lambda   3.70308606606766e-03
+Eigenvalue lambda   3.70308606606837e-03
+Eigenvalue lambda   4.02930622076399e-03
+Eigenvalue lambda   4.02930622076408e-03
+Eigenvalue lambda   4.35609587313207e-03
+Eigenvalue lambda   4.35609587313231e-03
+Eigenvalue lambda   4.46545682052473e-03
+Eigenvalue lambda   4.46545682052580e-03
+Eigenvalue lambda   4.90070573976678e-03
+Eigenvalue lambda   4.90070573976728e-03
+Eigenvalue lambda   5.44436651254823e-03
+Eigenvalue lambda   5.44436651254917e-03
+Eigenvalue lambda   5.44550541483443e-03
+Eigenvalue lambda   5.66307649423142e-03
+Eigenvalue lambda   5.66307649424342e-03
+Eigenvalue lambda   5.77115616492011e-03
+Eigenvalue lambda   5.77115616494639e-03
+Eigenvalue lambda   6.31576603233664e-03
+Eigenvalue lambda   6.31576603281125e-03
+Eigenvalue lambda   6.64312508916424e-03
+Eigenvalue lambda   6.64312512877305e-03
+Eigenvalue lambda   7.07671329052542e-03
+Eigenvalue lambda   7.07671395746523e-03
+Eigenvalue lambda   7.07813680688927e-03
+Eigenvalue lambda   7.07813708442580e-03
+Eigenvalue lambda   7.40350318887646e-03
+Eigenvalue lambda   7.40350487160130e-03
+Eigenvalue lambda   7.85671909606462e-03
+Eigenvalue lambda   7.94845489199929e-03
+Eigenvalue lambda   7.97103269759549e-03
+Residual   4.00830348786464e-16
+Residual   1.76587659704361e-14
+Residual   1.71902572617208e-14
+Residual   1.38143031566038e-13
+Residual   2.44689262406187e-13
+Residual   2.40843052333387e-13
+Residual   1.02346021572722e-12
+Residual   1.02791079179712e-12
+Residual   3.74110856843284e-12
+Residual   3.43843851017254e-12
+Residual   7.57545920490453e-12
+Residual   6.06914516473134e-12
+Residual   9.28520828545380e-12
+Residual   4.25565592827752e-11
+Residual   4.12118413222689e-11
+Residual   4.57925069367188e-11
+Residual   4.84937346118767e-11
+Residual   9.43902811153764e-11
+Residual   7.52676649536009e-11
+Residual   2.53567747114297e-10
+Residual   2.69195069462678e-10
+Residual   3.42658079220304e-10
+Residual   3.43130269172392e-10
+Residual   6.30684988401272e-10
+Residual   5.14700386309730e-10
+Residual   5.46784178697037e-10
+Residual   8.88776975675942e-10
+Residual   1.52520006404711e-09
+Residual   7.34951606288336e-10
+Residual   2.36274262114679e-09
+Residual   4.92095420203761e-09
+Residual   5.24047671750263e-09
+Residual   5.82184911714326e-09
+Residual   9.47159441124352e-09
+Residual   1.30900276965196e-08
+Residual   7.97667895422390e-09
+Residual   5.85570802913248e-08
+Residual   2.47277308505901e-07
+Residual   2.98615444362492e-07
+Residual   2.28392717050876e-07
+Residual   1.44472649172145e-06
+Residual   9.45717970486399e-07
+Residual   4.95581333950750e-06
+Residual   8.56123632791776e-07
+Residual   3.82200666634520e-06
+Residual   2.31877619788430e-06
+Residual   8.18457331331468e-06
+Residual   3.78058957838295e-04
+Residual   3.97330386662242e-05
+Residual   3.44955545539284e-04
+
+1 iterations
+Interpolate to 0 level
+level = 2
+Solve linear system A_hh x = lambda B_hh x using pase_pcg_solver.
+idx_eig = 27	28	29	30	31	32	33	34	35	36	37	38	39	40	41	42	43	44	45	46	47	48	49	
+LOBPCG for pase system A_hh x = lambda B_hh x
+
+Solving generalized eigenvalue problem without preconditioning
+
+block size 50
+
+No constraints
+
+
+Initial Max. Residual   1.63744694126099e-04
+Iteration 1 	bsize 18 	maxres   2.53914478460704e-03
+
+Eigenvalue lambda   2.17867679299557e-04
+Eigenvalue lambda   5.44657331667320e-04
+Eigenvalue lambda   5.44657331667457e-04
+Eigenvalue lambda   8.71446984035327e-04
+Eigenvalue lambda   1.08926719830186e-03
+Eigenvalue lambda   1.08926719830187e-03
+Eigenvalue lambda   1.41605685066982e-03
+Eigenvalue lambda   1.41605685066983e-03
+Eigenvalue lambda   1.85163795275898e-03
+Eigenvalue lambda   1.85163795275902e-03
+Eigenvalue lambda   1.96066671730420e-03
+Eigenvalue lambda   2.17842760512699e-03
+Eigenvalue lambda   2.17842760512707e-03
+Eigenvalue lambda   2.72303747176132e-03
+Eigenvalue lambda   2.72303747176135e-03
+Eigenvalue lambda   2.83168654706524e-03
+Eigenvalue lambda   2.83168654706528e-03
+Eigenvalue lambda   3.15847619943309e-03
+Eigenvalue lambda   3.15847619943319e-03
+Eigenvalue lambda   3.48540822621850e-03
+Eigenvalue lambda   3.70308606606750e-03
+Eigenvalue lambda   3.70308606606764e-03
+Eigenvalue lambda   4.02930622076421e-03
+Eigenvalue lambda   4.02930622076441e-03
+Eigenvalue lambda   4.35609587313223e-03
+Eigenvalue lambda   4.35609587313225e-03
+Eigenvalue lambda   4.46545682052481e-03
+Eigenvalue lambda   4.46545682052526e-03
+Eigenvalue lambda   4.90070573976662e-03
+Eigenvalue lambda   4.90070573976732e-03
+Eigenvalue lambda   5.44436651254827e-03
+Eigenvalue lambda   5.44436651255093e-03
+Eigenvalue lambda   5.44550541483415e-03
+Eigenvalue lambda   5.66307649423015e-03
+Eigenvalue lambda   5.66307649425491e-03
+Eigenvalue lambda   5.77115616491824e-03
+Eigenvalue lambda   5.77115616498528e-03
+Eigenvalue lambda   6.31576603167768e-03
+Eigenvalue lambda   6.31576603310547e-03
+Eigenvalue lambda   6.64312508875897e-03
+Eigenvalue lambda   6.64312509117868e-03
+Eigenvalue lambda   7.07671330137552e-03
+Eigenvalue lambda   7.07671337096018e-03
+Eigenvalue lambda   7.07813678997538e-03
+Eigenvalue lambda   7.07813713727863e-03
+Eigenvalue lambda   7.40350326190386e-03
+Eigenvalue lambda   7.40350476634376e-03
+Eigenvalue lambda   7.85480668226196e-03
+Eigenvalue lambda   7.94847913440316e-03
+Eigenvalue lambda   7.96535537708325e-03
+Residual   6.89601859643145e-16
+Residual   4.42736506757250e-14
+Residual   4.50802312212998e-14
+Residual   4.77027156010797e-13
+Residual   6.49968899625528e-13
+Residual   7.86039398871968e-13
+Residual   3.59211172295782e-12
+Residual   3.43359927202144e-12
+Residual   1.21100889128191e-11
+Residual   9.73263912880807e-12
+Residual   1.79357446347757e-11
+Residual   2.03016267069070e-11
+Residual   2.45781770431553e-11
+Residual   1.16961699309658e-10
+Residual   1.63805152407345e-10
+Residual   2.29328888482617e-10
+Residual   1.39136389926841e-10
+Residual   3.49234287056790e-10
+Residual   2.89947119719935e-10
+Residual   6.73791266216429e-10
+Residual   1.16484037417903e-09
+Residual   8.30233771712932e-10
+Residual   1.90973729827249e-09
+Residual   1.55611407518010e-09
+Residual   2.44345093683037e-09
+Residual   1.33282280933795e-09
+Residual   4.62617633611669e-09
+Residual   7.70206632417697e-09
+Residual   2.49113060339840e-09
+Residual   7.12280465957945e-09
+Residual   1.15452752972413e-08
+Residual   6.68430247066385e-08
+Residual   1.24050414124265e-08
+Residual   6.51606348751294e-08
+Residual   1.67760166763623e-07
+Residual   5.01415873194309e-08
+Residual   2.43187646842965e-07
+Residual   2.59047299830849e-07
+Residual   1.28802243534797e-06
+Residual   3.32295007071636e-07
+Residual   8.61893940573259e-07
+Residual   4.37617173646371e-06
+Residual   7.50596095759398e-06
+Residual   1.11677983195238e-06
+Residual   1.72934897169662e-05
+Residual   1.27246374206117e-05
+Residual   3.74583579008074e-05
+Residual   2.53914478460704e-03
+Residual   1.58303532594694e-04
+Residual   2.09461134678676e-03
+
+1 iterations
+Interpolate to 0 level
+level = 3
+Solve linear system A_hh x = lambda B_hh x using pase_pcg_solver.
+idx_eig = 27	28	29	30	31	32	33	34	35	36	37	38	39	40	41	42	43	44	45	46	47	48	49	
+LOBPCG for pase system A_hh x = lambda B_hh x
+
+Solving generalized eigenvalue problem without preconditioning
+
+block size 50
+
+No constraints
+
+
+Initial Max. Residual   7.22862459531712e-04
+Iteration 1 	bsize 20 	maxres   3.80791682731763e-03
+
+Eigenvalue lambda   2.17867679299557e-04
+Eigenvalue lambda   5.44657331667451e-04
+Eigenvalue lambda   5.44657331667468e-04
+Eigenvalue lambda   8.71446984035381e-04
+Eigenvalue lambda   1.08926719830191e-03
+Eigenvalue lambda   1.08926719830192e-03
+Eigenvalue lambda   1.41605685066982e-03
+Eigenvalue lambda   1.41605685066984e-03
+Eigenvalue lambda   1.85163795275903e-03
+Eigenvalue lambda   1.85163795275904e-03
+Eigenvalue lambda   1.96066671730427e-03
+Eigenvalue lambda   2.17842760512697e-03
+Eigenvalue lambda   2.17842760512698e-03
+Eigenvalue lambda   2.72303747176138e-03
+Eigenvalue lambda   2.72303747176139e-03
+Eigenvalue lambda   2.83168654706526e-03
+Eigenvalue lambda   2.83168654706528e-03
+Eigenvalue lambda   3.15847619943311e-03
+Eigenvalue lambda   3.15847619943321e-03
+Eigenvalue lambda   3.48540822621850e-03
+Eigenvalue lambda   3.70308606606759e-03
+Eigenvalue lambda   3.70308606606767e-03
+Eigenvalue lambda   4.02930622076427e-03
+Eigenvalue lambda   4.02930622076441e-03
+Eigenvalue lambda   4.35609587313221e-03
+Eigenvalue lambda   4.35609587313223e-03
+Eigenvalue lambda   4.46545682052487e-03
+Eigenvalue lambda   4.46545682052515e-03
+Eigenvalue lambda   4.90070573976672e-03
+Eigenvalue lambda   4.90070573976689e-03
+Eigenvalue lambda   5.44436651254708e-03
+Eigenvalue lambda   5.44436651255007e-03
+Eigenvalue lambda   5.44550541483389e-03
+Eigenvalue lambda   5.66307649422840e-03
+Eigenvalue lambda   5.66307649424267e-03
+Eigenvalue lambda   5.77115616491772e-03
+Eigenvalue lambda   5.77115616493623e-03
+Eigenvalue lambda   6.31576603202220e-03
+Eigenvalue lambda   6.31576603300449e-03
+Eigenvalue lambda   6.64312508902809e-03
+Eigenvalue lambda   6.64312510463076e-03
+Eigenvalue lambda   7.07671328365268e-03
+Eigenvalue lambda   7.07671393258651e-03
+Eigenvalue lambda   7.07813680370420e-03
+Eigenvalue lambda   7.07813699871011e-03
+Eigenvalue lambda   7.40350305952037e-03
+Eigenvalue lambda   7.40350413083078e-03
+Eigenvalue lambda   7.84905739385204e-03
+Eigenvalue lambda   7.94835799854321e-03
+Eigenvalue lambda   7.98232008399756e-03
+Residual   1.26112377456420e-15
+Residual   9.13679582506729e-14
+Residual   1.11465190138969e-13
+Residual   1.07426631533296e-12
+Residual   1.85259920119692e-12
+Residual   2.36644862274263e-12
+Residual   1.03002818404926e-11
+Residual   9.63692651775564e-12
+Residual   2.45027587692525e-11
+Residual   2.63030633207439e-11
+Residual   6.93276157490921e-11
+Residual   5.39160150286805e-11
+Residual   6.67859990020364e-11
+Residual   3.26973939266761e-10
+Residual   3.92262742835412e-10
+Residual   3.11701578346773e-10
+Residual   4.48434334925394e-10
+Residual   5.93426761653511e-10
+Residual   8.64660057572243e-10
+Residual   2.64876686993330e-09
+Residual   2.56176490085786e-09
+Residual   2.27970922588366e-09
+Residual   5.24051670913767e-09
+Residual   6.59529284385540e-09
+Residual   5.26812304438658e-09
+Residual   5.24861968881967e-09
+Residual   9.84150950110775e-09
+Residual   1.14614015434471e-08
+Residual   8.20217835062119e-09
+Residual   6.72366542239293e-09
+Residual   1.24087968780160e-08
+Residual   3.45619786937721e-08
+Residual   4.33380524037643e-08
+Residual   4.99143957912967e-08
+Residual   7.11896214152041e-08
+Residual   4.11244503242083e-08
+Residual   6.52081897329588e-08
+Residual   6.31548225513525e-07
+Residual   6.69044671191831e-07
+Residual   4.51292328466867e-07
+Residual   4.44531829084211e-06
+Residual   1.08389740714332e-06
+Residual   2.11908280025121e-05
+Residual   3.15691784594504e-06
+Residual   1.01118885844001e-05
+Residual   7.72126457122570e-06
+Residual   2.19134592880157e-05
+Residual   6.05769490210989e-04
+Residual   1.52291130927836e-04
+Residual   3.80791682731763e-03
+
+1 iterations
+Interpolate to 0 level
+Set A_Hh and B_Hh
+LOBPCG solve A_Hh U_Hh = lambda_Hh B_Hh U_Hh
+
+Solving generalized eigenvalue problem without preconditioning
+
+block size 50
+
+No constraints
+
+
+Initial Max. Residual   9.77715910964904e-03
+Iteration 1 	bsize 26 	maxres   1.01263778339298e-02
+Iteration 2 	bsize 23 	maxres   7.13522516304143e-03
+Iteration 3 	bsize 21 	maxres   5.19056202085263e-03
+Iteration 4 	bsize 20 	maxres   2.75906914754760e-03
+Iteration 5 	bsize 19 	maxres   1.65453732737841e-03
+Iteration 6 	bsize 18 	maxres   9.82429589421991e-04
+Iteration 7 	bsize 17 	maxres   6.72034675713998e-04
+Iteration 8 	bsize 15 	maxres   4.65145896205178e-04
+Iteration 9 	bsize 15 	maxres   3.46625316427351e-04
+Iteration 10 	bsize 15 	maxres   2.78921743670559e-04
+
+Eigenvalue lambda   2.17867679299557e-04
+Eigenvalue lambda   5.44657331667302e-04
+Eigenvalue lambda   5.44657331667440e-04
+Eigenvalue lambda   8.71446984035361e-04
+Eigenvalue lambda   1.08926719830182e-03
+Eigenvalue lambda   1.08926719830196e-03
+Eigenvalue lambda   1.41605685066976e-03
+Eigenvalue lambda   1.41605685066991e-03
+Eigenvalue lambda   1.85163795275892e-03
+Eigenvalue lambda   1.85163795275904e-03
+Eigenvalue lambda   1.96066671730414e-03
+Eigenvalue lambda   2.17842760512694e-03
+Eigenvalue lambda   2.17842760512715e-03
+Eigenvalue lambda   2.72303747176139e-03
+Eigenvalue lambda   2.72303747176147e-03
+Eigenvalue lambda   2.83168654706528e-03
+Eigenvalue lambda   2.83168654706539e-03
+Eigenvalue lambda   3.15847619943316e-03
+Eigenvalue lambda   3.15847619943333e-03
+Eigenvalue lambda   3.48540822621844e-03
+Eigenvalue lambda   3.70308606606750e-03
+Eigenvalue lambda   3.70308606606762e-03
+Eigenvalue lambda   4.02930622076422e-03
+Eigenvalue lambda   4.02930622076430e-03
+Eigenvalue lambda   4.35609587313225e-03
+Eigenvalue lambda   4.35609587313232e-03
+Eigenvalue lambda   4.46545682052476e-03
+Eigenvalue lambda   4.46545682052491e-03
+Eigenvalue lambda   4.90070573976665e-03
+Eigenvalue lambda   4.90070573976684e-03
+Eigenvalue lambda   5.44436651254677e-03
+Eigenvalue lambda   5.44436651254871e-03
+Eigenvalue lambda   5.44550541483223e-03
+Eigenvalue lambda   5.66307649422633e-03
+Eigenvalue lambda   5.66307649424190e-03
+Eigenvalue lambda   5.77115616491627e-03
+Eigenvalue lambda   5.77115616493425e-03
+Eigenvalue lambda   6.31576603175147e-03
+Eigenvalue lambda   6.31576603264786e-03
+Eigenvalue lambda   6.64312508872747e-03
+Eigenvalue lambda   6.64312509706232e-03
+Eigenvalue lambda   7.07671328298998e-03
+Eigenvalue lambda   7.07671364143621e-03
+Eigenvalue lambda   7.07813679235428e-03
+Eigenvalue lambda   7.07813695196394e-03
+Eigenvalue lambda   7.40350303897298e-03
+Eigenvalue lambda   7.40350388454894e-03
+Eigenvalue lambda   7.84881113408973e-03
+Eigenvalue lambda   7.94834695509715e-03
+Eigenvalue lambda   7.97248597518796e-03
+Residual   2.72892983880552e-15
+Residual   1.87949476177149e-13
+Residual   2.40617464485571e-13
+Residual   3.34532706078953e-12
+Residual   1.03192346815777e-11
+Residual   3.07653168329822e-12
+Residual   2.64102617931158e-11
+Residual   2.01654145141781e-11
+Residual   6.37380860451320e-11
+Residual   9.79708269522340e-11
+Residual   2.20718098510737e-10
+Residual   2.04665479524882e-10
+Residual   1.66998631989462e-10
+Residual   9.72691237051365e-10
+Residual   7.30538512763539e-10
+Residual   1.25527575991045e-09
+Residual   8.50296178301645e-10
+Residual   2.31043806068697e-09
+Residual   1.72071203720609e-09
+Residual   7.25179154795834e-09
+Residual   5.19758400678120e-09
+Residual   8.20447563774033e-09
+Residual   6.27774716765403e-09
+Residual   9.18719115071600e-09
+Residual   8.48454867096343e-09
+Residual   1.08955264259415e-08
+Residual   1.26063170465342e-08
+Residual   9.54798935100910e-09
+Residual   8.07437273292383e-09
+Residual   1.39408168575320e-08
+Residual   1.10712637061422e-08
+Residual   1.48715503151265e-08
+Residual   1.12985428672214e-08
+Residual   1.53338404117728e-08
+Residual   3.60660662245778e-08
+Residual   1.22872885363633e-08
+Residual   1.83746350467396e-08
+Residual   6.59474292215369e-08
+Residual   1.58738861396775e-07
+Residual   6.59367675776014e-08
+Residual   2.62659008045923e-07
+Residual   2.40385312421521e-07
+Residual   3.59577304455034e-06
+Residual   2.00206650897856e-07
+Residual   2.04114573407189e-06
+Residual   6.26046538641685e-07
+Residual   1.37809393044003e-06
+Residual   2.78921743670559e-04
+Residual   2.16689618666665e-05
+Residual   2.23945256959147e-04
+
+10 iterations
+pcg for 0 level 
+idx_eig = 
+27	28	29	30	31	32	33	34	35	36	37	38	39	40	41	42	43	44	45	46	47	48	49	
+compute residual and update eigenvalues
+num_conv = 37
+V-cycle from h to H
+level = 1
+Solve linear system A_hh x = lambda B_hh x using pase_pcg_solver.
+idx_eig = 37	38	39	40	41	42	43	44	45	46	47	48	49	
+LOBPCG for pase system A_hh x = lambda B_hh x
+
+Solving generalized eigenvalue problem without preconditioning
+
+block size 50
+
+No constraints
+
+
+Initial Max. Residual   5.42473356134931e-05
+Iteration 1 	bsize 9 	maxres   5.09995649663602e-04
+
+Eigenvalue lambda   2.17867679299560e-04
+Eigenvalue lambda   5.44657331667407e-04
+Eigenvalue lambda   5.44657331667579e-04
+Eigenvalue lambda   8.71446984035357e-04
+Eigenvalue lambda   1.08926719830195e-03
+Eigenvalue lambda   1.08926719830228e-03
+Eigenvalue lambda   1.41605685066968e-03
+Eigenvalue lambda   1.41605685066999e-03
+Eigenvalue lambda   1.85163795275920e-03
+Eigenvalue lambda   1.85163795275929e-03
+Eigenvalue lambda   1.96066671730440e-03
+Eigenvalue lambda   2.17842760512700e-03
+Eigenvalue lambda   2.17842760512713e-03
+Eigenvalue lambda   2.72303747176106e-03
+Eigenvalue lambda   2.72303747176154e-03
+Eigenvalue lambda   2.83168654706506e-03
+Eigenvalue lambda   2.83168654706538e-03
+Eigenvalue lambda   3.15847619943311e-03
+Eigenvalue lambda   3.15847619943320e-03
+Eigenvalue lambda   3.48540822621853e-03
+Eigenvalue lambda   3.70308606606743e-03
+Eigenvalue lambda   3.70308606606777e-03
+Eigenvalue lambda   4.02930622076429e-03
+Eigenvalue lambda   4.02930622076448e-03
+Eigenvalue lambda   4.35609587313211e-03
+Eigenvalue lambda   4.35609587313216e-03
+Eigenvalue lambda   4.46545682052458e-03
+Eigenvalue lambda   4.46545682052486e-03
+Eigenvalue lambda   4.90070573976654e-03
+Eigenvalue lambda   4.90070573976680e-03
+Eigenvalue lambda   5.44436651254631e-03
+Eigenvalue lambda   5.44436651254659e-03
+Eigenvalue lambda   5.44550541483111e-03
+Eigenvalue lambda   5.66307649422371e-03
+Eigenvalue lambda   5.66307649422385e-03
+Eigenvalue lambda   5.77115616491410e-03
+Eigenvalue lambda   5.77115616491447e-03
+Eigenvalue lambda   6.31576603154912e-03
+Eigenvalue lambda   6.31576603155235e-03
+Eigenvalue lambda   6.64312508853091e-03
+Eigenvalue lambda   6.64312508854565e-03
+Eigenvalue lambda   7.07671327459268e-03
+Eigenvalue lambda   7.07671328458389e-03
+Eigenvalue lambda   7.07813678614736e-03
+Eigenvalue lambda   7.07813678745738e-03
+Eigenvalue lambda   7.40350293263264e-03
+Eigenvalue lambda   7.40350295363813e-03
+Eigenvalue lambda   7.84265753309117e-03
+Eigenvalue lambda   7.94825374441843e-03
+Eigenvalue lambda   7.96063286261520e-03
+Residual   1.03907462328467e-15
+Residual   6.22369614081099e-14
+Residual   5.85979345178681e-14
+Residual   7.08809506187966e-13
+Residual   1.04516564199252e-12
+Residual   1.81810976339133e-12
+Residual   6.03807177175554e-12
+Residual   6.37232920579160e-12
+Residual   2.00719831849675e-11
+Residual   1.84833999343000e-11
+Residual   4.39932067123340e-11
+Residual   4.17431911731958e-11
+Residual   4.19406406389438e-11
+Residual   2.24167411609327e-10
+Residual   2.45229224197967e-10
+Residual   2.76179818652939e-10
+Residual   2.59842126827714e-10
+Residual   5.58502291766419e-10
+Residual   5.44982785666176e-10
+Residual   1.93468056182857e-09
+Residual   1.78284073620058e-09
+Residual   1.83158841412513e-09
+Residual   3.05825806479124e-09
+Residual   4.11725744633656e-09
+Residual   3.53721826571128e-09
+Residual   3.37327363664452e-09
+Residual   6.07518739932195e-11
+Residual   7.74843952223219e-09
+Residual   5.72077753258874e-11
+Residual   3.61091908958285e-11
+Residual   1.72164012640398e-10
+Residual   1.02724629658474e-10
+Residual   1.65947921259901e-10
+Residual   2.30929255938318e-10
+Residual   6.32069751823387e-10
+Residual   5.05881245994332e-10
+Residual   1.76986671212971e-10
+Residual   2.29497500703409e-09
+Residual   4.59315039573016e-09
+Residual   2.60511799838276e-09
+Residual   1.06649889350130e-08
+Residual   1.23696007573537e-07
+Residual   1.33533883355255e-06
+Residual   1.20836606238342e-07
+Residual   4.76461376694436e-07
+Residual   7.86188839201441e-07
+Residual   1.48974375322372e-06
+Residual   2.84308829529417e-04
+Residual   4.81790629555936e-05
+Residual   5.09995649663602e-04
+
+1 iterations
+Interpolate to 0 level
+level = 2
+Solve linear system A_hh x = lambda B_hh x using pase_pcg_solver.
+idx_eig = 37	38	39	40	41	42	43	44	45	46	47	48	49	
+LOBPCG for pase system A_hh x = lambda B_hh x
+
+Solving generalized eigenvalue problem without preconditioning
+
+block size 50
+
+No constraints
+
+
+Initial Max. Residual   9.87511861336773e-05
+Iteration 1 	bsize 10 	maxres   1.12893557093101e-03
+
+Eigenvalue lambda   2.17867679299560e-04
+Eigenvalue lambda   5.44657331667365e-04
+Eigenvalue lambda   5.44657331667555e-04
+Eigenvalue lambda   8.71446984035381e-04
+Eigenvalue lambda   1.08926719830182e-03
+Eigenvalue lambda   1.08926719830196e-03
+Eigenvalue lambda   1.41605685066975e-03
+Eigenvalue lambda   1.41605685066987e-03
+Eigenvalue lambda   1.85163795275903e-03
+Eigenvalue lambda   1.85163795275905e-03
+Eigenvalue lambda   1.96066671730429e-03
+Eigenvalue lambda   2.17842760512695e-03
+Eigenvalue lambda   2.17842760512700e-03
+Eigenvalue lambda   2.72303747176129e-03
+Eigenvalue lambda   2.72303747176140e-03
+Eigenvalue lambda   2.83168654706522e-03
+Eigenvalue lambda   2.83168654706534e-03
+Eigenvalue lambda   3.15847619943314e-03
+Eigenvalue lambda   3.15847619943322e-03
+Eigenvalue lambda   3.48540822621847e-03
+Eigenvalue lambda   3.70308606606766e-03
+Eigenvalue lambda   3.70308606606772e-03
+Eigenvalue lambda   4.02930622076418e-03
+Eigenvalue lambda   4.02930622076428e-03
+Eigenvalue lambda   4.35609587313215e-03
+Eigenvalue lambda   4.35609587313220e-03
+Eigenvalue lambda   4.46545682052471e-03
+Eigenvalue lambda   4.46545682052492e-03
+Eigenvalue lambda   4.90070573976647e-03
+Eigenvalue lambda   4.90070573976671e-03
+Eigenvalue lambda   5.44436651254642e-03
+Eigenvalue lambda   5.44436651254650e-03
+Eigenvalue lambda   5.44550541483099e-03
+Eigenvalue lambda   5.66307649422374e-03
+Eigenvalue lambda   5.66307649422380e-03
+Eigenvalue lambda   5.77115616491437e-03
+Eigenvalue lambda   5.77115616491446e-03
+Eigenvalue lambda   6.31576603154972e-03
+Eigenvalue lambda   6.31576603155101e-03
+Eigenvalue lambda   6.64312508853037e-03
+Eigenvalue lambda   6.64312508853379e-03
+Eigenvalue lambda   7.07671327466001e-03
+Eigenvalue lambda   7.07671327583509e-03
+Eigenvalue lambda   7.07813678602745e-03
+Eigenvalue lambda   7.07813678623604e-03
+Eigenvalue lambda   7.40350292807801e-03
+Eigenvalue lambda   7.40350296062625e-03
+Eigenvalue lambda   7.84279947397170e-03
+Eigenvalue lambda   7.94826196502462e-03
+Eigenvalue lambda   7.95780866633439e-03
+Residual   1.02857015548050e-15
+Residual   8.49285184732301e-14
+Residual   8.01990395803622e-14
+Residual   9.55434262152099e-13
+Residual   1.45892474798481e-12
+Residual   2.38925840533710e-12
+Residual   8.12427547036689e-12
+Residual   8.38753563937135e-12
+Residual   2.79632545851445e-11
+Residual   2.24895868927047e-11
+Residual   5.72033588569612e-11
+Residual   5.52958993033807e-11
+Residual   5.59068826587074e-11
+Residual   2.93986211798392e-10
+Residual   3.13253266273363e-10
+Residual   3.57814367037046e-10
+Residual   3.42470497891530e-10
+Residual   7.02088843825716e-10
+Residual   7.37115693920714e-10
+Residual   2.53233433634534e-09
+Residual   2.29053250163807e-09
+Residual   2.36093714440815e-09
+Residual   4.06824632758177e-09
+Residual   5.32070136789423e-09
+Residual   4.44323614162300e-09
+Residual   4.41848973299639e-09
+Residual   5.05839713501111e-10
+Residual   1.01386478694972e-08
+Residual   1.92123243750849e-10
+Residual   3.94475011329199e-10
+Residual   1.17073754889090e-09
+Residual   2.96550943572192e-10
+Residual   4.45592014424950e-10
+Residual   6.67051207443907e-10
+Residual   5.46841868662833e-09
+Residual   1.78221553912299e-09
+Residual   2.32888662003578e-09
+Residual   5.91929982900602e-09
+Residual   8.06729199950201e-09
+Residual   4.16913175911474e-09
+Residual   4.71266912240914e-08
+Residual   3.82969005616837e-07
+Residual   5.07236470021430e-07
+Residual   9.99259750703507e-08
+Residual   2.76519844154520e-07
+Residual   6.02979149579993e-07
+Residual   4.26363201827853e-06
+Residual   7.83652726410429e-04
+Residual   1.30772898099768e-04
+Residual   1.12893557093101e-03
+
+1 iterations
+Interpolate to 0 level
+level = 3
+Solve linear system A_hh x = lambda B_hh x using pase_pcg_solver.
+idx_eig = 37	38	39	40	41	42	43	44	45	46	47	48	49	
+LOBPCG for pase system A_hh x = lambda B_hh x
+
+Solving generalized eigenvalue problem without preconditioning
+
+block size 50
+
+No constraints
+
+
+Initial Max. Residual   5.47598434243275e-04
+Iteration 1 	bsize 12 	maxres   2.14861907411913e-03
+
+Eigenvalue lambda   2.17867679299560e-04
+Eigenvalue lambda   5.44657331667459e-04
+Eigenvalue lambda   5.44657331667469e-04
+Eigenvalue lambda   8.71446984035379e-04
+Eigenvalue lambda   1.08926719830192e-03
+Eigenvalue lambda   1.08926719830193e-03
+Eigenvalue lambda   1.41605685066981e-03
+Eigenvalue lambda   1.41605685066982e-03
+Eigenvalue lambda   1.85163795275903e-03
+Eigenvalue lambda   1.85163795275906e-03
+Eigenvalue lambda   1.96066671730425e-03
+Eigenvalue lambda   2.17842760512691e-03
+Eigenvalue lambda   2.17842760512697e-03
+Eigenvalue lambda   2.72303747176137e-03
+Eigenvalue lambda   2.72303747176138e-03
+Eigenvalue lambda   2.83168654706529e-03
+Eigenvalue lambda   2.83168654706531e-03
+Eigenvalue lambda   3.15847619943310e-03
+Eigenvalue lambda   3.15847619943318e-03
+Eigenvalue lambda   3.48540822621851e-03
+Eigenvalue lambda   3.70308606606767e-03
+Eigenvalue lambda   3.70308606606768e-03
+Eigenvalue lambda   4.02930622076424e-03
+Eigenvalue lambda   4.02930622076425e-03
+Eigenvalue lambda   4.35609587313210e-03
+Eigenvalue lambda   4.35609587313217e-03
+Eigenvalue lambda   4.46545682052474e-03
+Eigenvalue lambda   4.46545682052484e-03
+Eigenvalue lambda   4.90070573976643e-03
+Eigenvalue lambda   4.90070573976668e-03
+Eigenvalue lambda   5.44436651254645e-03
+Eigenvalue lambda   5.44436651254646e-03
+Eigenvalue lambda   5.44550541483096e-03
+Eigenvalue lambda   5.66307649422365e-03
+Eigenvalue lambda   5.66307649422378e-03
+Eigenvalue lambda   5.77115616491436e-03
+Eigenvalue lambda   5.77115616491440e-03
+Eigenvalue lambda   6.31576603155008e-03
+Eigenvalue lambda   6.31576603155142e-03
+Eigenvalue lambda   6.64312508853225e-03
+Eigenvalue lambda   6.64312508856845e-03
+Eigenvalue lambda   7.07671327455067e-03
+Eigenvalue lambda   7.07671328885320e-03
+Eigenvalue lambda   7.07813678626531e-03
+Eigenvalue lambda   7.07813678863705e-03
+Eigenvalue lambda   7.40350293243819e-03
+Eigenvalue lambda   7.40350294875760e-03
+Eigenvalue lambda   7.84209857970645e-03
+Eigenvalue lambda   7.94822959292267e-03
+Eigenvalue lambda   7.96554893612312e-03
+Residual   1.25432726118068e-15
+Residual   1.07365350660215e-13
+Residual   9.75500003888139e-14
+Residual   1.17662512724154e-12
+Residual   2.19460697339490e-12
+Residual   2.93896063417013e-12
+Residual   9.99129142705207e-12
+Residual   1.02599890958851e-11
+Residual   3.39052221216291e-11
+Residual   2.36290183226512e-11
+Residual   7.16735314944657e-11
+Residual   6.42163553168691e-11
+Residual   6.33158610153111e-11
+Residual   3.60738185080322e-10
+Residual   3.48571418237609e-10
+Residual   3.85903128601917e-10
+Residual   4.40301010112864e-10
+Residual   7.92058367992649e-10
+Residual   8.12839962604537e-10
+Residual   2.79453142266939e-09
+Residual   2.76375029366587e-09
+Residual   2.54165820573491e-09
+Residual   4.41173983411366e-09
+Residual   5.65434220139613e-09
+Residual   4.23480240161468e-09
+Residual   4.87341527198183e-09
+Residual   2.22479257362478e-09
+Residual   9.77059631982366e-09
+Residual   6.22680544195709e-10
+Residual   3.49097968437434e-10
+Residual   1.06730254355002e-09
+Residual   2.39856492580046e-09
+Residual   2.31576052031912e-09
+Residual   2.34837779560905e-09
+Residual   6.95943877871531e-09
+Residual   6.54946521130616e-09
+Residual   7.58189578018380e-09
+Residual   1.41125726936945e-08
+Residual   3.83116634112477e-08
+Residual   2.72551060309716e-08
+Residual   1.08283839093223e-07
+Residual   1.26659111147510e-07
+Residual   3.15913010594227e-06
+Residual   3.31838272642376e-07
+Residual   1.09449167934692e-06
+Residual   1.97008879002687e-06
+Residual   2.25532770114051e-06
+Residual   4.87106913815600e-04
+Residual   8.33211746085239e-05
+Residual   2.14861907411913e-03
+
+1 iterations
+Interpolate to 0 level
+Set A_Hh and B_Hh
+LOBPCG solve A_Hh U_Hh = lambda_Hh B_Hh U_Hh
+
+Solving generalized eigenvalue problem without preconditioning
+
+block size 50
+
+No constraints
+
+
+Initial Max. Residual   6.11464855965796e-03
+Iteration 1 	bsize 15 	maxres   6.01366523944544e-03
+Iteration 2 	bsize 13 	maxres   3.75280378551976e-03
+Iteration 3 	bsize 13 	maxres   2.35265570831213e-03
+Iteration 4 	bsize 13 	maxres   1.63938084666653e-03
+Iteration 5 	bsize 11 	maxres   1.17915645591850e-03
+Iteration 6 	bsize 11 	maxres   1.13409249095205e-03
+Iteration 7 	bsize 11 	maxres   1.15992532305550e-03
+Iteration 8 	bsize 10 	maxres   9.48763498140996e-04
+Iteration 9 	bsize 9 	maxres   6.03864951119550e-04
+Iteration 10 	bsize 9 	maxres   4.51675007987122e-04
+
+Eigenvalue lambda   2.17867679299560e-04
+Eigenvalue lambda   5.44657331667445e-04
+Eigenvalue lambda   5.44657331667453e-04
+Eigenvalue lambda   8.71446984035318e-04
+Eigenvalue lambda   1.08926719830190e-03
+Eigenvalue lambda   1.08926719830205e-03
+Eigenvalue lambda   1.41605685066979e-03
+Eigenvalue lambda   1.41605685066982e-03
+Eigenvalue lambda   1.85163795275900e-03
+Eigenvalue lambda   1.85163795275908e-03
+Eigenvalue lambda   1.96066671730425e-03
+Eigenvalue lambda   2.17842760512688e-03
+Eigenvalue lambda   2.17842760512703e-03
+Eigenvalue lambda   2.72303747176136e-03
+Eigenvalue lambda   2.72303747176144e-03
+Eigenvalue lambda   2.83168654706529e-03
+Eigenvalue lambda   2.83168654706539e-03
+Eigenvalue lambda   3.15847619943308e-03
+Eigenvalue lambda   3.15847619943321e-03
+Eigenvalue lambda   3.48540822621847e-03
+Eigenvalue lambda   3.70308606606755e-03
+Eigenvalue lambda   3.70308606606766e-03
+Eigenvalue lambda   4.02930622076419e-03
+Eigenvalue lambda   4.02930622076426e-03
+Eigenvalue lambda   4.35609587313212e-03
+Eigenvalue lambda   4.35609587313214e-03
+Eigenvalue lambda   4.46545682052480e-03
+Eigenvalue lambda   4.46545682052482e-03
+Eigenvalue lambda   4.90070573976641e-03
+Eigenvalue lambda   4.90070573976676e-03
+Eigenvalue lambda   5.44436651254644e-03
+Eigenvalue lambda   5.44436651254645e-03
+Eigenvalue lambda   5.44550541483095e-03
+Eigenvalue lambda   5.66307649422352e-03
+Eigenvalue lambda   5.66307649422374e-03
+Eigenvalue lambda   5.77115616491432e-03
+Eigenvalue lambda   5.77115616491443e-03
+Eigenvalue lambda   6.31576603154927e-03
+Eigenvalue lambda   6.31576603154983e-03
+Eigenvalue lambda   6.64312508853052e-03
+Eigenvalue lambda   6.64312508853900e-03
+Eigenvalue lambda   7.07671327452762e-03
+Eigenvalue lambda   7.07671327979362e-03
+Eigenvalue lambda   7.07813678608451e-03
+Eigenvalue lambda   7.07813678683698e-03
+Eigenvalue lambda   7.40350292943695e-03
+Eigenvalue lambda   7.40350294102044e-03
+Eigenvalue lambda   7.84183711975159e-03
+Eigenvalue lambda   7.94821653093636e-03
+Eigenvalue lambda   7.96065999178617e-03
+Residual   1.86089907499165e-15
+Residual   1.20489849784337e-13
+Residual   9.85643951635463e-14
+Residual   1.24961605417661e-12
+Residual   2.53232912409739e-12
+Residual   3.40695674424671e-12
+Residual   9.91523318669715e-12
+Residual   9.96235702081196e-12
+Residual   4.28241545513051e-11
+Residual   4.79636466237392e-11
+Residual   8.41225568258300e-11
+Residual   6.61041986774880e-11
+Residual   6.24947295825564e-11
+Residual   4.31982030856996e-10
+Residual   3.99570413809467e-10
+Residual   4.25110077993762e-10
+Residual   4.45402971333105e-10
+Residual   8.38316735236136e-10
+Residual   8.99736025617346e-10
+Residual   2.56833716578806e-09
+Residual   2.25339150714111e-09
+Residual   2.63039875989276e-09
+Residual   4.26090022060218e-09
+Residual   4.49087698617022e-09
+Residual   3.22270519240860e-09
+Residual   3.37967647615466e-09
+Residual   7.11908382435225e-09
+Residual   6.53130436540535e-09
+Residual   2.13648684449270e-09
+Residual   1.02642239406415e-09
+Residual   2.35732432399678e-09
+Residual   7.74172470301869e-09
+Residual   3.87476606759225e-09
+Residual   9.70199027344990e-09
+Residual   1.06101955391191e-08
+Residual   7.98659080413515e-09
+Residual   1.04393454547256e-08
+Residual   1.27631154580794e-08
+Residual   1.50153043610291e-08
+Residual   1.29974492331625e-08
+Residual   9.93027399029353e-09
+Residual   3.28577375609928e-08
+Residual   1.01642751367010e-07
+Residual   2.41411443166570e-08
+Residual   4.74010669579373e-08
+Residual   2.03094516659996e-07
+Residual   4.00397925226501e-07
+Residual   5.51017815172538e-05
+Residual   2.00035592810433e-05
+Residual   4.51675007987122e-04
+
+10 iterations
+pcg for 0 level 
+idx_eig = 
+37	38	39	40	41	42	43	44	45	46	47	48	49	
+compute residual and update eigenvalues
+num_conv = 40
+iter = 3
+=============================================
+Solve phase times:
+=============================================
+PASE Solve:
+  wall clock time = 46.320000 seconds
+  wall MFLOPS     = 0.000000
+  cpu clock time  = 46.319945 seconds
+  cpu MFLOPS      = 0.000000
+
+idx_eig = 
+0	1	2	3	4	5	6	7	8	9	10	11	12	13	14	15	16	17	18	19	20	21	22	23	24	25	26	27	28	29	30	31	32	33	34	35	36	37	38	39	40	41	42	43	44	45	46	47	48	49	
+eig = 1.973902961222e+01, error = 5.034277e-13, residual = 3.656307e-16
+eig = 4.934649890640e+01, error = 1.866366e-13, residual = 3.714111e-16
+eig = 4.934649890640e+01, error = -4.518571e-13, residual = 3.667345e-16
+eig = 7.895396820059e+01, error = 1.944950e-12, residual = 5.260844e-16
+eig = 9.868869743336e+01, error = 4.164944e-12, residual = 1.084094e-15
+eig = 9.868869743335e+01, error = 3.339813e-13, residual = 7.761963e-16
+eig = 1.282961667275e+02, error = 2.730788e-12, residual = 4.233568e-15
+eig = 1.282961667275e+02, error = 9.822980e-14, residual = 4.151496e-15
+eig = 1.677602501579e+02, error = -9.822980e-14, residual = 3.708686e-14
+eig = 1.677602501579e+02, error = -1.119820e-12, residual = 3.028816e-14
+eig = 1.776383652545e+02, error = -4.911490e-12, residual = 5.324649e-14
+eig = 1.973677194521e+02, error = 9.037142e-13, residual = 5.946614e-14
+eig = 1.973677194521e+02, error = -8.526347e-12, residual = 7.378295e-14
+eig = 2.467099179791e+02, error = -1.375217e-12, residual = 5.397674e-13
+eig = 2.467099179791e+02, error = -1.296633e-12, residual = 6.634374e-13
+eig = 2.565536328507e+02, error = 2.514683e-12, residual = 8.114158e-13
+eig = 2.565536328507e+02, error = 5.186533e-12, residual = 6.265032e-13
+eig = 2.861611021448e+02, error = -1.178758e-13, residual = 1.914660e-12
+eig = 2.861611021448e+02, error = -1.139466e-12, residual = 1.439485e-12
+eig = 3.157814707036e+02, error = 4.518571e-12, residual = 6.604005e-12
+eig = 3.355033006718e+02, error = 3.575565e-12, residual = 5.912248e-12
+eig = 3.355033006718e+02, error = 3.732732e-12, residual = 8.566825e-12
+eig = 3.650591729075e+02, error = 6.836794e-12, residual = 9.187221e-12
+eig = 3.650591729075e+02, error = -1.335925e-12, residual = 1.311167e-11
+eig = 3.946666422016e+02, error = 1.257341e-12, residual = 1.523830e-11
+eig = 3.946666422016e+02, error = -3.772024e-12, residual = 1.435042e-11
+eig = 4.045748533964e+02, error = -2.278931e-12, residual = 3.284015e-11
+eig = 4.045748533964e+02, error = 1.571677e-13, residual = 2.700162e-11
+eig = 4.440088407286e+02, error = 1.100174e-12, residual = 4.717214e-12
+eig = 4.440088407286e+02, error = -3.693441e-12, residual = 4.507867e-12
+eig = 4.932650504032e+02, error = 8.094136e-12, residual = 3.281354e-11
+eig = 4.932650504032e+02, error = -6.443875e-12, residual = 1.771098e-11
+eig = 4.933682360891e+02, error = 3.379105e-12, residual = 2.402999e-11
+eig = 5.130803934532e+02, error = 4.479279e-12, residual = 4.129024e-11
+eig = 5.130803934532e+02, error = -3.772024e-12, residual = 4.885669e-11
+eig = 5.228725196974e+02, error = -7.465465e-12, residual = 4.045259e-11
+eig = 5.228725196974e+02, error = 1.021590e-11, residual = 4.391086e-11
+eig = 5.722147182244e+02, error = 9.351477e-12, residual = 7.577912e-11
+eig = 5.722147182244e+02, error = 2.671851e-12, residual = 1.366281e-10
+eig = 6.018737761459e+02, error = 1.728844e-11, residual = 1.034307e-10
+the sum of error for eigenvalues = 1.430250e-10

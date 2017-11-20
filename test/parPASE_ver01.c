@@ -51,7 +51,7 @@ int main (int argc, char *argv[])
 
    /* 多算的特征值数 */
    int more = 10;
-   double tolerance = 1E-9;
+   double tolerance = 1E-8;
 
 
    /* -------------------------矩阵向量声明---------------------- */ 
@@ -197,6 +197,7 @@ int main (int argc, char *argv[])
 
 
    /* 多算more个特征值 */
+   more = (int)(block_size * 0.25);
    block_size += more;
 
    /* Preliminaries: want at least one processor per row */
@@ -359,9 +360,10 @@ int main (int argc, char *argv[])
    HYPRE_BoomerAMGCreate(&amg_solver);
 
    /* Set some parameters (See Reference Manual for more parameters) */
-   HYPRE_BoomerAMGSetPrintLevel(amg_solver, 0);         /* print solve info + parameters */
+   HYPRE_BoomerAMGSetPrintLevel(amg_solver, 1);         /* print solve info + parameters */
    HYPRE_BoomerAMGSetInterpType(amg_solver, 0 );
    HYPRE_BoomerAMGSetPMaxElmts(amg_solver, 0 );
+   /* hypre_BoomerAMGSetup中有 */
    HYPRE_BoomerAMGSetCoarsenType(amg_solver, 6);
    HYPRE_BoomerAMGSetMaxLevels(amg_solver, max_levels);  /* maximum number of levels */
    //   HYPRE_BoomerAMGSetRelaxType(amg_solver, 3);          /* G-S/Jacobi hybrid relaxation */
@@ -441,6 +443,8 @@ int main (int argc, char *argv[])
    HYPRE_ParCSRPCGCreate(MPI_COMM_WORLD, &pcg_solver);
 
    /* Set some parameters (See Reference Manual for more parameters) */
+   /* TODO:在进行pcg进行线性方程组求解时是否可以用到得到的precond, 至少level==0时可以, 
+    * 貌似也不用, 因为迭代8次都达到残差tol了 */
    HYPRE_PCGSetMaxIter(pcg_solver, 100); /* max iterations */
    HYPRE_PCGSetTol(pcg_solver, 1e-15); /* conv. tolerance */
    HYPRE_PCGSetTwoNorm(pcg_solver, 1); /* use the two norm as the stopping criteria */
@@ -658,8 +662,11 @@ int main (int argc, char *argv[])
 //
 //	 }
 
+//	 if (level>0)
+//	 {
 	 free((mv_TempMultiVector*) mv_MultiVectorGetData(eigenvectors));
 	 hypre_TFree(eigenvectors);
+//	 }
       }
    }
 
@@ -700,6 +707,43 @@ int main (int argc, char *argv[])
       PASE_LOBPCGSetupB(lobpcg_solver, parcsr_B_Hh, par_x_Hh);
    }
 
+
+
+//   {
+//      HYPRE_Solver lobpcg_solver_hypre, precond_hypre;
+//
+//      HYPRE_BoomerAMGCreate(&precond_hypre);
+//      HYPRE_BoomerAMGSetPrintLevel(precond_hypre, 1); /* print amg solution info */
+//      HYPRE_BoomerAMGSetNumSweeps(precond_hypre, 2); /* 2 sweeps of smoothing */
+//      HYPRE_BoomerAMGSetTol(precond_hypre, 0.0); /* conv. tolerance zero */
+//      HYPRE_BoomerAMGSetMaxIter(precond_hypre, 1); /* do only one iteration! */
+//
+//      HYPRE_LOBPCGCreate(interpreter_H, &matvec_fn_H, &lobpcg_solver_hypre);
+//
+//      HYPRE_LOBPCGSetMaxIter(lobpcg_solver_hypre, 100);
+//      HYPRE_LOBPCGSetPrecondUsageMode(lobpcg_solver_hypre, 1);
+//      HYPRE_LOBPCGSetTol(lobpcg_solver_hypre, 1E-8);
+//      HYPRE_LOBPCGSetPrintLevel(lobpcg_solver_hypre, 1);
+//
+//      HYPRE_LOBPCGSetPrecond(lobpcg_solver_hypre,
+//                             (HYPRE_PtrToSolverFcn) HYPRE_BoomerAMGSolve,
+//                             (HYPRE_PtrToSolverFcn) HYPRE_BoomerAMGSetup,
+//                             precond_hypre);
+//      HYPRE_LOBPCGSetup(lobpcg_solver_hypre, (HYPRE_Matrix)A_array[0],
+//                        (HYPRE_Vector)F_array[0], (HYPRE_Vector)U_array[0]);
+//      HYPRE_LOBPCGSetupB(lobpcg_solver_hypre, (HYPRE_Matrix)B_array[0], (HYPRE_Vector)U_array[0]);
+//      printf ( "solve\n" );
+//      HYPRE_LOBPCGSolve (lobpcg_solver_hypre, constraints_H, eigenvectors, eigenvalues );
+//
+//      HYPRE_BoomerAMGDestroy(precond_hypre);
+//      HYPRE_LOBPCGDestroy(lobpcg_solver_hypre);
+//
+//      return 0;
+//
+//   }
+
+
+
    /* eigenvectors - create a multivector */
    eigenvectors = mv_MultiVectorCreateFromSampleVector(interpreter, block_size, U_array[0]);
    /* eigenvectors - get a pointer */
@@ -708,7 +752,6 @@ int main (int argc, char *argv[])
 	 (mv_TempMultiVector*) mv_MultiVectorGetData(eigenvectors);
       pvx_h = (HYPRE_ParVector*)(tmp -> vector);
    }
-
 
 
    HYPRE_Solver pcg_solver_pase;
