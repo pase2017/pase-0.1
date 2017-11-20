@@ -49,10 +49,6 @@ int main (int argc, char *argv[])
    int global_time_index;
 
 
-   /* 多算的特征值数 */
-   int more = 10;
-   double tolerance = 1E-9;
-
 
    /* -------------------------矩阵向量声明---------------------- */ 
    /* 最细矩阵 */
@@ -194,10 +190,6 @@ int main (int argc, char *argv[])
 	 return (0);
       }
    }
-
-
-   /* 多算more个特征值 */
-   block_size += more;
 
    /* Preliminaries: want at least one processor per row */
    if (n*n < num_procs) n = sqrt(num_procs) + 1;
@@ -509,7 +501,7 @@ int main (int argc, char *argv[])
       printf ( "LOBPCG solve A_Hh U_Hh = lambda_Hh B_Hh U_Hh\n" );
       /* LOBPCG eigensolver */
       {
-	 int maxIterations = 5; /* maximum number of iterations */
+	 int maxIterations = 1000; /* maximum number of iterations */
 	 int pcgMode = 1;         /* use rhs as initial guess for inner pcg iterations */
 	 int verbosity = 0;       /* print iterations info */
 	 double tol = 1.e-8;     /* absolute tolerance (all eigenvalues) */
@@ -630,33 +622,30 @@ int main (int argc, char *argv[])
 	    HYPRE_ParCSRPCGSolve(pcg_solver, A_array[level], F_array[level], pvx[idx_eig]);
 	 }
 
-//	 if (level == 0)
-//	 {
-//	    sum_error = 0;
-//	    for (idx_eig = 0; idx_eig < block_size; ++idx_eig)
-//	    {
-//	       HYPRE_ParCSRMatrixMatvec ( 1.0, A_array[level], pvx[idx_eig], 0.0, F_array[level] );
-//	       HYPRE_ParVectorInnerProd (F_array[level], pvx[idx_eig], &eigenvalues[idx_eig]);
-//	       HYPRE_ParCSRMatrixMatvec ( 1.0, B_array[level], pvx[idx_eig], 0.0, F_array[level] );
-//	       HYPRE_ParVectorInnerProd (F_array[level], pvx[idx_eig], &tmp_double);
-//	       eigenvalues[idx_eig] = eigenvalues[idx_eig] / tmp_double;
-//	       if (myid == 0)
-//	       {
-//		  if (idx_eig < block_size-more)
-//		  {
-//		     printf ( "eig = %e, error = %e\n", 
-//			   eigenvalues[idx_eig]/h2, (eigenvalues[idx_eig]-exact_eigenvalues[idx_eig])/h2 );
-//		     sum_error += fabs(eigenvalues[idx_eig]-exact_eigenvalues[idx_eig])/h2;
-//		  }
-//	       }
-//	    }
-//
-//	    if (myid == 0)
-//	    {
-//	       printf ( "the sum of error = %e\n", sum_error );
-//	    }
-//
-//	 }
+	 if (level == 0)
+	 {
+	    sum_error = 0;
+	    for (idx_eig = 0; idx_eig < block_size; ++idx_eig)
+	    {
+	       HYPRE_ParCSRMatrixMatvec ( 1.0, A_array[level], pvx[idx_eig], 0.0, F_array[level] );
+	       HYPRE_ParVectorInnerProd (F_array[level], pvx[idx_eig], &eigenvalues[idx_eig]);
+	       HYPRE_ParCSRMatrixMatvec ( 1.0, B_array[level], pvx[idx_eig], 0.0, F_array[level] );
+	       HYPRE_ParVectorInnerProd (F_array[level], pvx[idx_eig], &tmp_double);
+	       eigenvalues[idx_eig] = eigenvalues[idx_eig] / tmp_double;
+	       if (myid == 0)
+	       {
+		  printf ( "eig = %e, error = %e\n", 
+			eigenvalues[idx_eig]/h2, (eigenvalues[idx_eig]-exact_eigenvalues[idx_eig])/h2 );
+		  sum_error += fabs(eigenvalues[idx_eig]-exact_eigenvalues[idx_eig])/h2;
+	       }
+	    }
+
+	    if (myid == 0)
+	    {
+	       printf ( "the sum of error = %e\n", sum_error );
+	    }
+
+	 }
 
 	 free((mv_TempMultiVector*) mv_MultiVectorGetData(eigenvectors));
 	 hypre_TFree(eigenvectors);
@@ -691,7 +680,7 @@ int main (int argc, char *argv[])
       mv_MultiVectorSetRandom (eigenvectors_Hh, 775);
 
       HYPRE_LOBPCGCreate(interpreter_Hh, &matvec_fn_Hh, &lobpcg_solver);
-      HYPRE_LOBPCGSetMaxIter(lobpcg_solver, 100);
+      HYPRE_LOBPCGSetMaxIter(lobpcg_solver, 1000);
       HYPRE_LOBPCGSetPrecondUsageMode(lobpcg_solver, 1);
       /* TODO: 这个残量是什么意思 */
       HYPRE_LOBPCGSetTol(lobpcg_solver, 1.e-8);
@@ -742,43 +731,13 @@ int main (int argc, char *argv[])
 
    /* 基于上述运算, 得到最细空间的特征向量pvx */
 
-   HYPRE_PCGSetMaxIter(pcg_solver, 5); /* max iterations */
+   HYPRE_PCGSetMaxIter(pcg_solver, 10); /* max iterations */
    
    int num_conv = 0;
-   printf ( "compute residual and update eigenvalues\n" );
-   for (idx_eig = num_conv; idx_eig < block_size; ++idx_eig)
-   {
-      HYPRE_ParCSRMatrixMatvec ( 1.0, A_array[0], pvx[idx_eig], 0.0, F_array[0] );
-      HYPRE_ParVectorInnerProd (F_array[0], pvx[idx_eig], &eigenvalues[idx_eig]);
-      HYPRE_ParCSRMatrixMatvec ( 1.0, B_array[0], pvx[idx_eig], 0.0, F_array[0] );
-      HYPRE_ParVectorInnerProd (F_array[0], pvx[idx_eig], &tmp_double);
-      eigenvalues[idx_eig] = eigenvalues[idx_eig] / tmp_double;
-
-      if (idx_eig < block_size-more)
-      {
-	 HYPRE_ParCSRMatrixMatvec ( 1.0, A_array[0], pvx[idx_eig], -eigenvalues[idx_eig], F_array[0] );
-	 HYPRE_ParVectorInnerProd (F_array[0], F_array[0], &residual);
-	 residual = sqrt(residual/tmp_double);
-	 if (residual < tolerance)
-	 {
-	    ++num_conv;
-	 }
-	 printf ( "residual = %e\n", residual );
-      }
-   }
-
-   printf ( "num_conv = %d\n", num_conv );
-
-
-
-
-
-
-
    int iter = 0;
 //   while (sum_error > 1E-6)
    residual = 1.0;
-   while (residual > tolerance || num_conv < block_size-more)
+   while (residual > 1E-8 || num_conv == block_size)
    {
       /* 从细到粗, 进行CG迭代 */
       printf ( "V-cycle from h to H\n" );
@@ -850,30 +809,22 @@ int main (int argc, char *argv[])
 
 
 	 printf ( "Solve linear system A_hh x = lambda B_hh x using pase_pcg_solver.\n" );
-	 printf ( "idx_eig = " );
-	 for (idx_eig =  num_conv; idx_eig < block_size; ++idx_eig)
+	 for (idx_eig = 0; idx_eig < block_size; ++idx_eig)
 	 {
-	    printf ( "%d\t", idx_eig );
 	    /* 生成右端项 y = alpha*A*x + beta*y */
 	    PASE_ParCSRMatrixMatvec ( eigenvalues[idx_eig], parcsr_B_hh[level], pvx_cur[idx_eig], 0.0, par_b_hh[level] );
 
 	    hypre_PCGSetup(pcg_solver_pase, parcsr_A_hh[level], par_b_hh[level], par_x_hh[level]);
 	    hypre_PCGSolve(pcg_solver_pase, parcsr_A_hh[level], par_b_hh[level], pvx_cur[idx_eig]);
 	 }
-	 printf ( "\n" );
 
 
 
-	 /* LOBPCG for pase system A_hh x = lambda B_hh x */
-	 printf ( "LOBPCG for pase system A_hh x = lambda B_hh x\n" );
-	 HYPRE_LOBPCGSetMaxIter(lobpcg_solver, 1);
+	 HYPRE_LOBPCGSetMaxIter(lobpcg_solver, 10);
 	 PASE_LOBPCGSetup (lobpcg_solver, parcsr_A_hh[level], par_b_hh[level], par_x_hh[level]);
 	 PASE_LOBPCGSetupB(lobpcg_solver, parcsr_B_hh[level], par_x_hh[level]);
 	 HYPRE_LOBPCGSolve(lobpcg_solver, constraints_Hh, eigenvectors_cur, eigenvalues );
 
-	 /* TODO: 插值回去, 到最细空间, 可能会费时, 也许进行后光滑就不会每层都进行到细的插值, 或者在最开始存储
-	  * 各个层到细的插值矩阵 */
-	 printf ( "Interpolate to 0 level\n" );
 	 for ( idx_eig = 0; idx_eig < block_size; ++idx_eig)
 	 {
 	    HYPRE_ParCSRMatrixMatvec  ( 1.0, P_array[level-1], pvx_cur[idx_eig]->b_H, 0.0, U_array[level-1] );
@@ -916,7 +867,7 @@ int main (int argc, char *argv[])
 	       parcsr_B_hh[num_levels-2], pvx_pre, U_array[num_levels-1], par_x_hh[num_levels-2] );
 	 for ( idx_eig = 0; idx_eig < block_size; ++idx_eig)
 	 {
-	    HYPRE_ParCSRMatrixMatvecT ( 1.0, P_array[num_levels-2], pvx_pre[idx_eig]->b_H, 0.0, pvx_Hh[idx_eig]->b_H );
+	    HYPRE_ParCSRMatrixMatvecT ( 1.0, P_array[num_levels-2], pvx_pre[idx_eig]->b_H, 0.0, pvx_cur[idx_eig]->b_H );
 	    hypre_SeqVectorCopy(pvx_pre[idx_eig]->aux_h, pvx_Hh[idx_eig]->aux_h);
 	 }
       }
@@ -939,27 +890,27 @@ int main (int argc, char *argv[])
 
       /* 求特征值问题 */
       printf ( "LOBPCG solve A_Hh U_Hh = lambda_Hh B_Hh U_Hh\n" );
-      HYPRE_LOBPCGSetMaxIter(lobpcg_solver, 10);
+      HYPRE_LOBPCGSetMaxIter(lobpcg_solver, 1000);
       PASE_LOBPCGSetup (lobpcg_solver, parcsr_A_Hh, par_b_Hh, par_x_Hh);
       PASE_LOBPCGSetupB(lobpcg_solver, parcsr_B_Hh, par_x_Hh);
       HYPRE_LOBPCGSolve(lobpcg_solver, constraints_Hh, eigenvectors_Hh, eigenvalues );
       /* 所得eigenvectors_Hh如何得到细空间上的特征向量 */
 
-//      sum_error = 0;
-//      for (idx_eig = 0; idx_eig < block_size; ++idx_eig)
-//      {
-//	 if (myid == 0)
-//	 {
-//	    printf ( "eig = %e, error = %e\n", 
-//		  eigenvalues[idx_eig]/h2, (eigenvalues[idx_eig]-exact_eigenvalues[idx_eig])/h2 );
-//	    sum_error += fabs(eigenvalues[idx_eig]-exact_eigenvalues[idx_eig])/h2;
-//	 }
-//      }
-//      if (myid == 0)
-//      {
-//	 printf ( "the sum of error = %e\n", sum_error ); 
-//      }
-//      printf ( "--------------------------------------------------\n" );
+      sum_error = 0;
+      for (idx_eig = 0; idx_eig < block_size; ++idx_eig)
+      {
+	 if (myid == 0)
+	 {
+	    printf ( "eig = %e, error = %e\n", 
+		  eigenvalues[idx_eig]/h2, (eigenvalues[idx_eig]-exact_eigenvalues[idx_eig])/h2 );
+	    sum_error += fabs(eigenvalues[idx_eig]-exact_eigenvalues[idx_eig])/h2;
+	 }
+      }
+      if (myid == 0)
+      {
+	 printf ( "the sum of error = %e\n", sum_error ); 
+      }
+      printf ( "--------------------------------------------------\n" );
 
       if ( num_levels > 2 )
       {
@@ -975,7 +926,6 @@ int main (int argc, char *argv[])
 
       pvx_pre = pvx_Hh;
 
-      printf ( "pcg for 0 level \n" );
       /* TODO: 这个与直接用LOBPCG求得的特征值稍有不同 */
       for (idx_eig = 0; idx_eig < block_size; ++idx_eig)
       {
@@ -986,10 +936,8 @@ int main (int argc, char *argv[])
       /* Now setup and solve! */
       HYPRE_ParCSRPCGSetup(pcg_solver, A_array[0], F_array[0], U_array[0]);
 
-      printf ( "idx_eig = \n" );
-      for (idx_eig = num_conv; idx_eig < block_size; ++idx_eig)
+      for (idx_eig = 0; idx_eig < block_size; ++idx_eig)
       {
-	 printf ( "%d\t", idx_eig );
 	 /* 生成右端项 y = alpha*A*x + beta*y */
 	 HYPRE_ParCSRMatrixMatvec ( eigenvalues[idx_eig], B_array[0], pvx_h[idx_eig], 0.0, F_array[0] );
 	 HYPRE_ParCSRPCGSolve(pcg_solver, A_array[0], F_array[0], pvx_h[idx_eig]);
@@ -997,53 +945,51 @@ int main (int argc, char *argv[])
 	 HYPRE_ParCSRMatrixMatvec ( eigenvalues[idx_eig], B_array[0], pvx_h[idx_eig], 0.0, F_array[0] );
 	 HYPRE_ParCSRPCGSolve(pcg_solver, A_array[0], F_array[0], pvx_h[idx_eig]);
       }
-      printf ( "\n" );
 
 
-//      for (idx_eig = num_conv; idx_eig < block_size; ++idx_eig)
-//      {
-//	 HYPRE_ParCSRMatrixMatvec ( 1.0, A_array[0], pvx_h[idx_eig], 0.0, F_array[0] );
-//	 HYPRE_ParVectorInnerProd (F_array[0], pvx_h[idx_eig], &eigenvalues[idx_eig]);
-//	 HYPRE_ParCSRMatrixMatvec ( 1.0, B_array[0], pvx_h[idx_eig], 0.0, F_array[0] );
-//	 HYPRE_ParVectorInnerProd (F_array[0], pvx_h[idx_eig], &tmp_double);
-//	 eigenvalues[idx_eig] = eigenvalues[idx_eig] / tmp_double;
-//      }
-//
-//      for (idx_eig = num_conv; idx_eig < block_size; ++idx_eig)
-//      {
-//	 /* 生成右端项 y = alpha*A*x + beta*y */
-//	 HYPRE_ParCSRMatrixMatvec ( eigenvalues[idx_eig], B_array[0], pvx_h[idx_eig], 0.0, F_array[0] );
-//	 HYPRE_ParCSRPCGSolve(pcg_solver, A_array[0], F_array[0], pvx_h[idx_eig]);
-//
-//	 HYPRE_ParCSRMatrixMatvec ( eigenvalues[idx_eig], B_array[0], pvx_h[idx_eig], 0.0, F_array[0] );
-//	 HYPRE_ParCSRPCGSolve(pcg_solver, A_array[0], F_array[0], pvx_h[idx_eig]);
-//      }
-
-
-      /* 求Railya商 */
-      printf ( "compute residual and update eigenvalues\n" );
-      for (idx_eig = num_conv; idx_eig < block_size; ++idx_eig)
+      for (idx_eig = 0; idx_eig < block_size; ++idx_eig)
       {
-	 HYPRE_ParCSRMatrixMatvec ( 1.0, A_array[0], pvx_h[idx_eig], 0.0, F_array[0] );
-	 HYPRE_ParVectorInnerProd (F_array[0], pvx_h[idx_eig], &eigenvalues[idx_eig]);
-	 HYPRE_ParCSRMatrixMatvec ( 1.0, B_array[0], pvx_h[idx_eig], 0.0, F_array[0] );
-	 HYPRE_ParVectorInnerProd (F_array[0], pvx_h[idx_eig], &tmp_double);
+	 HYPRE_ParCSRMatrixMatvec ( 1.0, A_array[0], pvx[idx_eig], 0.0, F_array[0] );
+	 HYPRE_ParVectorInnerProd (F_array[0], pvx[idx_eig], &eigenvalues[idx_eig]);
+	 HYPRE_ParCSRMatrixMatvec ( 1.0, B_array[0], pvx[idx_eig], 0.0, F_array[0] );
+	 HYPRE_ParVectorInnerProd (F_array[0], pvx[idx_eig], &tmp_double);
 	 eigenvalues[idx_eig] = eigenvalues[idx_eig] / tmp_double;
-
-	 if (idx_eig < block_size-more)
-	 {
-	    HYPRE_ParCSRMatrixMatvec ( 1.0, A_array[0], pvx_h[idx_eig], -eigenvalues[idx_eig], F_array[0] );
-	    HYPRE_ParVectorInnerProd (F_array[0], F_array[0], &residual);
-	    residual = sqrt(residual/tmp_double);
-	    if (residual < tolerance)
-	    {
-	       ++num_conv;
-	    }
-//	    printf ( "residual = %e\n", residual );
-	 }
       }
 
-      printf ( "num_conv = %d\n", num_conv );
+      for (idx_eig = 0; idx_eig < block_size; ++idx_eig)
+      {
+	 /* 生成右端项 y = alpha*A*x + beta*y */
+	 HYPRE_ParCSRMatrixMatvec ( eigenvalues[idx_eig], B_array[0], pvx_h[idx_eig], 0.0, F_array[0] );
+	 HYPRE_ParCSRPCGSolve(pcg_solver, A_array[0], F_array[0], pvx_h[idx_eig]);
+
+	 HYPRE_ParCSRMatrixMatvec ( eigenvalues[idx_eig], B_array[0], pvx_h[idx_eig], 0.0, F_array[0] );
+	 HYPRE_ParCSRPCGSolve(pcg_solver, A_array[0], F_array[0], pvx_h[idx_eig]);
+      }
+
+
+      for (idx_eig = 0; idx_eig < block_size; ++idx_eig)
+      {
+	 HYPRE_ParCSRMatrixMatvec ( 1.0, A_array[0], pvx[idx_eig], 0.0, F_array[0] );
+	 HYPRE_ParVectorInnerProd (F_array[0], pvx[idx_eig], &eigenvalues[idx_eig]);
+	 HYPRE_ParCSRMatrixMatvec ( 1.0, B_array[0], pvx[idx_eig], 0.0, F_array[0] );
+	 HYPRE_ParVectorInnerProd (F_array[0], pvx[idx_eig], &tmp_double);
+	 eigenvalues[idx_eig] = eigenvalues[idx_eig] / tmp_double;
+      }
+
+      for (idx_eig = 0; idx_eig < block_size; ++idx_eig)
+      {
+	 HYPRE_ParCSRMatrixMatvec ( 1.0, B_array[0], pvx_h[idx_eig], 0.0, F_array[0] );
+	 HYPRE_ParVectorInnerProd (F_array[0], pvx_h[idx_eig], &tmp_double);
+
+	 HYPRE_ParCSRMatrixMatvec ( 1.0, A_array[0], pvx_h[idx_eig], -eigenvalues[idx_eig], F_array[0] );
+	 HYPRE_ParVectorInnerProd (F_array[0], F_array[0], &residual);
+	 residual = sqrt(residual/tmp_double);
+	 printf ( "residual = %e\n", residual );
+      }
+
+
+
+
 
 //      sum_error = 0;
 //      for (idx_eig = 0; idx_eig < block_size; ++idx_eig)
@@ -1186,56 +1132,27 @@ int main (int argc, char *argv[])
       ++iter;
    }
 
+
    printf ( "iter = %d\n", iter );
 
-   hypre_EndTiming(global_time_index);
-   hypre_PrintTiming("Solve phase times", MPI_COMM_WORLD);
-   hypre_FinalizeTiming(global_time_index);
-   hypre_ClearTiming();
-
-
-
-   HYPRE_ParCSRPCGSetup(pcg_solver, A_array[0], F_array[0], U_array[0]);
-
-   printf ( "idx_eig = \n" );
-   for (idx_eig = 0; idx_eig < block_size; ++idx_eig)
-   {
-      printf ( "%d\t", idx_eig );
-      /* 生成右端项 y = alpha*A*x + beta*y */
-      HYPRE_ParCSRMatrixMatvec ( eigenvalues[idx_eig], B_array[0], pvx[idx_eig], 0.0, F_array[0] );
-      HYPRE_ParCSRPCGSolve(pcg_solver, A_array[0], F_array[0], pvx[idx_eig]);
-
-      HYPRE_ParCSRMatrixMatvec ( eigenvalues[idx_eig], B_array[0], pvx[idx_eig], 0.0, F_array[0] );
-      HYPRE_ParCSRPCGSolve(pcg_solver, A_array[0], F_array[0], pvx[idx_eig]);
-   }
-   printf ( "\n" );
-
-
-
    sum_error = 0;
-   for (idx_eig = 0; idx_eig < block_size-more; ++idx_eig)
+   for (idx_eig = 0; idx_eig < block_size; ++idx_eig)
    {
       HYPRE_ParCSRMatrixMatvec ( 1.0, A_array[0], pvx[idx_eig], 0.0, F_array[0] );
       HYPRE_ParVectorInnerProd (F_array[0], pvx[idx_eig], &eigenvalues[idx_eig]);
       HYPRE_ParCSRMatrixMatvec ( 1.0, B_array[0], pvx[idx_eig], 0.0, F_array[0] );
       HYPRE_ParVectorInnerProd (F_array[0], pvx[idx_eig], &tmp_double);
       eigenvalues[idx_eig] = eigenvalues[idx_eig] / tmp_double;
-
-      HYPRE_ParCSRMatrixMatvec ( 1.0, A_array[0], pvx[idx_eig], -eigenvalues[idx_eig], F_array[0] );
-      HYPRE_ParVectorInnerProd (F_array[0], F_array[0], &residual);
-      residual = sqrt(residual/tmp_double);
-
-
       if (myid == 0)
       {
-	 printf ( "eig = %1.12e, error = %e, residual = %e\n", 
-	       eigenvalues[idx_eig]/h2, (eigenvalues[idx_eig]-exact_eigenvalues[idx_eig])/h2, residual );
+	 printf ( "eig = %1.16e, error = %e\n", 
+	       eigenvalues[idx_eig], (eigenvalues[idx_eig]-exact_eigenvalues[idx_eig])/h2 );
 	 sum_error += fabs(eigenvalues[idx_eig]-exact_eigenvalues[idx_eig])/h2;
       }
    }
    if (myid == 0)
    {
-      printf ( "the sum of error for eigenvalues = %e\n", sum_error ); 
+      printf ( "the sum of error = %e\n", sum_error ); 
    }
 
 
@@ -1332,6 +1249,10 @@ int main (int argc, char *argv[])
    hypre_TFree(interpreter_Hh);
    hypre_TFree(interpreter);
 
+   hypre_EndTiming(global_time_index);
+   hypre_PrintTiming("Solve phase times", MPI_COMM_WORLD);
+   hypre_FinalizeTiming(global_time_index);
+   hypre_ClearTiming();
 
 
    /* Finalize MPI*/
