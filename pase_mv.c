@@ -340,7 +340,16 @@ HYPRE_Int PASE_ParVectorSetConstantValues( PASE_ParVector v , HYPRE_Real value )
 HYPRE_Int PASE_ParVectorSetRandomValues( PASE_ParVector v, HYPRE_Int seed )
 {
    hypre_ParVectorSetRandomValues( v->b_H, seed );
-   hypre_SeqVectorSetRandomValues( v->aux_h, seed );
+   /* 这里因为每个进程是独立完成下述随机赋值, 但是由于seed重新给出, 
+    * 所以每个进程得到的随机数是完全一样的, 
+    * 这里seed+314的原因是与本进程上一条语句生成的随机数不同 */
+   hypre_SeqVectorSetRandomValues( v->aux_h, seed+314 );
+//   int i;
+//   printf ( "SetRandomValues for PASE\n" );
+//   for (i = 0; i<v->aux_h->size;++i)
+//   {
+//      printf ( "%f\n", v->aux_h->data[i] );
+//   }
    return 0;
 }
 
