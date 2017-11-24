@@ -53,9 +53,9 @@ int main (int argc, char *argv[])
    int more;/* 多算的特征值数 */
    int iter = 0;/* 迭代次数 */
    int num_conv = 0;/* 收敛个数 */
-   int max_its = 20;/* 最大迭代次数 */
+   int max_its = 50;/* 最大迭代次数 */
    double residual = 1.0;/* 残量 */
-   double tolerance = 1E-12;/* 最小残量 */
+   double tolerance = 1E-8;/* 最小残量 */
 
 
    /* -------------------------矩阵向量声明---------------------- */ 
@@ -506,7 +506,6 @@ int main (int argc, char *argv[])
    }
 
    {
-      printf ( "-----------------------------iter = %d-------------------\n", iter );
       /* 在循环外创建par_x_Hh, par_b_Hh */
       /* 从粗到细, 细解问题, 最粗特征值 */
       for ( level = num_levels-2; level >= 0; --level )
@@ -711,9 +710,6 @@ int main (int argc, char *argv[])
    }
 
    hypre_EndTiming(global_time_index);
-   hypre_PrintTiming("Solve phase times", MPI_COMM_WORLD);
-   hypre_FinalizeTiming(global_time_index);
-   hypre_ClearTiming();
 
    sum_error = 0;
    for (idx_eig = 0; idx_eig < block_size-more; ++idx_eig)
@@ -738,11 +734,15 @@ int main (int argc, char *argv[])
    if (myid == 0)
    {
       printf ( "the sum of error for eigenvalues = %e\n", sum_error ); 
+      printf ( "The dim of the refinest space is %d.\n", N );
+      printf ( "The dim of the coarsest space is %d.\n", N_H );
+      printf ( "The number of levels = %d\n", num_levels );
+      printf ( "The number of iterations = %d\n", iter );
    }
+   hypre_PrintTiming("Solve phase times", MPI_COMM_WORLD);
+   hypre_FinalizeTiming(global_time_index);
+   hypre_ClearTiming();
 
-   printf ( "The dim of the refinest space is %d.\n", N );
-   printf ( "The dim of the coarsest space is %d.\n", N_H );
-   printf ( "The number of levels = %d\n", num_levels );
 
 
    /* Destroy PCG solver and preconditioner */
