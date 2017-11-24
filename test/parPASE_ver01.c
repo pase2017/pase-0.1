@@ -202,6 +202,7 @@ int main (int argc, char *argv[])
 
    /* 多算more个特征值 */
    more = (int)(block_size * 0.25)+10;
+//   more = 0;
    block_size += more;
 
    /* Preliminaries: want at least one processor per row */
@@ -368,7 +369,7 @@ int main (int argc, char *argv[])
    HYPRE_BoomerAMGSetInterpType(amg_solver, 0 );
    HYPRE_BoomerAMGSetPMaxElmts(amg_solver, 0 );
    /* hypre_BoomerAMGSetup中有 */
-   HYPRE_BoomerAMGSetCoarsenType(amg_solver, 6);
+   HYPRE_BoomerAMGSetCoarsenType(amg_solver, 9);
    HYPRE_BoomerAMGSetMaxLevels(amg_solver, max_levels);  /* maximum number of levels */
    //   HYPRE_BoomerAMGSetRelaxType(amg_solver, 3);          /* G-S/Jacobi hybrid relaxation */
    //   HYPRE_BoomerAMGSetRelaxOrder(amg_solver, 1);         /* uses C/F relaxation */
