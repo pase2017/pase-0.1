@@ -53,9 +53,9 @@ int main (int argc, char *argv[])
    int more;/* 多算的特征值数 */
    int iter = 0;/* 迭代次数 */
    int num_conv = 0;/* 收敛个数 */
-   int max_its = 50;/* 最大迭代次数 */
+   int max_its = 30;/* 最大迭代次数 */
    double residual = 1.0;/* 残量 */
-   double tolerance = 1E-8;/* 最小残量 */
+   double tolerance = 1E-12;/* 最小残量 */
 
 
    /* -------------------------矩阵向量声明---------------------- */ 
