@@ -120,6 +120,33 @@ HYPRE_Int PASE_ParCSRMatrixCreate( MPI_Comm comm ,
    return 0;
 }
 
+
+/**
+ * @brief PASE矩阵基于block_size个u_h重新生成辅助部分
+ * 
+ * matrix->aux_hH[col] = P^T A_h u_h[row]
+ * matrix->aux_hh  = u_h[col] A_h u_h[row]
+ *
+ * MPI IMPROVEMENT
+ * 首先计算 workspace_h = A_h u_h[row] 
+ * 对上三角部分的 matrix->aux_hh 进行局部内积计算 (由于是对称矩阵, 所以计算一半)
+ * 计算完一行就进行全局非阻塞归约, (另外一种做法是全部算完之后再总的做一次归约)
+ * 然后算matrix->aux_hH = P^T workspace_h
+ *
+ * 循环结束之后, 再对aux_hh的下三角部分进行赋值, 
+ * 这里需要进行MPI_Wait, 然后再赋值
+ *
+ * @param comm
+ * @param matrix
+ * @param block_size
+ * @param P
+ * @param A_h
+ * @param u_h
+ * @param workspace_H
+ * @param 
+ *
+ * @return 
+ */
 HYPRE_Int PASE_ParCSRMatrixSetAuxSpace( MPI_Comm comm , 
 				   PASE_ParCSRMatrix  matrix, 
                                    HYPRE_Int block_size,
@@ -130,11 +157,11 @@ HYPRE_Int PASE_ParCSRMatrixSetAuxSpace( MPI_Comm comm ,
 				   HYPRE_ParVector    workspace_h
 				   )
 {
+/*  
    HYPRE_Int row, col;
    HYPRE_Real* matrix_data = matrix->aux_hh->data;
    for (row = 0; row < block_size; ++row)
    {
-      /* y = alpha*A*x + beta*y */
       hypre_ParCSRMatrixMatvec(1.0, A_h, u_h[row], 0.0, workspace_h);
       for ( col = 0; col < block_size; ++col)
       {
@@ -143,10 +170,49 @@ HYPRE_Int PASE_ParCSRMatrixSetAuxSpace( MPI_Comm comm ,
       if ( P == NULL )
       {
 	 hypre_ParVectorCopy(workspace_h, matrix->aux_hH[row]);
-      } else {
+      } 
+      else 
+      {
 	 hypre_ParCSRMatrixMatvecT(1.0, P, workspace_h, 0.0, matrix->aux_hH[row]);
       }
    }
+*/  
+   /* MPI IMPROVEMENT */
+   MPI_Status   status;
+   MPI_Request *requests;
+   requests = hypre_CTAlloc (MPI_Request, block_size);
+   HYPRE_Int row, col;
+   HYPRE_Real* matrix_data = matrix->aux_hh->data;
+   for (row = 0; row < block_size; ++row)
+   {
+      hypre_ParCSRMatrixMatvec(1.0, A_h, u_h[row], 0.0, workspace_h);
+      for ( col = row; col < block_size; ++col)
+      {
+	 matrix_data[row*block_size+col] = hypre_SeqVectorInnerProd(
+	       hypre_ParVectorLocalVector(workspace_h), hypre_ParVectorLocalVector(u_h[col]) );
+      }
+      MPI_Iallreduce( MPI_IN_PLACE, &matrix_data[row*block_size+row], block_size-row, MPI_DOUBLE, MPI_SUM, comm, &requests[row] );
+
+      if ( P == NULL )
+      {
+	 hypre_ParVectorCopy(workspace_h, matrix->aux_hH[row]);
+      } 
+      else 
+      {
+	 hypre_ParCSRMatrixMatvecT(1.0, P, workspace_h, 0.0, matrix->aux_hH[row]);
+      }
+   }
+   for (row = 0; row < block_size; ++row)
+   {
+      MPI_Wait(&requests[row], &status);
+      for ( col = 0; col < row; ++col)
+      {
+	 matrix_data[row*block_size+col] = matrix_data[col*block_size+row];
+      }
+   }
+   hypre_TFree(requests);
+   /* MPI IMPROVEMENT */
+
    return 0;
 }
 
@@ -260,15 +326,41 @@ HYPRE_Int PASE_ParVectorGetParVector( HYPRE_ParCSRMatrix P, HYPRE_Int block_size
  * 这里x, y也是PASE_ParVector, 它们的成员b_H要与A的成员aux_HH的分布一致 
  * 判断矩阵和向量之间是否可以进行运算
  *
- * A_H    aux_hH    b_H        A_H b_H + aux_hH aux_h 
- * aux_hH aux_hh    aux_h      aux_hH b_H + aux_hh aux_h
+ * A_H    aux_hH    x->b_H      y->b_H          |   alpha A_H x->b_H    + alpha aux_hH x->aux_h  + beta y->b_H
+ * aux_hH aux_hh    x->aux_h    y->aux_h        |   alpha aux_hH x->b_H + alpha aux_hh x->aux_h  + beta y->aux_h
  *
+ * 为了提高并行效率, 先计算
+ * A->aux_hH[col]与x->b_H进行内积: 
+ * 每个进程进行局部向量的内积, 存储到tmp[col]里(HYPRE_Real数组)
+ * 然后进行MPI_Iallreduce进行非阻塞全局归约
+ * 之后, 进行与tmp无关的其它运算:
+ * y->b_H = alpha A->A_H x->b_H + beta y->b_H
+ * y->b_H = x->aux_h->data[col]) A->aux_hH[col] +  y->b_H
+ *
+ * y->aux_h = alpha A->aux_hh x->aux_h + beta y->aux_h
+ * 
+ * y->aux_h->data[col] += alpha * tmp;
  */
 HYPRE_Int PASE_ParCSRMatrixMatvec ( HYPRE_Real alpha, PASE_ParCSRMatrix A, PASE_ParVector x, HYPRE_Real beta, PASE_ParVector y )
 {
 
    HYPRE_Int col;
    HYPRE_Int block_size = A->block_size;
+
+   /* IMPROVEMENT for MPI */
+   MPI_Comm    comm = hypre_ParVectorComm(x->b_H);
+   MPI_Request request;
+   MPI_Status  status;
+   HYPRE_Real *inner_prod;
+   inner_prod = hypre_CTAlloc (HYPRE_Real,  block_size);
+   for (col = 0; col < block_size; ++col)
+   {
+      inner_prod[col] = hypre_SeqVectorInnerProd(
+	    hypre_ParVectorLocalVector(A->aux_hH[col]),  hypre_ParVectorLocalVector(x->b_H) );
+   }
+   MPI_Iallreduce(MPI_IN_PLACE, inner_prod, block_size, MPI_DOUBLE, MPI_SUM, comm, &request );
+   /* IMPROVEMENT for MPI */
+
    /* y = alpha A x + beta y */
    hypre_ParCSRMatrixMatvec( alpha , A->A_H , x->b_H , beta , y->b_H );
    for (col = 0; col < block_size; ++col)
@@ -276,12 +368,17 @@ HYPRE_Int PASE_ParCSRMatrixMatvec ( HYPRE_Real alpha, PASE_ParCSRMatrix A, PASE_
       /* y = alpha x + y */
       hypre_ParVectorAxpy(alpha*(x->aux_h->data[col]), A->aux_hH[col], y->b_H);
    }
-
    hypre_CSRMatrixMatvec( alpha , A->aux_hh , x->aux_h , beta , y->aux_h );
+
+   /* IMPROVEMENT for MPI */
+   MPI_Wait(&request, &status);
    for (col = 0; col < block_size; ++col)
    {
-      y->aux_h->data[col] += alpha * hypre_ParVectorInnerProd(A->aux_hH[col], x->b_H);
+//      y->aux_h->data[col] += alpha * hypre_ParVectorInnerProd(A->aux_hH[col], x->b_H);
+      y->aux_h->data[col] += alpha * inner_prod[col];
    }
+   hypre_TFree(inner_prod);
+   /* IMPROVEMENT for MPI */
    return 0;
 }
 
