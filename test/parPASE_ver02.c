@@ -131,8 +131,8 @@ int main (int argc, char *argv[])
 
 
    /* Default problem parameters */
-   n = 200;
-   max_levels = 5;
+   n = 100;
+   max_levels = 4;
    /* AMG第一层矩阵是原来的1/2, 之后都是1/4, 我们要求H空间的维数是所求特征值个数的8倍 */
    block_size = (int) n*n/pow(4, max_levels);
 
@@ -158,6 +158,11 @@ int main (int argc, char *argv[])
 	    arg_index++;
 	    max_levels = atoi(argv[arg_index++]);
 	 }
+	 else if ( strcmp(argv[arg_index], "-tol") == 0 )
+	 {
+	    arg_index++;
+	    tolerance = atof(argv[arg_index++]);
+	 }
 	 else if ( strcmp(argv[arg_index], "-help") == 0 )
 	 {
 	    print_usage = 1;
@@ -174,9 +179,10 @@ int main (int argc, char *argv[])
 	 printf("\n");
 	 printf("Usage: %s [<options>]\n", argv[0]);
 	 printf("\n");
-	 printf("  -n <n>              : problem size in each direction (default: 33)\n");
-	 printf("  -block_size <n>      : eigenproblem block size (default: 3)\n");
-	 printf("  -max_levels <n>      : max levels of AMG (default: 5)\n");
+	 printf("  -n <n>           : problem size in each direction (default: 100)\n");
+	 printf("  -block_size <n>  : eigenproblem block size (default: 39)\n");
+	 printf("  -max_levels <n>  : max levels of AMG (default: 4)\n");
+	 printf("  -tol        <n>  : max tolerance of cycle (default: 1.e-8)\n");
 	 printf("\n");
       }
 
