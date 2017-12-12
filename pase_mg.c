@@ -16,8 +16,6 @@ HYPRE_Int PASE_MultiGridCreate(PASE_MultiGrid* multi_grid, HYPRE_Int max_levels,
    hypre_ParVector    **F_array;
    hypre_ParVector    **U_array;
    
-  
-
   /* -------------------------- 利用AMG生成各个层的矩阵------------------ */
 
    /* Create solver */

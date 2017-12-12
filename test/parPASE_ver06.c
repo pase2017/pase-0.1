@@ -48,15 +48,13 @@ int main (int argc, char *argv[])
    //   int time_index; 
    int global_time_index;
 
-
    /* 算法的各个参数 */
    int more;/* 多算的特征值数 */
    int iter = 0;/* 迭代次数 */
    int num_conv = 0;/* 收敛个数 */
-   int max_its = 10;/* 最大迭代次数 */
+   int max_its = 5;/* 最大迭代次数 */
    double residual = 1.0;/* 残量 */
    double tolerance = 1E-8;/* 最小残量 */
-
 
    /* -------------------------矩阵向量声明---------------------- */ 
    /* 最细矩阵 */
@@ -117,7 +115,6 @@ int main (int argc, char *argv[])
    MPI_Comm_rank(MPI_COMM_WORLD, &myid);
    MPI_Comm_size(MPI_COMM_WORLD, &num_procs);
 
-
    if (myid==0)
    {
       printf("=============================================================\n" );
@@ -128,7 +125,6 @@ int main (int argc, char *argv[])
 
    global_time_index = hypre_InitializeTiming("PASE Solve");
    hypre_BeginTiming(global_time_index);
-
 
    /* Default problem parameters */
    n = 100;
@@ -202,7 +198,7 @@ int main (int argc, char *argv[])
 
    /* 多算more个特征值 */
    more = num_eigens;
-   num_eigens = (num_eigens / block_size + 1) * block_size; 
+   num_eigens = (num_eigens / block_size + 2) * block_size; 
    more = num_eigens - more;
 
    /* Preliminaries: want at least one processor per row */
@@ -245,7 +241,6 @@ int main (int argc, char *argv[])
 
    /* How many rows do I have? */
    local_size = iupper - ilower + 1;
-
 
    /* -------------------最细矩阵赋值------------------------ */
 
@@ -569,6 +564,7 @@ int main (int argc, char *argv[])
 	 pvx_h = (HYPRE_ParVector*)(tmp -> vector);
       }
 
+
       for ( idx_block = 0; idx_block < num_eigens; idx_block += block_size)
       {
 	 if ( level == num_levels-2 && idx_block == 0)
@@ -621,6 +617,9 @@ int main (int argc, char *argv[])
 	 }
 	 PASE_LOBPCGSetup (lobpcg_solver, parcsr_A_Hh, par_b_Hh, par_x_Hh);
 	 PASE_LOBPCGSetupB(lobpcg_solver, parcsr_B_Hh, par_x_Hh);
+
+	 ((mv_TempMultiVector*) mv_MultiVectorGetData(eigenvectors_Hh))->numVectors = idx_block + block_size;
+
 	 HYPRE_LOBPCGSolve(lobpcg_solver, constraints_Hh, eigenvectors_Hh, tmp_eigenvalues);
 
 	 /* 定义更细层的特征向量 */
@@ -630,9 +629,9 @@ int main (int argc, char *argv[])
 	    for ( idx_eig=0; idx_eig < block_size; ++idx_eig)
 	    {
 	       idx = idx_block+idx_eig;
-	       for (k = 0; k < num_eigens; ++k)
+	       for (k = (idx_block-block_size)>0?(idx_block-block_size):0; k < idx_block+block_size; ++k)
 	       {
-		  if ( 1.2*(pvx_Hh[k]->aux_h->data[idx_eig]) > pvx_Hh[idx]->aux_h->data[idx_eig] )
+		  if ( fabs(pvx_Hh[k]->aux_h->data[idx_eig]) > fabs(pvx_Hh[idx]->aux_h->data[idx_eig]) )
 		  {
 		     idx = k;
 		  }
@@ -641,17 +640,19 @@ int main (int argc, char *argv[])
 	       /* 将pvx_Hh插值到0层, 然后再插值到更细层 */
 	       PASE_ParVectorGetParVector( Q_array[0], block_size, &pvx[idx_block], pvx_Hh[idx], pvx_h[idx_block+idx_eig] );
 	       printf ( "idx_block = %d, idx_eig = %d, idx = %d\n", idx_block, idx_eig, idx );
-
 	    }
 	 }
 	 else
 	 {
+	    /* 判断所求得到的特征向量哪个是AUX里的 */
 	    for ( idx_eig=0; idx_eig < block_size; ++idx_eig)
 	    {
 	       idx = idx_block+idx_eig;
-	       for (k = 0; k < num_eigens; ++k)
+//	       printf ( "%d: %f\n", idx_eig, tmp_eigenvalues[idx_eig]/h2 );
+	       for (k = (idx_block-block_size)>0?(idx_block-block_size):0; k < idx_block+block_size; ++k)
 	       {
-		  if ( 1.2*(pvx_Hh[k]->aux_h->data[idx_eig]) > pvx_Hh[idx]->aux_h->data[idx_eig] )
+//		  printf ( "(pvx_Hh[%d]->aux_h->data[%d]) = %f\n", k, idx_eig, (pvx_Hh[k]->aux_h->data[idx_eig]) );
+		  if ( fabs(pvx_Hh[k]->aux_h->data[idx_eig]) > fabs(pvx_Hh[idx]->aux_h->data[idx_eig]) )
 		  {
 		     idx = k;
 		  }
@@ -726,14 +727,19 @@ int main (int argc, char *argv[])
 	 }
 	 PASE_LOBPCGSetup (lobpcg_solver, parcsr_A_Hh, par_b_Hh, par_x_Hh);
 	 PASE_LOBPCGSetupB(lobpcg_solver, parcsr_B_Hh, par_x_Hh);
+
+	 ((mv_TempMultiVector*) mv_MultiVectorGetData(eigenvectors_Hh))->numVectors = idx_block + block_size;
+
 	 HYPRE_LOBPCGSolve(lobpcg_solver, constraints_Hh, eigenvectors_Hh, tmp_eigenvalues);
 
+	 /* 判断所求得到的特征向量哪个是AUX里的 */
 	 for ( idx_eig=0; idx_eig < block_size; ++idx_eig)
 	 {
 	    idx = idx_block+idx_eig;
-	    for (k = 0; k < num_eigens; ++k)
+	    for (k = (idx_block-block_size)>0?(idx_block-block_size):0; k < idx_block+block_size; ++k)
 	    {
-	       if ( 1.2*(pvx_Hh[k]->aux_h->data[idx_eig]) > pvx_Hh[idx]->aux_h->data[idx_eig] )
+	       printf ( "(pvx_Hh[%d]->aux_h->data[%d]) = %f\n", k, idx_eig, (pvx_Hh[k]->aux_h->data[idx_eig]) );
+	       if ( fabs(pvx_Hh[k]->aux_h->data[idx_eig]) > fabs(pvx_Hh[idx]->aux_h->data[idx_eig]) )
 	       {
 		  idx = k;
 	       }
@@ -744,6 +750,11 @@ int main (int argc, char *argv[])
 	    printf ( "idx_block = %d, idx_eig = %d, idx = %d\n", idx_block, idx_eig, idx );
 	 }
 
+	 for ( idx_eig=0; idx_eig < block_size; ++idx_eig)
+	 {
+	    printf ( "%d : eig = %1.16e, error = %e\n", idx_eig+idx_block, 
+		  eigenvalues[idx_block+idx_eig]/h2, (eigenvalues[idx_block+idx_eig]-exact_eigenvalues[idx_block+idx_eig])/h2 );
+	 }
       }
 
       for (idx_eig = num_conv; idx_eig < num_eigens; ++idx_eig)
@@ -776,7 +787,6 @@ int main (int argc, char *argv[])
 	 printf ( "num_conv = %d\n", num_conv );
       }
       ++iter;
-
 
       tmp_pvx = pvx;
       pvx = pvx_h;
@@ -825,8 +835,6 @@ int main (int argc, char *argv[])
    hypre_PrintTiming("Solve phase times", MPI_COMM_WORLD);
    hypre_FinalizeTiming(global_time_index);
    hypre_ClearTiming();
-
-
 
    /* Destroy PCG solver and preconditioner */
    HYPRE_ParCSRPCGDestroy(pcg_solver);
@@ -899,8 +907,6 @@ int main (int argc, char *argv[])
 
    /* Destroy amg_solver */
    HYPRE_BoomerAMGDestroy(amg_solver);
-
-
 
    /* Finalize MPI*/
    MPI_Finalize();

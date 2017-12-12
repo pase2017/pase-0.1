@@ -54,7 +54,7 @@ LFLAGS90 =
 ########################################################################
 # List of all programs to be compiled
 ########################################################################
-ALLPROGS = serPASE_ver01 mv cg lobpcg parPASE_ver01
+ALLPROGS = serPASE_ver01 mv cg lobpcg parPASE_ver01 parPASE_ver02
 
 all: $(ALLPROGS)
 
@@ -92,11 +92,27 @@ parPASE_ver01: parPASE_ver01.o
 	$(CC) -o $@ $^ $(LFLAGS)
 
 
+########################################################################
+# Example 5 (Multi-Correction)
+########################################################################
+parPASE_ver02: parPASE_ver02.o
+	$(CC) -o $@ $^ $(LFLAGS)
+
+
+########################################################################
+# Example 5 (Multi-Correction)
+########################################################################
+parPASE_ver06: parPASE_ver06.o
+	$(CC) -o $@ $^ $(LFLAGS)
+
+
+
+
 
 
 ########################################################################
 # Clean up
 ########################################################################
 clean:
-	rm -f $(ALLPROGS:=.o) cg lobpcg mv parPASE_ver01 serPASE_ver01
+	rm -f $(ALLPROGS:=.o) cg lobpcg mv parPASE_ver01 parPASE_ver02 parPASE_ver06 serPASE_ver01
 	rm -f *\.[0-9] *\.aux
