@@ -1,11 +1,11 @@
 /*
-   parPASE_ver02
+   parPASE_ver07
 
    Interface:    Linear-Algebraic (IJ)
 
-   Compile with: make parPASE_ver02
+   Compile with: make parPASE_ver01
 
-   Sample run:   parPASE_ver01 -block_size 20 -n 100 -max_levels 6 -tol 1.e-8
+   Sample run:   parPASE_ver01 -block_size 20 -n 100 -max_levels 6 
 
    Description:  This example solves the 2-D Laplacian eigenvalue
                  problem with zero boundary conditions on an nxn grid.
@@ -17,8 +17,11 @@
                  The eigensolver is PASE (Parallels Auxiliary Space Eigen-solver)
                  with LOBPCG and AMG preconditioner.
 
+	         特征值分块计算, 特征值越大, 则在更上一层进行迭代 
+
 		 首先通过最粗+aux求特征值问题与细空间求解问题, 得到特征向量的好初值
-		 然后从最细到最粗, 最细求解线性问题, 最粗+aux求解特征问题
+		 然后V循环从细到粗在各个细+aux上进行pcg算法, 生成各个层的pase矩阵
+		 最后V循环从粗到细在各个细+aux上进行pcg算法, 利用已生成的pase矩阵, 更新解(右端项)
    
    Created:      2017.09.21
 
@@ -33,10 +36,10 @@ static int cmp( const void *a ,  const void *b )
 
 int main (int argc, char *argv[])
 {
-   int i, k, idx_eig;
+   int i, k, idx_eig, idx_block, idx;
    int myid, num_procs;
    int N, N_H, n;
-   int block_size, max_levels;
+   int block_size, max_levels, num_eigens;
 
    int ilower, iupper;
    int local_size, extra;
@@ -47,15 +50,13 @@ int main (int argc, char *argv[])
    //   int time_index; 
    int global_time_index;
 
-
    /* 算法的各个参数 */
    int more;/* 多算的特征值数 */
    int iter = 0;/* 迭代次数 */
    int num_conv = 0;/* 收敛个数 */
-   int max_its = 100;/* 最大迭代次数 */
+   int max_its = 5;/* 最大迭代次数 */
    double residual = 1.0;/* 残量 */
    double tolerance = 1E-8;/* 最小残量 */
-
 
    /* -------------------------矩阵向量声明---------------------- */ 
    /* 最细矩阵 */
@@ -76,7 +77,7 @@ int main (int argc, char *argv[])
    /* 插值到细空间求解线性问题, 存储多向量 */
    HYPRE_ParVector   *pvx_h, *pvx,*tmp_pvx;
 
-   HYPRE_Real        *eigenvalues,*exact_eigenvalues;
+   HYPRE_Real        *tmp_eigenvalues, *eigenvalues, *exact_eigenvalues;
 
    /* -------------------------求解器声明---------------------- */ 
    HYPRE_Solver amg_solver, lobpcg_solver, pcg_solver, precond;
@@ -116,7 +117,6 @@ int main (int argc, char *argv[])
    MPI_Comm_rank(MPI_COMM_WORLD, &myid);
    MPI_Comm_size(MPI_COMM_WORLD, &num_procs);
 
-
    if (myid==0)
    {
       printf("=============================================================\n" );
@@ -128,12 +128,12 @@ int main (int argc, char *argv[])
    global_time_index = hypre_InitializeTiming("PASE Solve");
    hypre_BeginTiming(global_time_index);
 
-
    /* Default problem parameters */
    n = 100;
    max_levels = 4;
+   num_eigens = 10;
    /* AMG第一层矩阵是原来的1/2, 之后都是1/4, 我们要求H空间的维数是所求特征值个数的8倍 */
-   block_size = (int) n*n/pow(4, max_levels);
+   block_size = 3;
 
    /* Parse command line */
    {
@@ -157,6 +157,11 @@ int main (int argc, char *argv[])
 	    arg_index++;
 	    max_levels = atoi(argv[arg_index++]);
 	 }
+	 else if ( strcmp(argv[arg_index], "-num_eigens") == 0 )
+	 {
+	    arg_index++;
+	    num_eigens = atoi(argv[arg_index++]);
+	 }
 	 else if ( strcmp(argv[arg_index], "-tol") == 0 )
 	 {
 	    arg_index++;
@@ -179,7 +184,8 @@ int main (int argc, char *argv[])
 	 printf("Usage: %s [<options>]\n", argv[0]);
 	 printf("\n");
 	 printf("  -n <n>           : problem size in each direction (default: 100)\n");
-	 printf("  -block_size <n>  : eigenproblem block size (default: 39)\n");
+	 printf("  -block_size <n>  : block size of auxiliary space  (default: 10)\n");
+	 printf("  -num_eigens <n>  : number of eigenvalues   (default: 39)\n");
 	 printf("  -max_levels <n>  : max levels of AMG (default: 4)\n");
 	 printf("  -tol        <n>  : max tolerance of cycle (default: 1.e-8)\n");
 	 printf("\n");
@@ -193,8 +199,9 @@ int main (int argc, char *argv[])
    }
 
    /* 多算more个特征值 */
-   more = (int)(block_size * 0.25)+10;
-   block_size += more;
+   more = num_eigens;
+   num_eigens = (num_eigens / block_size + 2) * block_size; 
+   more = num_eigens - more;
 
    /* Preliminaries: want at least one processor per row */
    if (n*n < num_procs) n = sqrt(num_procs) + 1;
@@ -204,9 +211,10 @@ int main (int argc, char *argv[])
 
    /*----------------------- Laplace精确特征值 ---------------------*/
    /* eigenvalues - allocate space */
-   eigenvalues = hypre_CTAlloc (HYPRE_Real, block_size);
+   eigenvalues = hypre_CTAlloc (HYPRE_Real, num_eigens);
+   tmp_eigenvalues = hypre_CTAlloc (HYPRE_Real, num_eigens);
    {
-      int tmp_nn = (int) sqrt(block_size) + 3;
+      int tmp_nn = (int) sqrt(num_eigens) + 3;
       exact_eigenvalues = hypre_CTAlloc (HYPRE_Real, tmp_nn*tmp_nn);
       for (i = 0; i < tmp_nn; ++i) 
       {
@@ -235,7 +243,6 @@ int main (int argc, char *argv[])
 
    /* How many rows do I have? */
    local_size = iupper - ilower + 1;
-
 
    /* -------------------最细矩阵赋值------------------------ */
 
@@ -430,7 +437,7 @@ int main (int argc, char *argv[])
    /* TODO:在进行pcg进行线性方程组求解时是否可以用到得到的precond, 至少level==0时可以, 
     * 是否可以不用precondition, 因为迭代8次都达到残差tol了 */
    HYPRE_PCGSetMaxIter(pcg_solver, 10); /* max iterations */
-   HYPRE_PCGSetTol(pcg_solver, 1e-18); /* conv. tolerance */
+   HYPRE_PCGSetTol(pcg_solver, 1e-15); /* conv. tolerance */
    HYPRE_PCGSetTwoNorm(pcg_solver, 1); /* use the two norm as the stopping criteria */
    HYPRE_PCGSetPrintLevel(pcg_solver, 0); /* print solve info */
    HYPRE_PCGSetLogging(pcg_solver, 1); /* needed to get run info later */
@@ -461,7 +468,7 @@ int main (int argc, char *argv[])
       /* eigenvectors - create a multivector */
       {
 	 eigenvectors_H = 
-	    mv_MultiVectorCreateFromSampleVector(interpreter_H, block_size, par_x_H);
+	    mv_MultiVectorCreateFromSampleVector(interpreter_H, num_eigens, par_x_H);
 	 mv_TempMultiVector* tmp = 
 	    (mv_TempMultiVector*) mv_MultiVectorGetData(eigenvectors_H);
 	 pvx_H = (HYPRE_ParVector*)(tmp -> vector);
@@ -488,16 +495,22 @@ int main (int argc, char *argv[])
       HYPRE_LOBPCGDestroy(lobpcg_solver);
    }
 
+   for ( idx_eig=0; idx_eig < num_eigens; ++idx_eig)
+   {
+      printf ( "%d : eig = %1.16e, error = %e\n", idx_eig, 
+	    eigenvalues[idx_eig]/h2, (eigenvalues[idx_eig]-exact_eigenvalues[idx_eig])/h2 );
+   }
+
    {
       eigenvectors = 
-	 mv_MultiVectorCreateFromSampleVector(interpreter, block_size, U_array[num_levels-2]);
+	 mv_MultiVectorCreateFromSampleVector(interpreter, num_eigens, U_array[num_levels-2]);
       mv_TempMultiVector* tmp = 
 	 (mv_TempMultiVector*) mv_MultiVectorGetData(eigenvectors);
       pvx = (HYPRE_ParVector*)(tmp -> vector);
    }
 
    /* 将特征向量插值到更细层num_levels-2 */
-   for (idx_eig = 0; idx_eig < block_size; ++idx_eig)
+   for (idx_eig = 0; idx_eig < num_eigens; ++idx_eig)
    {
       HYPRE_ParCSRMatrixMatvec ( 1.0, P_array[num_levels-2], pvx_H[idx_eig], 0.0, pvx[idx_eig] );
    }
@@ -510,52 +523,70 @@ int main (int argc, char *argv[])
       PASE_ParVectorCreate( MPI_COMM_WORLD, N_H, block_size, NULL,  partitioning, &par_b_Hh);
    }
 
+   /* 在循环外创建par_x_Hh, par_b_Hh */
+   /* 从粗到细, 细解问题, 最粗特征值 */
+   for ( level = num_levels-2; level >= 0; --level )
    {
-      /* 在循环外创建par_x_Hh, par_b_Hh */
-      /* 从粗到细, 细解问题, 最粗特征值 */
-      for ( level = num_levels-2; level >= 0; --level )
+      /*------------------------Create a preconditioner and solve the linear system-------------*/
+      if (myid==0)
       {
-	 /*------------------------Create a preconditioner and solve the linear system-------------*/
-	 if (myid==0)
-	 {
-	    printf ( "PCG solve A_h U = lambda_Hh B_h U_Hh\n" );
-	 }
-	 /* Now setup and solve! */
-	 HYPRE_ParCSRPCGSetup(pcg_solver, A_array[level], F_array[level], U_array[level]);
-	 for (idx_eig = 0; idx_eig < block_size; ++idx_eig)
-	 {
-	    /* 生成右端项 y = alpha*A*x + beta*y */
-	    HYPRE_ParCSRMatrixMatvec ( eigenvalues[idx_eig], B_array[level], pvx[idx_eig], 0.0, F_array[level] );
-	    HYPRE_ParCSRPCGSolve(pcg_solver, A_array[level], F_array[level], pvx[idx_eig]);
-	 }
+	 printf ( "PCG solve A_h U = lambda_Hh B_h U_Hh\n" );
+      }
+      /* Now setup and solve! */
+      HYPRE_ParCSRPCGSetup(pcg_solver, A_array[level], F_array[level], U_array[level]);
+      for (idx_eig = 0; idx_eig < num_eigens; ++idx_eig)
+      {
+	 /* 生成右端项 y = alpha*A*x + beta*y */
+	 HYPRE_ParCSRMatrixMatvec ( eigenvalues[idx_eig], B_array[level], pvx[idx_eig], 0.0, F_array[level] );
+	 HYPRE_ParCSRPCGSolve(pcg_solver, A_array[level], F_array[level], pvx[idx_eig]);
+      }
 
-	 /* pvx_Hh (特征向量)  pvx(当前层解问题向量)  pvx_h(是更新后的特征向量并插值到了更细层) */
-	 if (myid==0)
-	 {
-	    printf ( "Current level = %d\n", level );
-	    printf ( "Set A_Hh and B_Hh\n" );
-	 }
-	 /* 最粗层且第一次迭代时, 生成Hh矩阵, 其它都是重置 */
-	 if ( level == num_levels-2 )
+      /* pvx_Hh (特征向量)  pvx(当前层解问题向量)  pvx_h(是更新后的特征向量并插值到了更细层) */
+      if (myid==0)
+      {
+	 printf ( "Current level = %d\n", level );
+	 printf ( "Set A_Hh and B_Hh\n" );
+      }
+      /* 最粗层且第一次迭代时, 生成Hh矩阵, 其它都是重置 */
+
+      if (level == 0)
+      {
+	 eigenvectors_h = 
+	    mv_MultiVectorCreateFromSampleVector(interpreter, num_eigens, U_array[0]);
+	 mv_TempMultiVector* tmp = 
+	    (mv_TempMultiVector*) mv_MultiVectorGetData(eigenvectors_h);
+	 pvx_h = (HYPRE_ParVector*)(tmp -> vector);
+      }
+      else
+      {
+	 eigenvectors_h = 
+	    mv_MultiVectorCreateFromSampleVector(interpreter, num_eigens, U_array[level-1]);
+	 mv_TempMultiVector* tmp = 
+	    (mv_TempMultiVector*) mv_MultiVectorGetData(eigenvectors_h);
+	 pvx_h = (HYPRE_ParVector*)(tmp -> vector);
+      }
+
+
+      for ( idx_block = 0; idx_block < num_eigens; idx_block += block_size)
+      {
+	 if ( level == num_levels-2 && idx_block == 0)
 	 {
 	    PASE_ParCSRMatrixCreate( MPI_COMM_WORLD, block_size, parcsr_A_H, Q_array[level],
-		  A_array[level], pvx, &parcsr_A_Hh, U_array[num_levels-1], U_array[level] );
+		  A_array[level], &pvx[idx_block], &parcsr_A_Hh, U_array[num_levels-1], U_array[level] );
 	    PASE_ParCSRMatrixCreate( MPI_COMM_WORLD, block_size, parcsr_B_H, Q_array[level],
-		  B_array[level], pvx, &parcsr_B_Hh, U_array[num_levels-1], U_array[level] );
-
+		  B_array[level], &pvx[idx_block], &parcsr_B_Hh, U_array[num_levels-1], U_array[level] );
 	    /* eigenvectors - create a multivector */
 	    {
 	       eigenvectors_Hh = 
-		  mv_MultiVectorCreateFromSampleVector(interpreter_Hh, block_size, par_x_Hh);
+		  mv_MultiVectorCreateFromSampleVector(interpreter_Hh, num_eigens, par_x_Hh);
 	       mv_TempMultiVector* tmp = 
 		  (mv_TempMultiVector*) mv_MultiVectorGetData(eigenvectors_Hh);
 	       pvx_Hh = (PASE_ParVector*)(tmp -> vector);
 	    }
-
 	    /* LOBPCG for PASE */
 	    HYPRE_LOBPCGCreate(interpreter_Hh, &matvec_fn_Hh, &lobpcg_solver);
 	    /* 最粗+aux特征值问题的参数选取 */
-	    HYPRE_LOBPCGSetMaxIter(lobpcg_solver, 5);
+	    HYPRE_LOBPCGSetMaxIter(lobpcg_solver, 50);
 	    /* TODO: 搞清楚这是什么意思, 即是否可以以pvx_Hh为初值进行迭代 */
 	    /* use rhs as initial guess for inner pcg iterations */
 	    HYPRE_LOBPCGSetPrecondUsageMode(lobpcg_solver, 1);
@@ -565,15 +596,21 @@ int main (int argc, char *argv[])
 	 else
 	 {
 	    PASE_ParCSRMatrixSetAuxSpace( MPI_COMM_WORLD, parcsr_A_Hh, block_size, Q_array[level],
-		  A_array[level], pvx, U_array[num_levels-1], U_array[level] );
+		  A_array[level], &pvx[idx_block], U_array[num_levels-1], U_array[level] );
 	    PASE_ParCSRMatrixSetAuxSpace( MPI_COMM_WORLD, parcsr_B_Hh, block_size, Q_array[level],
-		  B_array[level], pvx, U_array[num_levels-1], U_array[level] );
+		  B_array[level], &pvx[idx_block], U_array[num_levels-1], U_array[level] );
 	 }
 
+	 /* 对特征向量赋予初值 */
+	 for ( idx_eig = 0; idx_eig < num_eigens; ++idx_eig)
+	 {
+	    HYPRE_ParCSRMatrixMatvecT ( 1.0, P_array[num_levels-2], pvx[idx_eig], 0.0, pvx_Hh[idx_eig]->b_H );
+	    hypre_SeqVectorSetConstantValues( pvx_Hh[idx_eig]->aux_h, 0.0 );
+	 }
 	 for ( idx_eig = 0; idx_eig < block_size; ++idx_eig)
 	 {
-	    PASE_ParVectorSetConstantValues(pvx_Hh[idx_eig], 0.0);
-	    pvx_Hh[idx_eig]->aux_h->data[idx_eig] = 1.0;
+	    PASE_ParVectorSetConstantValues(pvx_Hh[idx_block+idx_eig], 0.0);
+	    pvx_Hh[idx_block+idx_eig]->aux_h->data[idx_eig] = 1.0;
 	 }
 	 /* LOBPCG eigensolver */
 	 if (myid==0)
@@ -582,93 +619,147 @@ int main (int argc, char *argv[])
 	 }
 	 PASE_LOBPCGSetup (lobpcg_solver, parcsr_A_Hh, par_b_Hh, par_x_Hh);
 	 PASE_LOBPCGSetupB(lobpcg_solver, parcsr_B_Hh, par_x_Hh);
-	 HYPRE_LOBPCGSolve(lobpcg_solver, constraints_Hh, eigenvectors_Hh, eigenvalues);
+
+	 ((mv_TempMultiVector*) mv_MultiVectorGetData(eigenvectors_Hh))->numVectors = idx_block + block_size;
+
+	 HYPRE_LOBPCGSolve(lobpcg_solver, constraints_Hh, eigenvectors_Hh, tmp_eigenvalues);
 
 	 /* 定义更细层的特征向量 */
 	 if (level == 0)
 	 {
-	    eigenvectors_h = 
-	       mv_MultiVectorCreateFromSampleVector(interpreter, block_size, U_array[0]);
-	    mv_TempMultiVector* tmp = 
-	       (mv_TempMultiVector*) mv_MultiVectorGetData(eigenvectors_h);
-	    pvx_h = (HYPRE_ParVector*)(tmp -> vector);
-	    for (idx_eig = 0; idx_eig < block_size; ++idx_eig)
+	    /* 判断所求得到的特征向量哪个是AUX里的 */
+	    for ( idx_eig=0; idx_eig < block_size; ++idx_eig)
 	    {
+	       idx = idx_block+idx_eig;
+	       for (k = (idx_block-block_size)>0?(idx_block-block_size):0; k < idx_block+block_size; ++k)
+	       {
+		  if ( fabs(pvx_Hh[k]->aux_h->data[idx_eig]) > fabs(pvx_Hh[idx]->aux_h->data[idx_eig]) )
+		  {
+		     idx = k;
+		  }
+	       }
+	       eigenvalues[idx_block+idx_eig] = tmp_eigenvalues[idx];
 	       /* 将pvx_Hh插值到0层, 然后再插值到更细层 */
-	       PASE_ParVectorGetParVector( Q_array[0], block_size, pvx, pvx_Hh[idx_eig], pvx_h[idx_eig] );
+	       PASE_ParVectorGetParVector( Q_array[0], block_size, &pvx[idx_block], pvx_Hh[idx], pvx_h[idx_block+idx_eig] );
+	       printf ( "idx_block = %d, idx_eig = %d, idx = %d\n", idx_block, idx_eig, idx );
 	    }
 	 }
 	 else
 	 {
-	    eigenvectors_h = 
-	       mv_MultiVectorCreateFromSampleVector(interpreter, block_size, U_array[level-1]);
-	    mv_TempMultiVector* tmp = 
-	       (mv_TempMultiVector*) mv_MultiVectorGetData(eigenvectors_h);
-	    pvx_h = (HYPRE_ParVector*)(tmp -> vector);
-	    /* 对pvx_Hh进行处理 */
-	    for (idx_eig = 0; idx_eig < block_size; ++idx_eig)
+	    /* 判断所求得到的特征向量哪个是AUX里的 */
+	    for ( idx_eig=0; idx_eig < block_size; ++idx_eig)
 	    {
+	       idx = idx_block+idx_eig;
+//	       printf ( "%d: %f\n", idx_eig, tmp_eigenvalues[idx_eig]/h2 );
+	       for (k = (idx_block-block_size)>0?(idx_block-block_size):0; k < idx_block+block_size; ++k)
+	       {
+//		  printf ( "(pvx_Hh[%d]->aux_h->data[%d]) = %f\n", k, idx_eig, (pvx_Hh[k]->aux_h->data[idx_eig]) );
+		  if ( fabs(pvx_Hh[k]->aux_h->data[idx_eig]) > fabs(pvx_Hh[idx]->aux_h->data[idx_eig]) )
+		  {
+		     idx = k;
+		  }
+	       }
+	       eigenvalues[idx_block+idx_eig] = tmp_eigenvalues[idx];
 	       /* 将pvx_Hh插值到level层, 然后再插值到更细层 */
-	       PASE_ParVectorGetParVector( Q_array[level], block_size, pvx, pvx_Hh[idx_eig], U_array[level] );
+	       PASE_ParVectorGetParVector( Q_array[level], block_size, &pvx[idx_block], pvx_Hh[idx], U_array[level] );
 	       /* 生成当前网格下的特征向量 */
-	       HYPRE_ParCSRMatrixMatvec ( 1.0, P_array[level-1], U_array[level], 0.0, pvx_h[idx_eig] );
+	       HYPRE_ParCSRMatrixMatvec ( 1.0, P_array[level-1], U_array[level], 0.0, pvx_h[idx_block+idx_eig] );
+	       printf ( "idx_block = %d, idx_eig = %d, idx = %d\n", idx_block, idx_eig, idx );
 	    }
 	 }
 
-	 /* eigenvectors - create a multivector and get a pointer */
-	 /* 释放这一层解问题向量的空间 */
-	 for (idx_eig = 0; idx_eig < block_size; ++idx_eig)
+	 for ( idx_eig=0; idx_eig < block_size; ++idx_eig)
 	 {
-	    HYPRE_ParVectorDestroy(pvx[idx_eig]);
+	    printf ( "%d : eig = %1.16e, error = %e\n", idx_eig+idx_block, 
+		  eigenvalues[idx_block+idx_eig]/h2, (eigenvalues[idx_block+idx_eig]-exact_eigenvalues[idx_block+idx_eig])/h2 );
 	 }
-	 hypre_TFree(pvx);
-	 free((mv_TempMultiVector*) mv_MultiVectorGetData(eigenvectors));
-	 hypre_TFree(eigenvectors);
-	 /* pvx_h是当前层更新的特征向量 */
-	 pvx = pvx_h;
-	 eigenvectors = eigenvectors_h;
       }
-   }
 
+      /* eigenvectors - create a multivector and get a pointer */
+      /* 释放这一层解问题向量的空间 */
+      for (idx_eig = 0; idx_eig < num_eigens; ++idx_eig)
+      {
+	 HYPRE_ParVectorDestroy(pvx[idx_eig]);
+      }
+      hypre_TFree(pvx);
+      free((mv_TempMultiVector*) mv_MultiVectorGetData(eigenvectors));
+      hypre_TFree(eigenvectors);
+      /* pvx_h是当前层更新的特征向量 */
+      pvx = pvx_h;
+      eigenvectors = eigenvectors_h;
+   }
 
    {
       eigenvectors_h = 
-	 mv_MultiVectorCreateFromSampleVector(interpreter, block_size, U_array[0]);
+	 mv_MultiVectorCreateFromSampleVector(interpreter, num_eigens, U_array[0]);
       mv_TempMultiVector* tmp = 
 	 (mv_TempMultiVector*) mv_MultiVectorGetData(eigenvectors_h);
       pvx_h = (HYPRE_ParVector*)(tmp -> vector);
    }
 
-
    HYPRE_ParCSRPCGSetup(pcg_solver, A_array[0], F_array[0], U_array[0]);
 
-   while (iter < max_its && num_conv < block_size-more)
+   printf ( "num_eigens = %d, more = %d, block_size = %d\n", num_eigens, more, block_size );
+
+   /* pvx是上次迭代的特征向量 */
+   while (iter < max_its && num_conv < num_eigens-more)
    {
-      PASE_ParCSRMatrixSetAuxSpace( MPI_COMM_WORLD, parcsr_A_Hh, block_size, Q_array[0],
-	    A_array[0], pvx, U_array[num_levels-1], U_array[0] );
-      PASE_ParCSRMatrixSetAuxSpace( MPI_COMM_WORLD, parcsr_B_Hh, block_size, Q_array[0],
-	    B_array[0], pvx, U_array[num_levels-1], U_array[0] );
-      for ( idx_eig = 0; idx_eig < block_size; ++idx_eig)
+      for ( idx_block = 0; idx_block < num_eigens; idx_block += block_size)
       {
-	 PASE_ParVectorSetConstantValues(pvx_Hh[idx_eig], 0.0);
-	 pvx_Hh[idx_eig]->aux_h->data[idx_eig] = 1.0;
-      }
-      /* LOBPCG eigensolver */
-      if (myid==0)
-      {
-	 printf ( "LOBPCG solve A_Hh U_Hh = lambda_Hh B_Hh U_Hh\n" );
-      }
-      PASE_LOBPCGSetup (lobpcg_solver, parcsr_A_Hh, par_b_Hh, par_x_Hh);
-      PASE_LOBPCGSetupB(lobpcg_solver, parcsr_B_Hh, par_x_Hh);
-      HYPRE_LOBPCGSolve(lobpcg_solver, constraints_Hh, eigenvectors_Hh, eigenvalues);
+	 PASE_ParCSRMatrixSetAuxSpace( MPI_COMM_WORLD, parcsr_A_Hh, block_size, Q_array[0],
+	       A_array[0], &pvx[idx_block], U_array[num_levels-1], U_array[0] );
+	 PASE_ParCSRMatrixSetAuxSpace( MPI_COMM_WORLD, parcsr_B_Hh, block_size, Q_array[0],
+	       B_array[0], &pvx[idx_block], U_array[num_levels-1], U_array[0] );
 
-      /* 将pvx_Hh插值到0层, 然后再插值到更细层 */
-      for (idx_eig = 0; idx_eig < block_size; ++idx_eig)
-      {
-	 PASE_ParVectorGetParVector( Q_array[0], block_size, pvx, pvx_Hh[idx_eig], pvx_h[idx_eig] );
+	 for ( idx_eig = 0; idx_eig < num_eigens; ++idx_eig)
+	 {
+	    HYPRE_ParCSRMatrixMatvecT ( 1.0, P_array[num_levels-2], pvx[idx_eig], 0.0, pvx_Hh[idx_eig]->b_H );
+	    hypre_SeqVectorSetConstantValues( pvx_Hh[idx_eig]->aux_h, 0.0 );
+	 }
+	 for ( idx_eig = 0; idx_eig < block_size; ++idx_eig)
+	 {
+	    PASE_ParVectorSetConstantValues(pvx_Hh[idx_block+idx_eig], 0.0);
+	    pvx_Hh[idx_block+idx_eig]->aux_h->data[idx_eig] = 1.0;
+	 }
+
+	 /* LOBPCG eigensolver */
+	 if (myid==0)
+	 {
+	    printf ( "LOBPCG solve A_Hh U_Hh = lambda_Hh B_Hh U_Hh\n" );
+	 }
+	 PASE_LOBPCGSetup (lobpcg_solver, parcsr_A_Hh, par_b_Hh, par_x_Hh);
+	 PASE_LOBPCGSetupB(lobpcg_solver, parcsr_B_Hh, par_x_Hh);
+
+	 ((mv_TempMultiVector*) mv_MultiVectorGetData(eigenvectors_Hh))->numVectors = idx_block + block_size;
+
+	 HYPRE_LOBPCGSolve(lobpcg_solver, constraints_Hh, eigenvectors_Hh, tmp_eigenvalues);
+
+	 /* 判断所求得到的特征向量哪个是AUX里的 */
+	 for ( idx_eig=0; idx_eig < block_size; ++idx_eig)
+	 {
+	    idx = idx_block+idx_eig;
+	    for (k = (idx_block-block_size)>0?(idx_block-block_size):0; k < idx_block+block_size; ++k)
+	    {
+	       printf ( "(pvx_Hh[%d]->aux_h->data[%d]) = %f\n", k, idx_eig, (pvx_Hh[k]->aux_h->data[idx_eig]) );
+	       if ( fabs(pvx_Hh[k]->aux_h->data[idx_eig]) > fabs(pvx_Hh[idx]->aux_h->data[idx_eig]) )
+	       {
+		  idx = k;
+	       }
+	    }
+	    eigenvalues[idx_block+idx_eig] = tmp_eigenvalues[idx];
+	    /* 将pvx_Hh插值到0层 */
+	    PASE_ParVectorGetParVector( Q_array[0], block_size, &pvx[idx_block], pvx_Hh[idx], pvx_h[idx_block+idx_eig] );
+	    printf ( "idx_block = %d, idx_eig = %d, idx = %d\n", idx_block, idx_eig, idx );
+	 }
+
+	 for ( idx_eig=0; idx_eig < block_size; ++idx_eig)
+	 {
+	    printf ( "%d : eig = %1.16e, error = %e\n", idx_eig+idx_block, 
+		  eigenvalues[idx_block+idx_eig]/h2, (eigenvalues[idx_block+idx_eig]-exact_eigenvalues[idx_block+idx_eig])/h2 );
+	 }
       }
 
-      for (idx_eig = num_conv; idx_eig < block_size; ++idx_eig)
+      for (idx_eig = num_conv; idx_eig < num_eigens; ++idx_eig)
       {
 	 /* 生成右端项 y = alpha*A*x + beta*y */
 	 HYPRE_ParCSRMatrixMatvec ( eigenvalues[idx_eig], B_array[0], pvx_h[idx_eig], 0.0, F_array[0] );
@@ -679,7 +770,7 @@ int main (int argc, char *argv[])
       {
 	 printf ( "compute residual and update eigenvalues\n" );
       }
-      for (idx_eig = num_conv; idx_eig < block_size-more; ++idx_eig)
+      for (idx_eig = num_conv; idx_eig < num_eigens-more; ++idx_eig)
       {
 	 HYPRE_ParCSRMatrixMatvec ( 1.0, B_array[0], pvx_h[idx_eig], 0.0, F_array[0] );
 	 HYPRE_ParVectorInnerProd (F_array[0], pvx_h[idx_eig], &tmp_double);
@@ -699,7 +790,6 @@ int main (int argc, char *argv[])
       }
       ++iter;
 
-
       tmp_pvx = pvx;
       pvx = pvx_h;
       pvx_h = tmp_pvx;
@@ -717,7 +807,7 @@ int main (int argc, char *argv[])
    hypre_EndTiming(global_time_index);
 
    sum_error = 0;
-   for (idx_eig = 0; idx_eig < block_size-more; ++idx_eig)
+   for (idx_eig = 0; idx_eig < num_eigens-more; ++idx_eig)
    {
       HYPRE_ParCSRMatrixMatvec ( 1.0, A_array[0], pvx[idx_eig], 0.0, F_array[0] );
       HYPRE_ParVectorInnerProd (F_array[0], pvx[idx_eig], &eigenvalues[idx_eig]);
@@ -748,15 +838,13 @@ int main (int argc, char *argv[])
    hypre_FinalizeTiming(global_time_index);
    hypre_ClearTiming();
 
-
-
    /* Destroy PCG solver and preconditioner */
    HYPRE_ParCSRPCGDestroy(pcg_solver);
    HYPRE_BoomerAMGDestroy(precond);
    HYPRE_LOBPCGDestroy(lobpcg_solver);
 
    /* 销毁level==num_levels-2层的特征向量 */
-   for ( idx_eig = 0; idx_eig < block_size; ++idx_eig)
+   for ( idx_eig = 0; idx_eig < num_eigens; ++idx_eig)
    {
       HYPRE_ParVectorDestroy(pvx_H[idx_eig]);
    }
@@ -766,7 +854,7 @@ int main (int argc, char *argv[])
    hypre_TFree(interpreter_H);
 
    /* 销毁PASE向量和解释器 */
-   for ( idx_eig = 0; idx_eig < block_size; ++idx_eig)
+   for ( idx_eig = 0; idx_eig < num_eigens; ++idx_eig)
    {
       PASE_ParVectorDestroy(pvx_Hh[idx_eig]);
    }
@@ -783,7 +871,7 @@ int main (int argc, char *argv[])
 
 
    /* 销毁Hh空间的特征向量(当只有一层时也对) */
-   for ( idx_eig = 0; idx_eig < block_size; ++idx_eig)
+   for ( idx_eig = 0; idx_eig < num_eigens; ++idx_eig)
    {
       HYPRE_ParVectorDestroy(pvx[idx_eig]);
       HYPRE_ParVectorDestroy(pvx_h[idx_eig]);
@@ -809,6 +897,7 @@ int main (int argc, char *argv[])
    hypre_TFree(B_array);
    hypre_TFree(Q_array);
 
+   hypre_TFree(tmp_eigenvalues);
    hypre_TFree(eigenvalues);
    hypre_TFree(exact_eigenvalues);
 
@@ -820,8 +909,6 @@ int main (int argc, char *argv[])
 
    /* Destroy amg_solver */
    HYPRE_BoomerAMGDestroy(amg_solver);
-
-
 
    /* Finalize MPI*/
    MPI_Finalize();
