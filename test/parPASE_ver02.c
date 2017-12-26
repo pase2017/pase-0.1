@@ -5,7 +5,7 @@
 
    Compile with: make parPASE_ver01
 
-   Sample run:   parPASE_ver01 -block_size 20 -n 100 -max_levels 6 
+   Sample run:   parPASE_ver01 -block_size 20 -n 100 -max_levels 6 -tol 1.e-8
 
    Description:  This example solves the 2-D Laplacian eigenvalue
                  problem with zero boundary conditions on an nxn grid.
@@ -53,7 +53,7 @@ int main (int argc, char *argv[])
    int more;/* 多算的特征值数 */
    int iter = 0;/* 迭代次数 */
    int num_conv = 0;/* 收敛个数 */
-   int max_its = 30;/* 最大迭代次数 */
+   int max_its = 100;/* 最大迭代次数 */
    double residual = 1.0;/* 残量 */
    double tolerance = 1E-8;/* 最小残量 */
 
@@ -431,7 +431,7 @@ int main (int argc, char *argv[])
    /* TODO:在进行pcg进行线性方程组求解时是否可以用到得到的precond, 至少level==0时可以, 
     * 是否可以不用precondition, 因为迭代8次都达到残差tol了 */
    HYPRE_PCGSetMaxIter(pcg_solver, 10); /* max iterations */
-   HYPRE_PCGSetTol(pcg_solver, 1e-15); /* conv. tolerance */
+   HYPRE_PCGSetTol(pcg_solver, 1e-18); /* conv. tolerance */
    HYPRE_PCGSetTwoNorm(pcg_solver, 1); /* use the two norm as the stopping criteria */
    HYPRE_PCGSetPrintLevel(pcg_solver, 0); /* print solve info */
    HYPRE_PCGSetLogging(pcg_solver, 1); /* needed to get run info later */

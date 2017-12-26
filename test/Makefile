@@ -4,7 +4,10 @@
 CC        = mpicc
 F77       = mpif77
 CXX       = mpicxx
-F90       = mpif90
+#CC        = mpiicc
+#F77       = mpiifort
+#CXX       = mpiicpc
+#F90       = mpif90
 HYPRE_DIR = ../../../hypre
 
 ########################################################################
@@ -54,7 +57,7 @@ LFLAGS90 =
 ########################################################################
 # List of all programs to be compiled
 ########################################################################
-ALLPROGS = serPASE_ver01 mv cg lobpcg parPASE_ver01
+ALLPROGS = serPASE_ver01 mv cg lobpcg parPASE_ver01 parPASE_ver02
 
 all: $(ALLPROGS)
 
@@ -91,6 +94,13 @@ lobpcg: lobpcg.o
 parPASE_ver01: parPASE_ver01.o
 	$(CC) -o $@ $^ $(LFLAGS)
 
+########################################################################
+# Example 5 (Multi-Correction)
+########################################################################
+parPASE_ver02: parPASE_ver02.o
+	$(CC) -o $@ $^ $(LFLAGS)
+
+
 
 
 
@@ -98,5 +108,5 @@ parPASE_ver01: parPASE_ver01.o
 # Clean up
 ########################################################################
 clean:
-	rm -f $(ALLPROGS:=.o) cg lobpcg mv parPASE_ver01 serPASE_ver01
+	rm -f $(ALLPROGS:=.o) cg lobpcg mv parPASE_ver01 parPASE_ver02 serPASE_ver01
 	rm -f *\.[0-9] *\.aux
