@@ -100,6 +100,7 @@ HYPRE_Int PASE_ParCSRMatrixSetAuxSpace( MPI_Comm comm ,
                                    HYPRE_ParCSRMatrix P,
                                    HYPRE_ParCSRMatrix A_h, 
 				   HYPRE_ParVector*   u_h, 
+                                   HYPRE_Int          begin_idx,
 				   HYPRE_ParVector    workspace_H, 
 				   HYPRE_ParVector    workspace_h
 				   );

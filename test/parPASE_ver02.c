@@ -510,204 +510,201 @@ int main (int argc, char *argv[])
       PASE_ParVectorCreate( MPI_COMM_WORLD, N_H, block_size, NULL,  partitioning, &par_b_Hh);
    }
 
+   /* 在循环外创建par_x_Hh, par_b_Hh */
+   /* 从粗到细, 细解问题, 最粗特征值 */
+   for ( level = num_levels-2; level >= 0; --level )
    {
-      /* 在循环外创建par_x_Hh, par_b_Hh */
-      /* 从粗到细, 细解问题, 最粗特征值 */
-      for ( level = num_levels-2; level >= 0; --level )
+      /*------------------------Create a preconditioner and solve the linear system-------------*/
+      if (myid==0)
       {
-	 /*------------------------Create a preconditioner and solve the linear system-------------*/
-	 if (myid==0)
+	 printf ( "PCG solve A_h U = lambda_Hh B_h U_Hh\n" );
+      }
+      /* Now setup and solve! */
+      HYPRE_ParCSRPCGSetup(pcg_solver, A_array[level], F_array[level], U_array[level]);
+      for (idx_eig = 0; idx_eig < block_size; ++idx_eig)
+      {
+	 /* 生成右端项 y = alpha*A*x + beta*y */
+	 HYPRE_ParCSRMatrixMatvec ( eigenvalues[idx_eig], B_array[level], pvx[idx_eig], 0.0, F_array[level] );
+	 HYPRE_ParCSRPCGSolve(pcg_solver, A_array[level], F_array[level], pvx[idx_eig]);
+      }
+
+      /* pvx_Hh (特征向量)  pvx(当前层解问题向量)  pvx_h(是更新后的特征向量并插值到了更细层) */
+      if (myid==0)
+      {
+	 printf ( "Current level = %d\n", level );
+	 printf ( "Set A_Hh and B_Hh\n" );
+      }
+      /* 最粗层且第一次迭代时, 生成Hh矩阵, 其它都是重置 */
+      if ( level == num_levels-2 )
+      {
+	 PASE_ParCSRMatrixCreate( MPI_COMM_WORLD, block_size, parcsr_A_H, Q_array[level],
+	       A_array[level], pvx, &parcsr_A_Hh, U_array[num_levels-1], U_array[level] );
+	 PASE_ParCSRMatrixCreate( MPI_COMM_WORLD, block_size, parcsr_B_H, Q_array[level],
+	       B_array[level], pvx, &parcsr_B_Hh, U_array[num_levels-1], U_array[level] );
+
+	 /* eigenvectors - create a multivector */
 	 {
-	    printf ( "PCG solve A_h U = lambda_Hh B_h U_Hh\n" );
+	    eigenvectors_Hh = 
+	       mv_MultiVectorCreateFromSampleVector(interpreter_Hh, block_size, par_x_Hh);
+	    mv_TempMultiVector* tmp = 
+	       (mv_TempMultiVector*) mv_MultiVectorGetData(eigenvectors_Hh);
+	    pvx_Hh = (PASE_ParVector*)(tmp -> vector);
 	 }
-	 /* Now setup and solve! */
-	 HYPRE_ParCSRPCGSetup(pcg_solver, A_array[level], F_array[level], U_array[level]);
+
+	 /* LOBPCG for PASE */
+	 HYPRE_LOBPCGCreate(interpreter_Hh, &matvec_fn_Hh, &lobpcg_solver);
+	 /* 最粗+aux特征值问题的参数选取 */
+	 HYPRE_LOBPCGSetMaxIter(lobpcg_solver, 3);
+	 /* TODO: 搞清楚这是什么意思, 即是否可以以pvx_Hh为初值进行迭代 */
+	 /* use rhs as initial guess for inner pcg iterations */
+	 HYPRE_LOBPCGSetPrecondUsageMode(lobpcg_solver, 1);
+	 HYPRE_LOBPCGSetTol(lobpcg_solver, 1.e-8);
+	 HYPRE_LOBPCGSetPrintLevel(lobpcg_solver, 0);
+      } 
+      else
+      {
+	 PASE_ParCSRMatrixSetAuxSpace( MPI_COMM_WORLD, parcsr_A_Hh, block_size, Q_array[level],
+	       A_array[level], pvx, 0, U_array[num_levels-1], U_array[level] );
+	 PASE_ParCSRMatrixSetAuxSpace( MPI_COMM_WORLD, parcsr_B_Hh, block_size, Q_array[level],
+	       B_array[level], pvx, 0, U_array[num_levels-1], U_array[level] );
+      }
+
+      for ( idx_eig = 0; idx_eig < block_size; ++idx_eig)
+      {
+	 PASE_ParVectorSetConstantValues(pvx_Hh[idx_eig], 0.0);
+	 pvx_Hh[idx_eig]->aux_h->data[idx_eig] = 1.0;
+      }
+      /* LOBPCG eigensolver */
+      if (myid==0)
+      {
+	 printf ( "LOBPCG solve A_Hh U_Hh = lambda_Hh B_Hh U_Hh\n" );
+      }
+      PASE_LOBPCGSetup (lobpcg_solver, parcsr_A_Hh, par_b_Hh, par_x_Hh);
+      PASE_LOBPCGSetupB(lobpcg_solver, parcsr_B_Hh, par_x_Hh);
+      HYPRE_LOBPCGSolve(lobpcg_solver, constraints_Hh, eigenvectors_Hh, eigenvalues);
+
+      /* 定义更细层的特征向量 */
+      if (level == 0)
+      {
+	 eigenvectors_h = 
+	    mv_MultiVectorCreateFromSampleVector(interpreter, block_size, U_array[0]);
+	 mv_TempMultiVector* tmp = 
+	    (mv_TempMultiVector*) mv_MultiVectorGetData(eigenvectors_h);
+	 pvx_h = (HYPRE_ParVector*)(tmp -> vector);
 	 for (idx_eig = 0; idx_eig < block_size; ++idx_eig)
 	 {
-	    /* 生成右端项 y = alpha*A*x + beta*y */
-	    HYPRE_ParCSRMatrixMatvec ( eigenvalues[idx_eig], B_array[level], pvx[idx_eig], 0.0, F_array[level] );
-	    HYPRE_ParCSRPCGSolve(pcg_solver, A_array[level], F_array[level], pvx[idx_eig]);
+	    /* 将pvx_Hh插值到0层, 然后再插值到更细层 */
+	    PASE_ParVectorGetParVector( Q_array[0], block_size, pvx, pvx_Hh[idx_eig], pvx_h[idx_eig] );
 	 }
-
-	 /* pvx_Hh (特征向量)  pvx(当前层解问题向量)  pvx_h(是更新后的特征向量并插值到了更细层) */
-	 if (myid==0)
-	 {
-	    printf ( "Current level = %d\n", level );
-	    printf ( "Set A_Hh and B_Hh\n" );
-	 }
-	 /* 最粗层且第一次迭代时, 生成Hh矩阵, 其它都是重置 */
-	 if ( level == num_levels-2 )
-	 {
-	    PASE_ParCSRMatrixCreate( MPI_COMM_WORLD, block_size, parcsr_A_H, Q_array[level],
-		  A_array[level], pvx, &parcsr_A_Hh, U_array[num_levels-1], U_array[level] );
-	    PASE_ParCSRMatrixCreate( MPI_COMM_WORLD, block_size, parcsr_B_H, Q_array[level],
-		  B_array[level], pvx, &parcsr_B_Hh, U_array[num_levels-1], U_array[level] );
-
-	    /* eigenvectors - create a multivector */
-	    {
-	       eigenvectors_Hh = 
-		  mv_MultiVectorCreateFromSampleVector(interpreter_Hh, block_size, par_x_Hh);
-	       mv_TempMultiVector* tmp = 
-		  (mv_TempMultiVector*) mv_MultiVectorGetData(eigenvectors_Hh);
-	       pvx_Hh = (PASE_ParVector*)(tmp -> vector);
-	    }
-
-	    /* LOBPCG for PASE */
-	    HYPRE_LOBPCGCreate(interpreter_Hh, &matvec_fn_Hh, &lobpcg_solver);
-	    /* 最粗+aux特征值问题的参数选取 */
-	    HYPRE_LOBPCGSetMaxIter(lobpcg_solver, 3);
-	    /* TODO: 搞清楚这是什么意思, 即是否可以以pvx_Hh为初值进行迭代 */
-	    /* use rhs as initial guess for inner pcg iterations */
-	    HYPRE_LOBPCGSetPrecondUsageMode(lobpcg_solver, 1);
-	    HYPRE_LOBPCGSetTol(lobpcg_solver, 1.e-8);
-	    HYPRE_LOBPCGSetPrintLevel(lobpcg_solver, 0);
-	 } 
-	 else
-	 {
-	    PASE_ParCSRMatrixSetAuxSpace( MPI_COMM_WORLD, parcsr_A_Hh, block_size, Q_array[level],
-		  A_array[level], pvx, U_array[num_levels-1], U_array[level] );
-	    PASE_ParCSRMatrixSetAuxSpace( MPI_COMM_WORLD, parcsr_B_Hh, block_size, Q_array[level],
-		  B_array[level], pvx, U_array[num_levels-1], U_array[level] );
-	 }
-
-	 for ( idx_eig = 0; idx_eig < block_size; ++idx_eig)
-	 {
-	    PASE_ParVectorSetConstantValues(pvx_Hh[idx_eig], 0.0);
-	    pvx_Hh[idx_eig]->aux_h->data[idx_eig] = 1.0;
-	 }
-	 /* LOBPCG eigensolver */
-	 if (myid==0)
-	 {
-	    printf ( "LOBPCG solve A_Hh U_Hh = lambda_Hh B_Hh U_Hh\n" );
-	 }
-	 PASE_LOBPCGSetup (lobpcg_solver, parcsr_A_Hh, par_b_Hh, par_x_Hh);
-	 PASE_LOBPCGSetupB(lobpcg_solver, parcsr_B_Hh, par_x_Hh);
-	 HYPRE_LOBPCGSolve(lobpcg_solver, constraints_Hh, eigenvectors_Hh, eigenvalues);
-
-	 /* 定义更细层的特征向量 */
-	 if (level == 0)
-	 {
-	    eigenvectors_h = 
-	       mv_MultiVectorCreateFromSampleVector(interpreter, block_size, U_array[0]);
-	    mv_TempMultiVector* tmp = 
-	       (mv_TempMultiVector*) mv_MultiVectorGetData(eigenvectors_h);
-	    pvx_h = (HYPRE_ParVector*)(tmp -> vector);
-	    for (idx_eig = 0; idx_eig < block_size; ++idx_eig)
-	    {
-	       /* 将pvx_Hh插值到0层, 然后再插值到更细层 */
-	       PASE_ParVectorGetParVector( Q_array[0], block_size, pvx, pvx_Hh[idx_eig], pvx_h[idx_eig] );
-	    }
-	 }
-	 else
-	 {
-	    eigenvectors_h = 
-	       mv_MultiVectorCreateFromSampleVector(interpreter, block_size, U_array[level-1]);
-	    mv_TempMultiVector* tmp = 
-	       (mv_TempMultiVector*) mv_MultiVectorGetData(eigenvectors_h);
-	    pvx_h = (HYPRE_ParVector*)(tmp -> vector);
-	    /* 对pvx_Hh进行处理 */
-	    for (idx_eig = 0; idx_eig < block_size; ++idx_eig)
-	    {
-	       /* 将pvx_Hh插值到level层, 然后再插值到更细层 */
-	       PASE_ParVectorGetParVector( Q_array[level], block_size, pvx, pvx_Hh[idx_eig], U_array[level] );
-	       /* 生成当前网格下的特征向量 */
-	       HYPRE_ParCSRMatrixMatvec ( 1.0, P_array[level-1], U_array[level], 0.0, pvx_h[idx_eig] );
-	    }
-	 }
-
-	 /* eigenvectors - create a multivector and get a pointer */
-	 /* 释放这一层解问题向量的空间 */
+      }
+      else
+      {
+	 eigenvectors_h = 
+	    mv_MultiVectorCreateFromSampleVector(interpreter, block_size, U_array[level-1]);
+	 mv_TempMultiVector* tmp = 
+	    (mv_TempMultiVector*) mv_MultiVectorGetData(eigenvectors_h);
+	 pvx_h = (HYPRE_ParVector*)(tmp -> vector);
+	 /* 对pvx_Hh进行处理 */
 	 for (idx_eig = 0; idx_eig < block_size; ++idx_eig)
 	 {
-	    HYPRE_ParVectorDestroy(pvx[idx_eig]);
+	    /* 将pvx_Hh插值到level层, 然后再插值到更细层 */
+	    PASE_ParVectorGetParVector( Q_array[level], block_size, pvx, pvx_Hh[idx_eig], U_array[level] );
+	    /* 生成当前网格下的特征向量 */
+	    HYPRE_ParCSRMatrixMatvec ( 1.0, P_array[level-1], U_array[level], 0.0, pvx_h[idx_eig] );
 	 }
-	 hypre_TFree(pvx);
-	 free((mv_TempMultiVector*) mv_MultiVectorGetData(eigenvectors));
-	 hypre_TFree(eigenvectors);
-	 /* pvx_h是当前层更新的特征向量 */
-	 pvx = pvx_h;
-	 eigenvectors = eigenvectors_h;
+      }
 
-	 /* 判断是否已经达到较好的初始精度 */
-	 if (level < num_levels-2 && level > 0)
+      /* eigenvectors - create a multivector and get a pointer */
+      /* 释放这一层解问题向量的空间 */
+      for (idx_eig = 0; idx_eig < block_size; ++idx_eig)
+      {
+	 HYPRE_ParVectorDestroy(pvx[idx_eig]);
+      }
+      hypre_TFree(pvx);
+      free((mv_TempMultiVector*) mv_MultiVectorGetData(eigenvectors));
+      hypre_TFree(eigenvectors);
+      /* pvx_h是当前层更新的特征向量 */
+      pvx = pvx_h;
+      eigenvectors = eigenvectors_h;
+
+      /* 判断是否已经达到较好的初始精度 */
+      if (level < num_levels-2 && level > 0)
+      {
+	 /* 此时pvx是level-1层的特征向量 */
+	 if (level == 1)
 	 {
-	    /* 此时pvx是level-1层的特征向量 */
+	    /* 计算残量 */
+	    HYPRE_ParCSRMatrixMatvec ( 1.0, B_array[0], pvx[block_size-more-1], 0.0, F_array[0] );
+	    HYPRE_ParVectorInnerProd (F_array[0], pvx[block_size-more-1], &tmp_double);
+	    HYPRE_ParCSRMatrixMatvec ( 1.0, A_array[0], pvx[block_size-more-1], -eigenvalues[block_size-more-1], F_array[0] );
+	    HYPRE_ParVectorInnerProd (F_array[0], F_array[0], &residual);
+	    residual = sqrt(residual/tmp_double);
+	 }
+	 else 
+	 {
+	    HYPRE_ParCSRMatrixMatvec ( 1.0, P_array[level-2], pvx[block_size-more-1], 0.0, U_array[level-2]);
+	    for (i = level-3; i >= 0; --i)
+	    {
+	       HYPRE_ParCSRMatrixMatvec ( 1.0, P_array[i], U_array[i+1], 0.0, U_array[i] );
+	    }
+	    /* 计算残量 */
+	    HYPRE_ParCSRMatrixMatvec ( 1.0, B_array[0], U_array[0], 0.0, F_array[0] );
+	    HYPRE_ParVectorInnerProd (F_array[0], U_array[0], &tmp_double);
+	    HYPRE_ParCSRMatrixMatvec ( 1.0, A_array[0], U_array[0], -eigenvalues[block_size-more-1], F_array[0] );
+	    HYPRE_ParVectorInnerProd (F_array[0], F_array[0], &residual);
+	    residual = sqrt(residual/tmp_double);
+	 }
+	 printf ( "inital maximal residual = %f\n", residual );
+	 if ( residual < 1e-2 )
+	 {
+	    /* 将所有特征向量插值到最细空间 */
 	    if (level == 1)
 	    {
-	       /* 计算残量 */
-	       HYPRE_ParCSRMatrixMatvec ( 1.0, B_array[0], pvx[block_size-more-1], 0.0, F_array[0] );
-	       HYPRE_ParVectorInnerProd (F_array[0], pvx[block_size-more-1], &tmp_double);
-	       HYPRE_ParCSRMatrixMatvec ( 1.0, A_array[0], pvx[block_size-more-1], -eigenvalues[block_size-more-1], F_array[0] );
-	       HYPRE_ParVectorInnerProd (F_array[0], F_array[0], &residual);
-	       residual = sqrt(residual/tmp_double);
+	       /* 特征向量已经在最细层 */
 	    }
 	    else 
 	    {
-	       HYPRE_ParCSRMatrixMatvec ( 1.0, P_array[level-2], pvx[block_size-more-1], 0.0, U_array[level-2]);
-	       for (i = level-3; i >= 0; --i)
+	       eigenvectors_h = 
+		  mv_MultiVectorCreateFromSampleVector(interpreter, block_size, U_array[0]);
+	       mv_TempMultiVector* tmp = 
+		  (mv_TempMultiVector*) mv_MultiVectorGetData(eigenvectors_h);
+	       pvx_h = (HYPRE_ParVector*)(tmp -> vector);
+
+	       if (level == 2)
 	       {
-		  HYPRE_ParCSRMatrixMatvec ( 1.0, P_array[i], U_array[i+1], 0.0, U_array[i] );
-	       }
-	       /* 计算残量 */
-	       HYPRE_ParCSRMatrixMatvec ( 1.0, B_array[0], U_array[0], 0.0, F_array[0] );
-	       HYPRE_ParVectorInnerProd (F_array[0], U_array[0], &tmp_double);
-	       HYPRE_ParCSRMatrixMatvec ( 1.0, A_array[0], U_array[0], -eigenvalues[block_size-more-1], F_array[0] );
-	       HYPRE_ParVectorInnerProd (F_array[0], F_array[0], &residual);
-	       residual = sqrt(residual/tmp_double);
-	    }
-	    printf ( "inital maximal residual = %f\n", residual );
-	    if ( residual < 4e-3 )
-	    {
-	       /* 将所有特征向量插值到最细空间 */
-	       if (level == 1)
-	       {
-		  /* 特征向量已经在最细层 */
+		  for (idx_eig = 0; idx_eig < block_size; ++idx_eig)
+		  {
+		     HYPRE_ParCSRMatrixMatvec ( 1.0, P_array[level-2], pvx[idx_eig], 0.0, pvx_h[idx_eig]);
+		  }
 	       }
 	       else 
 	       {
-		  eigenvectors_h = 
-		     mv_MultiVectorCreateFromSampleVector(interpreter, block_size, U_array[0]);
-		  mv_TempMultiVector* tmp = 
-		     (mv_TempMultiVector*) mv_MultiVectorGetData(eigenvectors_h);
-		  pvx_h = (HYPRE_ParVector*)(tmp -> vector);
-
-		  if (level == 2)
-		  {
-		     for (idx_eig = 0; idx_eig < block_size; ++idx_eig)
-		     {
-			HYPRE_ParCSRMatrixMatvec ( 1.0, P_array[level-2], pvx[idx_eig], 0.0, pvx_h[idx_eig]);
-		     }
-		  }
-		  else 
-		  {
-		     for (idx_eig = 0; idx_eig < block_size; ++idx_eig)
-		     {
-			HYPRE_ParCSRMatrixMatvec ( 1.0, P_array[level-2], pvx[idx_eig], 0.0, U_array[level-2]);
-			for (i = level-3; i > 0; --i)
-			{
-			   HYPRE_ParCSRMatrixMatvec ( 1.0, P_array[i], U_array[i+1], 0.0, U_array[i] );
-			}
-			HYPRE_ParCSRMatrixMatvec ( 1.0, P_array[0], U_array[1], 0.0, pvx_h[idx_eig] );
-		     }
-		  }
-		  /* 销毁 */
 		  for (idx_eig = 0; idx_eig < block_size; ++idx_eig)
 		  {
-		     HYPRE_ParVectorDestroy(pvx[idx_eig]);
+		     HYPRE_ParCSRMatrixMatvec ( 1.0, P_array[level-2], pvx[idx_eig], 0.0, U_array[level-2]);
+		     for (i = level-3; i > 0; --i)
+		     {
+			HYPRE_ParCSRMatrixMatvec ( 1.0, P_array[i], U_array[i+1], 0.0, U_array[i] );
+		     }
+		     HYPRE_ParCSRMatrixMatvec ( 1.0, P_array[0], U_array[1], 0.0, pvx_h[idx_eig] );
 		  }
-		  hypre_TFree(pvx);
-		  free((mv_TempMultiVector*) mv_MultiVectorGetData(eigenvectors));
-		  hypre_TFree(eigenvectors);
-		  /* pvx_h是当前层更新的特征向量 */
-		  pvx = pvx_h;
-		  eigenvectors = eigenvectors_h;
 	       }
-	       break;
+	       /* 销毁 */
+	       for (idx_eig = 0; idx_eig < block_size; ++idx_eig)
+	       {
+		  HYPRE_ParVectorDestroy(pvx[idx_eig]);
+	       }
+	       hypre_TFree(pvx);
+	       free((mv_TempMultiVector*) mv_MultiVectorGetData(eigenvectors));
+	       hypre_TFree(eigenvectors);
+	       /* pvx_h是当前层更新的特征向量 */
+	       pvx = pvx_h;
+	       eigenvectors = eigenvectors_h;
 	    }
+	    break;
 	 }
       }
    }
-
 
    {
       eigenvectors_h = 
@@ -716,7 +713,6 @@ int main (int argc, char *argv[])
 	 (mv_TempMultiVector*) mv_MultiVectorGetData(eigenvectors_h);
       pvx_h = (HYPRE_ParVector*)(tmp -> vector);
    }
-
 
    HYPRE_ParCSRPCGSetup(pcg_solver, A_array[0], F_array[0], U_array[0]);
 
@@ -730,10 +726,11 @@ int main (int argc, char *argv[])
 	 HYPRE_ParCSRPCGSolve(pcg_solver, A_array[0], F_array[0], pvx[idx_eig]);
       }
 
+      /* 这里虽然设置了begin_idx这个参数, 但是由于特征向量的顺序会发生变化, 无法简单地不动收敛的特征向量 */
       PASE_ParCSRMatrixSetAuxSpace( MPI_COMM_WORLD, parcsr_A_Hh, block_size, Q_array[0],
-	    A_array[0], pvx, U_array[num_levels-1], U_array[0] );
+	    A_array[0], pvx, 0, U_array[num_levels-1], U_array[0] );
       PASE_ParCSRMatrixSetAuxSpace( MPI_COMM_WORLD, parcsr_B_Hh, block_size, Q_array[0],
-	    B_array[0], pvx, U_array[num_levels-1], U_array[0] );
+	    B_array[0], pvx, 0, U_array[num_levels-1], U_array[0] );
       for ( idx_eig = 0; idx_eig < block_size; ++idx_eig)
       {
 	 PASE_ParVectorSetConstantValues(pvx_Hh[idx_eig], 0.0);
@@ -769,6 +766,10 @@ int main (int argc, char *argv[])
 	 if (residual < tolerance+tolerance*eigenvalues[idx_eig])
 	 {
 	    ++num_conv;
+	 }
+	 else 
+	 {
+	    break;
 	 }
 //	 printf ( "residual = %e\n", residual );
       }
@@ -809,8 +810,8 @@ int main (int argc, char *argv[])
 
       if (myid == 0)
       {
-	 printf ( "eig = %1.16e, error = %e, residual = %e\n", 
-	       eigenvalues[idx_eig]/h2, (eigenvalues[idx_eig]-exact_eigenvalues[idx_eig])/h2, residual );
+	 printf ( "%d : eig = %1.16e, error = %e, residual = %e\n", 
+	       idx_eig, eigenvalues[idx_eig]/h2, (eigenvalues[idx_eig]-exact_eigenvalues[idx_eig])/h2, residual );
 	 sum_error += fabs(eigenvalues[idx_eig]-exact_eigenvalues[idx_eig])/h2;
       }
    }
