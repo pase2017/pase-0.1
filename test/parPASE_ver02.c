@@ -130,8 +130,8 @@ int main (int argc, char *argv[])
 
 
    /* Default problem parameters */
-   n = 100;
-   max_levels = 4;
+   n = 200;
+   max_levels = 6;
    /* AMG第一层矩阵是原来的1/2, 之后都是1/4, 我们要求H空间的维数是所求特征值个数的8倍 */
    block_size = (int) n*n/pow(4, max_levels);
 
@@ -193,7 +193,7 @@ int main (int argc, char *argv[])
    }
 
    /* 多算more个特征值 */
-   more = (int)(block_size * 0.25)+10;
+   more = (int)(block_size * 0.25);
    block_size += more;
 
    /* Preliminaries: want at least one processor per row */
@@ -429,8 +429,8 @@ int main (int argc, char *argv[])
    /* Set some parameters (See Reference Manual for more parameters) */
    /* TODO:在进行pcg进行线性方程组求解时是否可以用到得到的precond, 至少level==0时可以, 
     * 是否可以不用precondition, 因为迭代8次都达到残差tol了 */
-   HYPRE_PCGSetMaxIter(pcg_solver, 10); /* max iterations */
-   HYPRE_PCGSetTol(pcg_solver, 1e-18); /* conv. tolerance */
+   HYPRE_PCGSetMaxIter(pcg_solver, 3); /* max iterations */
+   HYPRE_PCGSetTol(pcg_solver, 1e-8); /* conv. tolerance */
    HYPRE_PCGSetTwoNorm(pcg_solver, 1); /* use the two norm as the stopping criteria */
    HYPRE_PCGSetPrintLevel(pcg_solver, 0); /* print solve info */
    HYPRE_PCGSetLogging(pcg_solver, 1); /* needed to get run info later */
@@ -555,7 +555,7 @@ int main (int argc, char *argv[])
 	    /* LOBPCG for PASE */
 	    HYPRE_LOBPCGCreate(interpreter_Hh, &matvec_fn_Hh, &lobpcg_solver);
 	    /* 最粗+aux特征值问题的参数选取 */
-	    HYPRE_LOBPCGSetMaxIter(lobpcg_solver, 5);
+	    HYPRE_LOBPCGSetMaxIter(lobpcg_solver, 3);
 	    /* TODO: 搞清楚这是什么意思, 即是否可以以pvx_Hh为初值进行迭代 */
 	    /* use rhs as initial guess for inner pcg iterations */
 	    HYPRE_LOBPCGSetPrecondUsageMode(lobpcg_solver, 1);
@@ -627,6 +627,84 @@ int main (int argc, char *argv[])
 	 /* pvx_h是当前层更新的特征向量 */
 	 pvx = pvx_h;
 	 eigenvectors = eigenvectors_h;
+
+	 /* 判断是否已经达到较好的初始精度 */
+	 if (level < num_levels-2 && level > 0)
+	 {
+	    /* 此时pvx是level-1层的特征向量 */
+	    if (level == 1)
+	    {
+	       /* 计算残量 */
+	       HYPRE_ParCSRMatrixMatvec ( 1.0, B_array[0], pvx[block_size-more-1], 0.0, F_array[0] );
+	       HYPRE_ParVectorInnerProd (F_array[0], pvx[block_size-more-1], &tmp_double);
+	       HYPRE_ParCSRMatrixMatvec ( 1.0, A_array[0], pvx[block_size-more-1], -eigenvalues[block_size-more-1], F_array[0] );
+	       HYPRE_ParVectorInnerProd (F_array[0], F_array[0], &residual);
+	       residual = sqrt(residual/tmp_double);
+	    }
+	    else 
+	    {
+	       HYPRE_ParCSRMatrixMatvec ( 1.0, P_array[level-2], pvx[block_size-more-1], 0.0, U_array[level-2]);
+	       for (i = level-3; i >= 0; --i)
+	       {
+		  HYPRE_ParCSRMatrixMatvec ( 1.0, P_array[i], U_array[i+1], 0.0, U_array[i] );
+	       }
+	       /* 计算残量 */
+	       HYPRE_ParCSRMatrixMatvec ( 1.0, B_array[0], U_array[0], 0.0, F_array[0] );
+	       HYPRE_ParVectorInnerProd (F_array[0], U_array[0], &tmp_double);
+	       HYPRE_ParCSRMatrixMatvec ( 1.0, A_array[0], U_array[0], -eigenvalues[block_size-more-1], F_array[0] );
+	       HYPRE_ParVectorInnerProd (F_array[0], F_array[0], &residual);
+	       residual = sqrt(residual/tmp_double);
+	    }
+	    printf ( "inital maximal residual = %f\n", residual );
+	    if ( residual < 4e-3 )
+	    {
+	       /* 将所有特征向量插值到最细空间 */
+	       if (level == 1)
+	       {
+		  /* 特征向量已经在最细层 */
+	       }
+	       else 
+	       {
+		  eigenvectors_h = 
+		     mv_MultiVectorCreateFromSampleVector(interpreter, block_size, U_array[0]);
+		  mv_TempMultiVector* tmp = 
+		     (mv_TempMultiVector*) mv_MultiVectorGetData(eigenvectors_h);
+		  pvx_h = (HYPRE_ParVector*)(tmp -> vector);
+
+		  if (level == 2)
+		  {
+		     for (idx_eig = 0; idx_eig < block_size; ++idx_eig)
+		     {
+			HYPRE_ParCSRMatrixMatvec ( 1.0, P_array[level-2], pvx[idx_eig], 0.0, pvx_h[idx_eig]);
+		     }
+		  }
+		  else 
+		  {
+		     for (idx_eig = 0; idx_eig < block_size; ++idx_eig)
+		     {
+			HYPRE_ParCSRMatrixMatvec ( 1.0, P_array[level-2], pvx[idx_eig], 0.0, U_array[level-2]);
+			for (i = level-3; i > 0; --i)
+			{
+			   HYPRE_ParCSRMatrixMatvec ( 1.0, P_array[i], U_array[i+1], 0.0, U_array[i] );
+			}
+			HYPRE_ParCSRMatrixMatvec ( 1.0, P_array[0], U_array[1], 0.0, pvx_h[idx_eig] );
+		     }
+		  }
+		  /* 销毁 */
+		  for (idx_eig = 0; idx_eig < block_size; ++idx_eig)
+		  {
+		     HYPRE_ParVectorDestroy(pvx[idx_eig]);
+		  }
+		  hypre_TFree(pvx);
+		  free((mv_TempMultiVector*) mv_MultiVectorGetData(eigenvectors));
+		  hypre_TFree(eigenvectors);
+		  /* pvx_h是当前层更新的特征向量 */
+		  pvx = pvx_h;
+		  eigenvectors = eigenvectors_h;
+	       }
+	       break;
+	    }
+	 }
       }
    }
 
@@ -644,6 +722,14 @@ int main (int argc, char *argv[])
 
    while (iter < max_its && num_conv < block_size-more)
    {
+
+      for (idx_eig = num_conv; idx_eig < block_size; ++idx_eig)
+      {
+	 /* 生成右端项 y = alpha*A*x + beta*y */
+	 HYPRE_ParCSRMatrixMatvec ( eigenvalues[idx_eig], B_array[0], pvx[idx_eig], 0.0, F_array[0] );
+	 HYPRE_ParCSRPCGSolve(pcg_solver, A_array[0], F_array[0], pvx[idx_eig]);
+      }
+
       PASE_ParCSRMatrixSetAuxSpace( MPI_COMM_WORLD, parcsr_A_Hh, block_size, Q_array[0],
 	    A_array[0], pvx, U_array[num_levels-1], U_array[0] );
       PASE_ParCSRMatrixSetAuxSpace( MPI_COMM_WORLD, parcsr_B_Hh, block_size, Q_array[0],
@@ -662,17 +748,10 @@ int main (int argc, char *argv[])
       PASE_LOBPCGSetupB(lobpcg_solver, parcsr_B_Hh, par_x_Hh);
       HYPRE_LOBPCGSolve(lobpcg_solver, constraints_Hh, eigenvectors_Hh, eigenvalues);
 
-      /* 将pvx_Hh插值到0层, 然后再插值到更细层 */
+      /* 将pvx_Hh插值到0层 */
       for (idx_eig = 0; idx_eig < block_size; ++idx_eig)
       {
 	 PASE_ParVectorGetParVector( Q_array[0], block_size, pvx, pvx_Hh[idx_eig], pvx_h[idx_eig] );
-      }
-
-      for (idx_eig = num_conv; idx_eig < block_size; ++idx_eig)
-      {
-	 /* 生成右端项 y = alpha*A*x + beta*y */
-	 HYPRE_ParCSRMatrixMatvec ( eigenvalues[idx_eig], B_array[0], pvx_h[idx_eig], 0.0, F_array[0] );
-	 HYPRE_ParCSRPCGSolve(pcg_solver, A_array[0], F_array[0], pvx_h[idx_eig]);
       }
 
       if (myid==0)
@@ -698,7 +777,6 @@ int main (int argc, char *argv[])
 	 printf ( "num_conv = %d\n", num_conv );
       }
       ++iter;
-
 
       tmp_pvx = pvx;
       pvx = pvx_h;
