@@ -33,7 +33,7 @@ static int cmp( const void *a ,  const void *b )
 
 int main (int argc, char *argv[])
 {
-   int i, k, idx_eig;
+   int i, k, idx_eig, begin_idx;
    int myid, num_procs;
    int N, N_H, n;
    int block_size, max_levels;
@@ -47,7 +47,6 @@ int main (int argc, char *argv[])
    //   int time_index; 
    int global_time_index;
 
-
    /* 算法的各个参数 */
    int more;/* 多算的特征值数 */
    int iter = 0;/* 迭代次数 */
@@ -55,7 +54,8 @@ int main (int argc, char *argv[])
    int max_its = 100;/* 最大迭代次数 */
    double residual = 1.0;/* 残量 */
    double tolerance = 1E-8;/* 最小残量 */
-
+   double initial_res = 1E-3;/* 初始残差 */
+   double min_gap = 1E-4;/* 不同特征值的最小距离 */
 
    /* -------------------------矩阵向量声明---------------------- */ 
    /* 最细矩阵 */
@@ -654,8 +654,11 @@ int main (int argc, char *argv[])
 	    HYPRE_ParVectorInnerProd (F_array[0], F_array[0], &residual);
 	    residual = sqrt(residual/tmp_double);
 	 }
-	 printf ( "inital maximal residual = %f\n", residual );
-	 if ( residual < 1e-2 )
+	 if (myid==0)
+	 {
+	    printf ( "inital maximal residual = %f\n", residual );
+	 }
+	 if ( residual < initial_res )
 	 {
 	    /* 将所有特征向量插值到最细空间 */
 	    if (level == 1)
@@ -716,22 +719,24 @@ int main (int argc, char *argv[])
 
    HYPRE_ParCSRPCGSetup(pcg_solver, A_array[0], F_array[0], U_array[0]);
 
+   num_conv  = 0;
+   begin_idx = num_conv;
    while (iter < max_its && num_conv < block_size-more)
    {
 
-      for (idx_eig = num_conv; idx_eig < block_size; ++idx_eig)
+      for (idx_eig = begin_idx; idx_eig < block_size; ++idx_eig)
       {
 	 /* 生成右端项 y = alpha*A*x + beta*y */
 	 HYPRE_ParCSRMatrixMatvec ( eigenvalues[idx_eig], B_array[0], pvx[idx_eig], 0.0, F_array[0] );
 	 HYPRE_ParCSRPCGSolve(pcg_solver, A_array[0], F_array[0], pvx[idx_eig]);
       }
 
-      /* 这里虽然设置了begin_idx这个参数, 但是由于特征向量的顺序会发生变化, 无法简单地不动收敛的特征向量 */
+      /* 这里设置了begin_idx这个参数, 使得特征子空间一起收敛 */
       PASE_ParCSRMatrixSetAuxSpace( MPI_COMM_WORLD, parcsr_A_Hh, block_size, Q_array[0],
-	    A_array[0], pvx, 0, U_array[num_levels-1], U_array[0] );
+	    A_array[0], pvx, begin_idx, U_array[num_levels-1], U_array[0] );
       PASE_ParCSRMatrixSetAuxSpace( MPI_COMM_WORLD, parcsr_B_Hh, block_size, Q_array[0],
-	    B_array[0], pvx, 0, U_array[num_levels-1], U_array[0] );
-      for ( idx_eig = 0; idx_eig < block_size; ++idx_eig)
+	    B_array[0], pvx, begin_idx, U_array[num_levels-1], U_array[0] );
+      for ( idx_eig = begin_idx; idx_eig < block_size; ++idx_eig)
       {
 	 PASE_ParVectorSetConstantValues(pvx_Hh[idx_eig], 0.0);
 	 pvx_Hh[idx_eig]->aux_h->data[idx_eig] = 1.0;
@@ -746,7 +751,7 @@ int main (int argc, char *argv[])
       HYPRE_LOBPCGSolve(lobpcg_solver, constraints_Hh, eigenvectors_Hh, eigenvalues);
 
       /* 将pvx_Hh插值到0层 */
-      for (idx_eig = 0; idx_eig < block_size; ++idx_eig)
+      for (idx_eig = begin_idx; idx_eig < block_size; ++idx_eig)
       {
 	 PASE_ParVectorGetParVector( Q_array[0], block_size, pvx, pvx_Hh[idx_eig], pvx_h[idx_eig] );
       }
@@ -755,6 +760,7 @@ int main (int argc, char *argv[])
       {
 	 printf ( "compute residual and update eigenvalues\n" );
       }
+      /* TODO:是否可以从num_conv开始, 应该是特征子空间整个一起收敛 */
       for (idx_eig = num_conv; idx_eig < block_size-more; ++idx_eig)
       {
 	 HYPRE_ParCSRMatrixMatvec ( 1.0, B_array[0], pvx_h[idx_eig], 0.0, F_array[0] );
@@ -771,11 +777,20 @@ int main (int argc, char *argv[])
 	 {
 	    break;
 	 }
-//	 printf ( "residual = %e\n", residual );
       }
-      if (myid==0)
+
+      /* 比较已收敛的特征值与前一个特征值是否是重根, 若是则再往前寻找 */
+      for (i = num_conv-2; i >= begin_idx; --i)
       {
-	 printf ( "num_conv = %d\n", num_conv );
+	 if ( fabs(eigenvalues[num_conv-1]-eigenvalues[i]) > min_gap )
+	 {
+	    begin_idx = i+1;
+	    break;
+	 }
+      }
+      if (myid == 0)
+      {
+	 printf ( "begin_idx = %d, num_conv = %d\n", begin_idx, num_conv );
       }
       ++iter;
 
