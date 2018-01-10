@@ -33,7 +33,7 @@ static int cmp( const void *a ,  const void *b )
 
 int main (int argc, char *argv[])
 {
-   int i, k, idx_eig, begin_idx;
+   int i, k, idx_eig, pre_begin_idx, begin_idx;
    int myid, num_procs;
    int N, N_H, n;
    int block_size, max_levels;
@@ -54,6 +54,8 @@ int main (int argc, char *argv[])
    int max_its = 100;/* 最大迭代次数 */
    double residual = 1.0;/* 残量 */
    double tolerance = 1E-8;/* 最小残量 */
+   double tol_lobpcg = 1E-6;/* 最小残量 */
+   double tol_pcg = 1E-8;/* 最小残量 */
    double initial_res = 1E-3;/* 初始残差 */
    double min_gap = 1E-4;/* 不同特征值的最小距离 */
 
@@ -124,9 +126,6 @@ int main (int argc, char *argv[])
       printf("Please contact liyu@lsec.cc.ac.cn, if there is any bugs.\n"); 
       printf("=============================================================\n" );
    }
-
-   global_time_index = hypre_InitializeTiming("PASE Solve");
-   hypre_BeginTiming(global_time_index);
 
 
    /* Default problem parameters */
@@ -345,6 +344,11 @@ int main (int argc, char *argv[])
    HYPRE_IJVectorAssemble(x);
    HYPRE_IJVectorGetObject(x, (void **) &par_x);
 
+
+
+   global_time_index = hypre_InitializeTiming("PASE Solve");
+   hypre_BeginTiming(global_time_index);
+
    /* -------------------------- 利用AMG生成各个层的矩阵------------------ */
 
    /* Create solver */
@@ -429,8 +433,8 @@ int main (int argc, char *argv[])
    /* Set some parameters (See Reference Manual for more parameters) */
    /* TODO:在进行pcg进行线性方程组求解时是否可以用到得到的precond, 至少level==0时可以, 
     * 是否可以不用precondition, 因为迭代8次都达到残差tol了 */
-   HYPRE_PCGSetMaxIter(pcg_solver, 3); /* max iterations */
-   HYPRE_PCGSetTol(pcg_solver, 1e-8); /* conv. tolerance */
+   HYPRE_PCGSetMaxIter(pcg_solver, 2); /* max iterations */
+   HYPRE_PCGSetTol(pcg_solver, tol_pcg); /* conv. tolerance */
    HYPRE_PCGSetTwoNorm(pcg_solver, 1); /* use the two norm as the stopping criteria */
    HYPRE_PCGSetPrintLevel(pcg_solver, 0); /* print solve info */
    HYPRE_PCGSetLogging(pcg_solver, 1); /* needed to get run info later */
@@ -474,7 +478,7 @@ int main (int argc, char *argv[])
       /* TODO: 搞清楚这是什么意思, 即是否可以以pvx_Hh为初值进行迭代 */
       /* use rhs as initial guess for inner pcg iterations */
       HYPRE_LOBPCGSetPrecondUsageMode(lobpcg_solver, 1);
-      HYPRE_LOBPCGSetTol(lobpcg_solver, 1.e-8);
+      HYPRE_LOBPCGSetTol(lobpcg_solver, tol_lobpcg);
       HYPRE_LOBPCGSetPrintLevel(lobpcg_solver, 0);
 
       mv_MultiVectorSetRandom (eigenvectors_H, 775);
@@ -554,11 +558,11 @@ int main (int argc, char *argv[])
 	 /* LOBPCG for PASE */
 	 HYPRE_LOBPCGCreate(interpreter_Hh, &matvec_fn_Hh, &lobpcg_solver);
 	 /* 最粗+aux特征值问题的参数选取 */
-	 HYPRE_LOBPCGSetMaxIter(lobpcg_solver, 3);
+	 HYPRE_LOBPCGSetMaxIter(lobpcg_solver, 2);
 	 /* TODO: 搞清楚这是什么意思, 即是否可以以pvx_Hh为初值进行迭代 */
 	 /* use rhs as initial guess for inner pcg iterations */
 	 HYPRE_LOBPCGSetPrecondUsageMode(lobpcg_solver, 1);
-	 HYPRE_LOBPCGSetTol(lobpcg_solver, 1.e-8);
+	 HYPRE_LOBPCGSetTol(lobpcg_solver, tol_lobpcg);
 	 HYPRE_LOBPCGSetPrintLevel(lobpcg_solver, 0);
       } 
       else
@@ -721,6 +725,7 @@ int main (int argc, char *argv[])
 
    num_conv  = 0;
    begin_idx = num_conv;
+   pre_begin_idx = begin_idx;
    while (iter < max_its && num_conv < block_size-more)
    {
 
@@ -733,10 +738,10 @@ int main (int argc, char *argv[])
 
       /* 这里设置了begin_idx这个参数, 使得特征子空间一起收敛 */
       PASE_ParCSRMatrixSetAuxSpace( MPI_COMM_WORLD, parcsr_A_Hh, block_size, Q_array[0],
-	    A_array[0], pvx, begin_idx, U_array[num_levels-1], U_array[0] );
+	    A_array[0], pvx, pre_begin_idx, U_array[num_levels-1], U_array[0] );
       PASE_ParCSRMatrixSetAuxSpace( MPI_COMM_WORLD, parcsr_B_Hh, block_size, Q_array[0],
-	    B_array[0], pvx, begin_idx, U_array[num_levels-1], U_array[0] );
-      for ( idx_eig = begin_idx; idx_eig < block_size; ++idx_eig)
+	    B_array[0], pvx, pre_begin_idx, U_array[num_levels-1], U_array[0] );
+      for ( idx_eig = pre_begin_idx; idx_eig < block_size; ++idx_eig)
       {
 	 PASE_ParVectorSetConstantValues(pvx_Hh[idx_eig], 0.0);
 	 pvx_Hh[idx_eig]->aux_h->data[idx_eig] = 1.0;
@@ -779,10 +784,11 @@ int main (int argc, char *argv[])
 	 }
       }
 
+      pre_begin_idx = begin_idx;
       /* 比较已收敛的特征值与前一个特征值是否是重根, 若是则再往前寻找 */
       for (i = num_conv-2; i >= begin_idx; --i)
       {
-	 if ( fabs(eigenvalues[num_conv-1]-eigenvalues[i]) > min_gap )
+	 if ( fabs(eigenvalues[num_conv-1]-eigenvalues[i]) > min_gap*h2 )
 	 {
 	    begin_idx = i+1;
 	    break;
@@ -790,7 +796,7 @@ int main (int argc, char *argv[])
       }
       if (myid == 0)
       {
-	 printf ( "begin_idx = %d, num_conv = %d\n", begin_idx, num_conv );
+	 printf ( "pre_begin_idx = %d, begin_idx = %d, num_conv = %d\n", pre_begin_idx, begin_idx, num_conv );
       }
       ++iter;
 

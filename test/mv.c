@@ -371,6 +371,14 @@ int main (int argc, char *argv[])
 
    HYPRE_Real prod;
    PASE_ParVectorInnerProd(x_Hh, b_Hh, &prod);
+
+   hypre_Vector *x_local = hypre_ParVectorLocalVector(x_Hh->b_H);
+   HYPRE_Int size;
+   size   = hypre_VectorSize(x_local);
+   printf ( "Size = %d\n", size );
+   size   = hypre_VectorNumVectors(x_local);
+   printf ( "Num = %d\n", size );
+
    printf ( "prod = %f\n", prod );
    PASE_ParVectorAxpy( 2.0, x_Hh , b_Hh );
 //   PASE_ParVectorPrint(b_Hh, "b_Hh");
