@@ -28,6 +28,50 @@
 
 #include "pase.h"
 
+static int partition( HYPRE_Int *part,  HYPRE_Real *array, HYPRE_Int size, HYPRE_Real min_gap)
+{   
+   int nparts, start, pre_start;
+   part[0] = 0;
+   nparts = 1;
+   pre_start = 0;
+   for (start = 1; start < size; ++start)
+   {
+      if ( fabs(array[pre_start]-array[start]) > min_gap )
+      {
+	 part[ nparts ] = start;
+	 pre_start = start;
+	 ++nparts;
+      }
+   }
+   part[ nparts ] = size;
+   return nparts;
+}
+
+
+#ifdef PP
+int main (int argc, char *argv[])
+{
+   int i, j;
+   double array[6] = {-2, -2, 7, 7, 9, 10};
+   int part[6], npart;
+   npart = partition( part,  array, 6, 0.5);
+   for (i = 0; i < 6; ++i)
+   {
+      printf ( "%d\n", part[i] );
+      if (part[i] == 6)
+	 break;
+   }
+   for (j = 0; j < npart; ++j)
+   {
+      for (i = part[j]; i < part[j+1]; ++i)
+      {
+	 printf ( "%f\t", array[i] );
+      }
+      printf ( "\n" );
+   }
+   return 0;
+}
+#endif
 
 static int cmp( const void *a ,  const void *b )
 {   return *(double *)a > *(double *)b ? 1 : -1; }
@@ -594,9 +638,9 @@ int main (int argc, char *argv[])
 	 else
 	 {
 	    PASE_ParCSRMatrixSetAuxSpace( MPI_COMM_WORLD, parcsr_A_Hh, block_size, Q_array[level],
-		  A_array[level], &pvx[idx_block], U_array[num_levels-1], U_array[level] );
+		  A_array[level], &pvx[idx_block], 0, U_array[num_levels-1], U_array[level] );
 	    PASE_ParCSRMatrixSetAuxSpace( MPI_COMM_WORLD, parcsr_B_Hh, block_size, Q_array[level],
-		  B_array[level], &pvx[idx_block], U_array[num_levels-1], U_array[level] );
+		  B_array[level], &pvx[idx_block], 0, U_array[num_levels-1], U_array[level] );
 	 }
 
 	 /* 对特征向量赋予初值 */
@@ -705,9 +749,9 @@ int main (int argc, char *argv[])
       for ( idx_block = 0; idx_block < num_eigens; idx_block += block_size)
       {
 	 PASE_ParCSRMatrixSetAuxSpace( MPI_COMM_WORLD, parcsr_A_Hh, block_size, Q_array[0],
-	       A_array[0], &pvx[idx_block], U_array[num_levels-1], U_array[0] );
+	       A_array[0], &pvx[idx_block], 0, U_array[num_levels-1], U_array[0] );
 	 PASE_ParCSRMatrixSetAuxSpace( MPI_COMM_WORLD, parcsr_B_Hh, block_size, Q_array[0],
-	       B_array[0], &pvx[idx_block], U_array[num_levels-1], U_array[0] );
+	       B_array[0], &pvx[idx_block], 0, U_array[num_levels-1], U_array[0] );
 
 	 for ( idx_eig = 0; idx_eig < num_eigens; ++idx_eig)
 	 {
