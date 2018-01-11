@@ -44,14 +44,14 @@ int main (int argc, char *argv[])
    double h, h2;
    double sum_error, tmp_double;
    int level, num_levels;
-   //   int time_index; 
+   double start_time, end_time; 
    int global_time_index;
 
    /* 算法的各个参数 */
    int more;/* 多算的特征值数 */
    int iter = 0;/* 迭代次数 */
    int num_conv = 0;/* 收敛个数 */
-   int max_its = 100;/* 最大迭代次数 */
+   int max_its = 30;/* 最大迭代次数 */
    double residual = 1.0;/* 残量 */
    double tolerance = 1E-8;/* 最小残量 */
    double tol_lobpcg = 1E-6;/* 最小残量 */
@@ -160,6 +160,11 @@ int main (int argc, char *argv[])
 	 {
 	    arg_index++;
 	    tolerance = atof(argv[arg_index++]);
+	 }
+	 else if ( strcmp(argv[arg_index], "-initial_res") == 0 )
+	 {
+	    arg_index++;
+	    initial_res = atof(argv[arg_index++]);
 	 }
 	 else if ( strcmp(argv[arg_index], "-help") == 0 )
 	 {
@@ -351,6 +356,8 @@ int main (int argc, char *argv[])
 
    /* -------------------------- 利用AMG生成各个层的矩阵------------------ */
 
+   start_time = MPI_Wtime();
+
    /* Create solver */
    HYPRE_BoomerAMGCreate(&amg_solver);
 
@@ -358,9 +365,15 @@ int main (int argc, char *argv[])
    HYPRE_BoomerAMGSetPrintLevel(amg_solver, 1);         /* print solve info + parameters */
    HYPRE_BoomerAMGSetInterpType(amg_solver, 0 );
    HYPRE_BoomerAMGSetPMaxElmts(amg_solver, 0 );
-   /* hypre_BoomerAMGSetup中有 */
+   /* hypre_BoomerAMGSetup详细介绍各种参数表示的意义 */
    HYPRE_BoomerAMGSetCoarsenType(amg_solver, 6);
    HYPRE_BoomerAMGSetMaxLevels(amg_solver, max_levels);  /* maximum number of levels */
+//   /* two levels MC中用AMG做线性求解器 */
+//   HYPRE_BoomerAMGSetRelaxType(amg_solver,  3);   /*  G-S/Jacobi hybrid relaxation */
+//   HYPRE_BoomerAMGSetRelaxOrder(amg_solver,  1);  /*  uses C/F relaxation */
+//   HYPRE_BoomerAMGSetNumSweeps(amg_solver,  2);   /*  Sweeeps on each level */
+//   HYPRE_BoomerAMGSetTol(amg_solver,  1e-6);      /*  conv. tolerance */
+//   HYPRE_BoomerAMGSetMaxIter(amg_solver,  30);
 
    /* Now setup */
    HYPRE_BoomerAMGSetup(amg_solver, parcsr_A, par_b, par_x);
@@ -453,6 +466,14 @@ int main (int argc, char *argv[])
    HYPRE_PCGSetPrecond(pcg_solver, (HYPRE_PtrToSolverFcn) HYPRE_BoomerAMGSolve,
 	 (HYPRE_PtrToSolverFcn) HYPRE_BoomerAMGSetup, precond);
 
+
+   end_time = MPI_Wtime();
+   if (myid==0)
+   {
+      printf ( "Initialization time %f \n", end_time-start_time );
+   }
+
+   start_time = MPI_Wtime();
    /* TODO: 可以有Precondition */
    /* 首次在粗网格上进行特征值问题的计算 */
    {
@@ -713,6 +734,12 @@ int main (int argc, char *argv[])
       }
    }
 
+   end_time = MPI_Wtime();
+   if (myid==0)
+   {
+      printf ( "Full MC time %f \n", end_time-start_time );
+   }
+
    {
       eigenvectors_h = 
 	 mv_MultiVectorCreateFromSampleVector(interpreter, block_size, U_array[0]);
@@ -721,7 +748,12 @@ int main (int argc, char *argv[])
       pvx_h = (HYPRE_ParVector*)(tmp -> vector);
    }
 
-   HYPRE_ParCSRPCGSetup(pcg_solver, A_array[0], F_array[0], U_array[0]);
+   start_time = MPI_Wtime();
+
+   if (level != -1)
+   {
+      HYPRE_ParCSRPCGSetup(pcg_solver, A_array[0], F_array[0], U_array[0]);
+   }
 
    num_conv  = 0;
    begin_idx = num_conv;
@@ -733,6 +765,7 @@ int main (int argc, char *argv[])
       {
 	 /* 生成右端项 y = alpha*A*x + beta*y */
 	 HYPRE_ParCSRMatrixMatvec ( eigenvalues[idx_eig], B_array[0], pvx[idx_eig], 0.0, F_array[0] );
+//	 HYPRE_BoomerAMGSolve(amg_solver, A_array[0], F_array[0], pvx[idx_eig]);
 	 HYPRE_ParCSRPCGSolve(pcg_solver, A_array[0], F_array[0], pvx[idx_eig]);
       }
 
@@ -808,6 +841,14 @@ int main (int argc, char *argv[])
       eigenvectors = eigenvectors_h;
       eigenvectors_h = tmp_eigenvectors;
    }
+
+   end_time = MPI_Wtime();
+   if (myid==0)
+   {
+      printf ( "Two levels MC time %f \n", end_time-start_time );
+   }
+
+
 
    if (myid==0)
    {
