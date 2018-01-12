@@ -36,7 +36,7 @@ static int partition( HYPRE_Int *part,  HYPRE_Real *array, HYPRE_Int size, HYPRE
    pre_start = 0;
    for (start = 1; start < size; ++start)
    {
-      if ( fabs(array[pre_start]-array[start]) > min_gap )
+      if ( fabs(array[pre_start]-array[start]) > fabs(array[pre_start])*min_gap )
       {
 	 part[ nparts ] = start;
 	 pre_start = start;
@@ -216,7 +216,8 @@ int main (int argc, char *argv[])
    }
 
    /* 多算more个特征值 */
-   more = (int)(block_size * 0.25);
+   more = (block_size<5)?(block_size):(5);
+   printf ( "more = %d\n", more );
    block_size += more;
 
    /* Preliminaries: want at least one processor per row */
@@ -386,13 +387,12 @@ int main (int argc, char *argv[])
    HYPRE_BoomerAMGSetPMaxElmts(amg_solver, 0 );
    /* hypre_BoomerAMGSetup详细介绍各种参数表示的意义 */
    HYPRE_BoomerAMGSetCoarsenType(amg_solver, 6);
-   HYPRE_BoomerAMGSetMaxLevels(amg_solver, max_levels);  /* maximum number of levels */
    /* two levels MC中用AMG做线性求解器 */
    HYPRE_BoomerAMGSetRelaxType(amg_solver,  3);   /*  G-S/Jacobi hybrid relaxation */
    HYPRE_BoomerAMGSetRelaxOrder(amg_solver,  1);  /*  uses C/F relaxation */
    HYPRE_BoomerAMGSetNumSweeps(amg_solver,  1);   /*  Sweeeps on each level */
    HYPRE_BoomerAMGSetTol(amg_solver,  0.0);      /*  conv. tolerance */
-   HYPRE_BoomerAMGSetMaxIter(amg_solver, 2);
+   HYPRE_BoomerAMGSetMaxIter(amg_solver, 1);
 
    /* Now setup */
    HYPRE_BoomerAMGSetup(amg_solver, parcsr_A, par_b, par_x);
@@ -406,9 +406,21 @@ int main (int argc, char *argv[])
    U_array = hypre_ParAMGDataUArray(amg_data);
 
    num_levels = hypre_ParAMGDataNumLevels(amg_data);
+   /* 基于特征值的个数, 选择最粗层 */
+   for (i = num_levels-1; i >=0; --i)
+   {
+      N_H = hypre_ParCSRMatrixGlobalNumRows(A_array[i]);
+      if ( N_H > block_size*10 )
+      {
+	 num_levels = i+1;
+	 break;
+      }
+   }
+
    if (myid==0)
    {
       printf ( "The number of levels = %d\n", num_levels );
+      printf ( "The dim of the coarsest space is %d.\n", N_H );
    }
 
    B_array = hypre_CTAlloc(hypre_ParCSRMatrix*,  num_levels);
@@ -435,12 +447,6 @@ int main (int argc, char *argv[])
    for ( level = num_levels-3; level >= 0; --level )
    {
       Q_array[level] = hypre_ParMatmul(P_array[level], Q_array[level+1]); 
-   }
-
-   N_H = hypre_ParCSRMatrixGlobalNumRows(A_array[num_levels-1]);
-   if (myid==0)
-   {
-      printf ( "The dim of the coarsest space is %d.\n", N_H );
    }
 
    /* -----------------------特征向量存储成MultiVector--------------------- */
@@ -480,7 +486,7 @@ int main (int argc, char *argv[])
    HYPRE_BoomerAMGSetRelaxType(precond, 6); /* Sym G.S./Jacobi hybrid */
    HYPRE_BoomerAMGSetNumSweeps(precond, 2);
    HYPRE_BoomerAMGSetTol(precond, 0.0); /* conv. tolerance zero */
-   HYPRE_BoomerAMGSetMaxIter(precond, 2); /* do only one iteration! */
+   HYPRE_BoomerAMGSetMaxIter(precond, 1); /* do only one iteration! */
    /* Set the PCG preconditioner */
 //   HYPRE_PCGSetPrecond(pcg_solver, (HYPRE_PtrToSolverFcn) HYPRE_BoomerAMGSolve,
 //	 (HYPRE_PtrToSolverFcn) HYPRE_BoomerAMGSetup, precond);
@@ -781,8 +787,8 @@ int main (int argc, char *argv[])
    pre_begin_idx = begin_idx;
    while (iter < max_its && num_conv < block_size-more)
    {
-
-      for (idx_eig = begin_idx; idx_eig < block_size; ++idx_eig)
+      /* 只从不收敛的特征值开始求解线性问题 */
+      for (idx_eig = num_conv; idx_eig < block_size; ++idx_eig)
       {
 	 /* 生成右端项 y = alpha*A*x + beta*y */
 	 HYPRE_ParCSRMatrixMatvec ( eigenvalues[idx_eig], B_array[0], pvx[idx_eig], 0.0, F_array[0] );
@@ -824,6 +830,7 @@ int main (int argc, char *argv[])
 	 printf ( "compute residual and update eigenvalues\n" );
       }
       /* TODO:是否可以从num_conv开始, 应该是特征子空间整个一起收敛 */
+      num_conv  = begin_idx;
       for (idx_eig = num_conv; idx_eig < block_size-more; ++idx_eig)
       {
 	 HYPRE_ParCSRMatrixMatvec ( 1.0, B_array[0], pvx_h[idx_eig], 0.0, F_array[0] );
@@ -842,16 +849,27 @@ int main (int argc, char *argv[])
 	 }
       }
 
-      pre_begin_idx = begin_idx;
-      /* 比较已收敛的特征值与前一个特征值是否是重根, 若是则再往前寻找 */
-      for (i = num_conv-2; i >= begin_idx; --i)
+      if (num_conv > 0 && num_conv < block_size-more)
       {
-	 if ( fabs(eigenvalues[num_conv-1]-eigenvalues[i]) > min_gap*h2 )
+	 pre_begin_idx = begin_idx;
+	 /* 比较已收敛的特征值与后一个特征值是否是重根, 若是则再往前寻找特征子空间的开始 */
+	 if ( fabs(eigenvalues[num_conv-1]-eigenvalues[num_conv]) > min_gap*eigenvalues[num_conv-1] )
 	 {
-	    begin_idx = i+1;
-	    break;
+	    begin_idx = num_conv;
+	 }
+	 else
+	 {
+	    for (i = num_conv-2; i >= begin_idx; --i)
+	    {
+	       if ( fabs(eigenvalues[num_conv-1]-eigenvalues[i]) > min_gap*fabs(eigenvalues[num_conv-1]) )
+	       {
+		  begin_idx = i+1;
+		  break;
+	       }
+	    }
 	 }
       }
+
       if (myid == 0)
       {
 	 printf ( "pre_begin_idx = %d, begin_idx = %d, num_conv = %d\n", pre_begin_idx, begin_idx, num_conv );
@@ -873,8 +891,6 @@ int main (int argc, char *argv[])
       printf ( "Two levels MC time %f \n", end_time-start_time );
    }
 
-
-
    if (myid==0)
    {
       printf ( "iter = %d\n", iter );
@@ -895,6 +911,8 @@ int main (int argc, char *argv[])
       HYPRE_ParVectorInnerProd (F_array[0], F_array[0], &residual);
       residual = sqrt(residual/tmp_double);
 
+      HYPRE_ParVectorScale(1/sqrt(tmp_double), pvx[idx_eig]);
+
       if (myid == 0)
       {
 	 printf ( "%d : eig = %1.16e, error = %e, residual = %e\n", 
@@ -914,24 +932,30 @@ int main (int argc, char *argv[])
    hypre_FinalizeTiming(global_time_index);
    hypre_ClearTiming();
 
-   int nparts, *part;
-   part = hypre_CTAlloc (HYPRE_Int, block_size);
-   nparts = partition(part, eigenvalues, block_size, h2);
-   for (i = 0; i < block_size; ++i)
+   if (myid==0)
    {
-      printf ( "%d\n", part[i] );
-      if (part[i] == block_size)
-	 break;
-   }
-   for (k = 0; k < nparts; ++k)
-   {
-      for (i = part[k]; i < part[k+1]; ++i)
+      int nparts, *part;
+      part = hypre_CTAlloc (HYPRE_Int, block_size);
+      nparts = partition(part, eigenvalues, block_size, min_gap);
+      for (i = 0; i < block_size; ++i)
       {
-	 printf ( "%lf\t", eigenvalues[i]/h2 );
+	 printf ( "%d\n", part[i] );
+	 if (part[i] == block_size)
+	    break;
       }
-      printf ( "\n" );
-   }
+      for (k = 0; k < nparts; ++k)
+      {
+	 for (i = part[k]; i < part[k+1]; ++i)
+	 {
+	    printf ( "%lf\t", eigenvalues[i]/h2 );
+	 }
+	 printf ( "\n" );
+      }
 
+      hypre_TFree(part);
+
+   }
+   
 
    /* Destroy PCG solver and preconditioner */
    HYPRE_ParCSRPCGDestroy(pcg_solver);
