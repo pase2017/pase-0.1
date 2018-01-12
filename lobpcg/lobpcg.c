@@ -174,37 +174,17 @@ HYPRE_Int* activeMask
 
   notConverged = 0;
 
-  if (num_lock <= 0)
-  {
-     for ( i = 0; i < n; i++ ) {
-	if ( utilities_FortranMatrixValue( resNorms, i + 1, 1 ) >
-	      utilities_FortranMatrixValue( lambda, i + 1, 1 )*rtol + atol
-	      + DBL_EPSILON ) {
-	   activeMask[i] = 1; 
-	   notConverged++;
-	}
-	else
-	   activeMask[i] = 0;
-     }
-
-  }
-  else 
-  {
-     for ( i = 0; i < num_lock; i++ ) {
-	if ( utilities_FortranMatrixValue( resNorms, i + 1, 1 ) >
-	      utilities_FortranMatrixValue( lambda, i + 1, 1 )*rtol + atol
-	      + DBL_EPSILON ) {
-	   activeMask[i] = 1; 
-	   notConverged++;
-	}
-	else
-	   activeMask[i] = 0;
-     }
-     for ( i = num_lock; i < n; i++ ) {
-	activeMask[i] = 1;
+  for ( i = 0; i < n; i++ ) {
+     if ( utilities_FortranMatrixValue( resNorms, i + 1, 1 ) >
+	   utilities_FortranMatrixValue( lambda, i + 1, 1 )*rtol + atol
+	   + DBL_EPSILON || i >= num_lock ) {
+	activeMask[i] = 1; 
 	notConverged++;
      }
+     else
+	activeMask[i] = 0;
   }
+
   return notConverged;
 }
 
