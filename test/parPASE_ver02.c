@@ -73,7 +73,7 @@ int main (int argc, char *argv[])
    int max_its = 50;/* 最大迭代次数 */
    double residual = 1.0;/* 残量 */
    double tolerance = 1E-8;/* 最小残量 */
-   double tol_lobpcg = 1E-6;/* 最小残量 */
+   double tol_lobpcg = 1E-8;/* 最小残量 */
    double tol_pcg = 1E-8;/* 最小残量 */
    double initial_res = 1E-8;/* 初始残差 */
    double min_gap = 1E-4;/* 不同特征值的最小距离 */
@@ -217,8 +217,11 @@ int main (int argc, char *argv[])
 
    /* 多算more个特征值 */
    more = (block_size<5)?(block_size):(5);
-   printf ( "more = %d\n", more );
    block_size += more;
+   if (myid==0)
+   {
+      printf ( "more = %d\n", more );
+   }
 
    /* Preliminaries: want at least one processor per row */
    if (n*n < num_procs) n = sqrt(num_procs) + 1;
@@ -534,7 +537,7 @@ int main (int argc, char *argv[])
       /* 这里(HYPRE_Matrix)的存在意义是变成一个空结构 */
       HYPRE_LOBPCGSetup (lobpcg_solver, (HYPRE_Matrix)parcsr_A_H, (HYPRE_Vector)par_b_H, (HYPRE_Vector)par_x_H);
       HYPRE_LOBPCGSetupB(lobpcg_solver, (HYPRE_Matrix)parcsr_B_H, (HYPRE_Vector)par_x_H);
-      HYPRE_LOBPCGSolve (lobpcg_solver, constraints_H, eigenvectors_H, eigenvalues );
+      HYPRE_LOBPCGSolve (0, lobpcg_solver, constraints_H, eigenvectors_H, eigenvalues );
       HYPRE_LOBPCGDestroy(lobpcg_solver);
    }
 
@@ -631,7 +634,7 @@ int main (int argc, char *argv[])
       {
 	 printf ( "LOBPCG solve A_Hh U_Hh = lambda_Hh B_Hh U_Hh\n" );
       }
-      HYPRE_LOBPCGSolve(lobpcg_solver, constraints_Hh, eigenvectors_Hh, eigenvalues);
+      HYPRE_LOBPCGSolve(0, lobpcg_solver, constraints_Hh, eigenvectors_Hh, eigenvalues);
 
       /* 定义更细层的特征向量 */
       if (level == 0)
@@ -788,6 +791,10 @@ int main (int argc, char *argv[])
    while (iter < max_its && num_conv < block_size-more)
    {
       /* 只从不收敛的特征值开始求解线性问题 */
+      if (myid==0)
+      {
+	 printf ( "PCG solve A_h U = lambda_Hh B_h U_Hh\n" );
+      }
       for (idx_eig = num_conv; idx_eig < block_size; ++idx_eig)
       {
 	 /* 生成右端项 y = alpha*A*x + beta*y */
@@ -817,7 +824,7 @@ int main (int argc, char *argv[])
       }
 //      PASE_LOBPCGSetup (lobpcg_solver, parcsr_A_Hh, par_b_Hh, par_x_Hh);
 //      PASE_LOBPCGSetupB(lobpcg_solver, parcsr_B_Hh, par_x_Hh);
-      HYPRE_LOBPCGSolve(lobpcg_solver, constraints_Hh, eigenvectors_Hh, eigenvalues);
+      HYPRE_LOBPCGSolve(begin_idx, lobpcg_solver, constraints_Hh, eigenvectors_Hh, eigenvalues);
 
       /* 将pvx_Hh插值到0层 */
       for (idx_eig = begin_idx; idx_eig < block_size; ++idx_eig)
