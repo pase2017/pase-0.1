@@ -52,7 +52,7 @@ static int cmp( const void *a ,  const void *b )
 
 int main (int argc, char *argv[])
 {
-   int i, k, idx_eig, pre_begin_idx, begin_idx;
+   int i, k, idx_eig, begin_idx;
    int myid, num_procs;
    int N, N_H, n;
    int block_size, max_levels;
@@ -70,14 +70,14 @@ int main (int argc, char *argv[])
    int more;/* 多算的特征值数 */
    int iter = 0;/* 迭代次数 */
    int num_conv = 0;/* 收敛个数 */
-   int max_its = 50;/* 最大迭代次数 */
+   int max_its = 20;/* 最大迭代次数 */
    double residual = 1.0;/* 残量 */
    double tolerance = 1E-8;/* 最小残量 */
-   double tol_lobpcg = 1E-8;/* 最小残量 */
+   double tol_lobpcg = 1E-6;/* 最小残量 */
 //   double tol_pcg = 1E-8;/* 最小残量 */
-   double tol_amg = 1E-8;/* 最小残量 */
-   double initial_res = 1E-8;/* 初始残差 */
-   double min_gap = 1E-4;/* 不同特征值的最小距离 */
+   double tol_amg = 0.0;/* 最小残量 */
+   double initial_res = 1E-6;/* 初始残差 */
+   double min_gap = 1E-3;/* 不同特征值的最小距离 */
 
    /* -------------------------矩阵向量声明---------------------- */ 
    /* 最细矩阵 */
@@ -393,12 +393,6 @@ int main (int argc, char *argv[])
    HYPRE_BoomerAMGSetPMaxElmts(amg, 0 );
    /* hypre_BoomerAMGSetup详细介绍各种参数表示的意义 */
    HYPRE_BoomerAMGSetCoarsenType(amg, 6);
-   /* two levels MC中用AMG做线性求解器 */
-   HYPRE_BoomerAMGSetRelaxType(amg,  3);   /*  G-S/Jacobi hybrid relaxation */
-   HYPRE_BoomerAMGSetRelaxOrder(amg,  1);  /*  uses C/F relaxation */
-   HYPRE_BoomerAMGSetNumSweeps(amg,  1);   /*  Sweeeps on each level */
-   HYPRE_BoomerAMGSetTol(amg,  0.0);      /*  conv. tolerance */
-   HYPRE_BoomerAMGSetMaxIter(amg, 1);
 
    /* Now setup */
    HYPRE_BoomerAMGSetup(amg, parcsr_A, par_b, par_x);
@@ -495,7 +489,7 @@ int main (int argc, char *argv[])
    HYPRE_BoomerAMGSetRelaxOrder(amg_solver,  1);  /*  uses C/F relaxation */
    HYPRE_BoomerAMGSetNumSweeps(amg_solver,  1);   /*  Sweeeps on each level */
    HYPRE_BoomerAMGSetTol(amg_solver,  tol_amg);      /*  conv. tolerance */
-   HYPRE_BoomerAMGSetMaxIter(amg_solver, 1);
+   HYPRE_BoomerAMGSetMaxIter(amg_solver, 2);
 
    /* Now set up the AMG preconditioner and specify any parameters */
    HYPRE_BoomerAMGCreate(&precond);
@@ -544,7 +538,7 @@ int main (int argc, char *argv[])
       /* TODO: 搞清楚这是什么意思, 即是否可以以pvx_Hh为初值进行迭代 */
       /* use rhs as initial guess for inner pcg iterations */
       HYPRE_LOBPCGSetPrecondUsageMode(lobpcg_solver, 1);
-      HYPRE_LOBPCGSetTol(lobpcg_solver, tol_lobpcg);
+      HYPRE_LOBPCGSetTol(lobpcg_solver, 0.0);
       HYPRE_LOBPCGSetPrintLevel(lobpcg_solver, 0);
 
       mv_MultiVectorSetRandom (eigenvectors_H, 775);
@@ -592,7 +586,7 @@ int main (int argc, char *argv[])
       /* Now setup and solve! */
 //      HYPRE_ParCSRPCGSetup(pcg_solver, A_array[level], F_array[level], U_array[level]);
       HYPRE_BoomerAMGSetup(amg_solver, A_array[level], F_array[level], U_array[level]);
-      for (idx_eig = 0; idx_eig < block_size; ++idx_eig)
+      for (idx_eig = 0; idx_eig < block_size-more; ++idx_eig)
       {
 	 /* 生成右端项 y = alpha*A*x + beta*y */
 	 HYPRE_ParCSRMatrixMatvec ( eigenvalues[idx_eig], B_array[level], pvx[idx_eig], 0.0, F_array[level] );
@@ -631,7 +625,7 @@ int main (int argc, char *argv[])
 	 /* use rhs as initial guess for inner pcg iterations */
 	 HYPRE_LOBPCGSetPrecondUsageMode(lobpcg_solver, 1);
 	 HYPRE_LOBPCGSetTol(lobpcg_solver, tol_lobpcg);
-	 HYPRE_LOBPCGSetPrintLevel(lobpcg_solver, 1);
+	 HYPRE_LOBPCGSetPrintLevel(lobpcg_solver, 0);
 	 PASE_LOBPCGSetup (lobpcg_solver, parcsr_A_Hh, par_b_Hh, par_x_Hh);
 	 PASE_LOBPCGSetupB(lobpcg_solver, parcsr_B_Hh, par_x_Hh);
       } 
@@ -806,13 +800,16 @@ int main (int argc, char *argv[])
 
    num_conv  = 0;
    begin_idx = num_conv;
-   pre_begin_idx = begin_idx;
    while (iter < max_its && num_conv < block_size-more)
    {
+      if (myid == 0)
+      {
+	 printf ( "-----------------------------\n" );
+      }
       /* 只从不收敛的特征值开始求解线性问题 */
       if (myid==0)
       {
-	 printf ( "PCG solve A_h U = lambda_Hh B_h U_Hh\n" );
+	 printf ( "PCG solve A_h U = lambda_Hh B_h U_Hh from %d\n", num_conv );
       }
       for (idx_eig = num_conv; idx_eig < block_size; ++idx_eig)
       {
@@ -823,11 +820,15 @@ int main (int argc, char *argv[])
       }
 
       /* 这里设置了begin_idx这个参数, 使得特征子空间一起收敛 */
+      if (myid==0)
+      {
+	 printf ( "Update Aux Space from %d\n", begin_idx );
+      }
       PASE_ParCSRMatrixSetAuxSpace( MPI_COMM_WORLD, parcsr_A_Hh, block_size, Q_array[0],
-	    A_array[0], pvx, pre_begin_idx, U_array[num_levels-1], U_array[0] );
+	    A_array[0], pvx, begin_idx, U_array[num_levels-1], U_array[0] );
       PASE_ParCSRMatrixSetAuxSpace( MPI_COMM_WORLD, parcsr_B_Hh, block_size, Q_array[0],
-	    B_array[0], pvx, pre_begin_idx, U_array[num_levels-1], U_array[0] );
-      for ( idx_eig = pre_begin_idx; idx_eig < block_size; ++idx_eig)
+	    B_array[0], pvx, begin_idx, U_array[num_levels-1], U_array[0] );
+      for ( idx_eig = begin_idx; idx_eig < block_size; ++idx_eig)
       {
 	 PASE_ParVectorSetConstantValues(pvx_Hh[idx_eig], 0.0);
 	 pvx_Hh[idx_eig]->aux_h->data[idx_eig] = 1.0;
@@ -839,10 +840,10 @@ int main (int argc, char *argv[])
       }
 //      PASE_LOBPCGSetup (lobpcg_solver, parcsr_A_Hh, par_b_Hh, par_x_Hh);
 //      PASE_LOBPCGSetupB(lobpcg_solver, parcsr_B_Hh, par_x_Hh);
-      HYPRE_LOBPCGSolve(begin_idx, lobpcg_solver, constraints_Hh, eigenvectors_Hh, eigenvalues);
+      HYPRE_LOBPCGSolve(num_conv, lobpcg_solver, constraints_Hh, eigenvectors_Hh, eigenvalues);
 
       /* 将pvx_Hh插值到0层 */
-      for (idx_eig = begin_idx; idx_eig < block_size; ++idx_eig)
+      for (idx_eig = num_conv; idx_eig < block_size; ++idx_eig)
       {
 	 PASE_ParVectorGetParVector( Q_array[0], block_size, pvx, pvx_Hh[idx_eig], pvx_h[idx_eig] );
       }
@@ -852,7 +853,7 @@ int main (int argc, char *argv[])
 	 printf ( "compute residual and update eigenvalues\n" );
       }
       /* TODO:是否可以从num_conv开始, 应该是特征子空间整个一起收敛 */
-      num_conv  = begin_idx;
+      begin_idx = num_conv;
       for (idx_eig = num_conv; idx_eig < block_size-more; ++idx_eig)
       {
 	 HYPRE_ParCSRMatrixMatvec ( 1.0, B_array[0], pvx_h[idx_eig], 0.0, F_array[0] );
@@ -873,29 +874,26 @@ int main (int argc, char *argv[])
 
       if (num_conv > 0 && num_conv < block_size-more)
       {
-	 pre_begin_idx = begin_idx;
 	 /* 比较已收敛的特征值与后一个特征值是否是重根, 若是则再往前寻找特征子空间的开始 */
-	 if ( fabs(eigenvalues[num_conv-1]-eigenvalues[num_conv]) > min_gap*eigenvalues[num_conv-1] )
+	 printf ( "%d, %e, %e\n", num_conv, fabs(eigenvalues[num_conv-1]-eigenvalues[num_conv]), min_gap*fabs(eigenvalues[num_conv-1]) );
+	 /* 若当前收敛的特征值与下一个是重根, 则往回 */
+	 if ( fabs(eigenvalues[num_conv-1]-eigenvalues[num_conv]) < min_gap*fabs(eigenvalues[num_conv-1]) )
 	 {
-	    begin_idx = num_conv;
-	 }
-	 else
-	 {
-	    for (i = num_conv-2; i >= begin_idx; --i)
+	    for (i = num_conv-2; i >= begin_idx-1; --i)
 	    {
 	       if ( fabs(eigenvalues[num_conv-1]-eigenvalues[i]) > min_gap*fabs(eigenvalues[num_conv-1]) )
 	       {
-		  begin_idx = i+1;
+		  num_conv  = i+1;
 		  break;
 	       }
 	    }
 	 }
       }
-
       if (myid == 0)
       {
-	 printf ( "pre_begin_idx = %d, begin_idx = %d, num_conv = %d\n", pre_begin_idx, begin_idx, num_conv );
+	 printf ( "begin_idx = %d, num_conv = %d\n", begin_idx, num_conv );
       }
+
       ++iter;
 
       tmp_pvx = pvx;

@@ -98,7 +98,7 @@ int main (int argc, char *argv[])
    int num_conv = 0;/* 收敛个数 */
    int max_its = 5;/* 最大迭代次数 */
    double residual = 1.0;/* 残量 */
-   double tolerance = 1E-8;/* 最小残量 */
+   double tolerance = 1E-6;/* 最小残量 */
 
    /* -------------------------矩阵向量声明---------------------- */ 
    /* 最细矩阵 */
