@@ -177,7 +177,7 @@ HYPRE_Int* activeMask
   for ( i = 0; i < n; i++ ) {
      if ( utilities_FortranMatrixValue( resNorms, i + 1, 1 ) >
 	   utilities_FortranMatrixValue( lambda, i + 1, 1 )*rtol + atol
-	   + DBL_EPSILON || i >= num_lock ) {
+	   + DBL_EPSILON && i >= num_lock ) {
 	activeMask[i] = 1; 
 	notConverged++;
      }
