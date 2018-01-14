@@ -497,10 +497,11 @@ int main (int argc, char *argv[])
    HYPRE_BoomerAMGSetInterpType( precond, 0 );
    HYPRE_BoomerAMGSetPMaxElmts( precond, 0 );
    HYPRE_BoomerAMGSetCoarsenType(precond, 6);
-   HYPRE_BoomerAMGSetRelaxType(precond, 6); /* Sym G.S./Jacobi hybrid */
-   HYPRE_BoomerAMGSetNumSweeps(precond, 2);
-   HYPRE_BoomerAMGSetTol(precond, 0.0); /* conv. tolerance zero */
-   HYPRE_BoomerAMGSetMaxIter(precond, 1); /* do only one iteration! */
+   HYPRE_BoomerAMGSetRelaxType(precond, 3); /* Sym G.S./Jacobi hybrid */
+   HYPRE_BoomerAMGSetRelaxOrder(precond,  1);  /*  uses C/F relaxation */
+   HYPRE_BoomerAMGSetNumSweeps(precond, 1);
+   HYPRE_BoomerAMGSetTol(precond, tol_amg); /* conv. tolerance zero */
+   HYPRE_BoomerAMGSetMaxIter(precond, 10); /* do only one iteration! */
    /* Set the PCG preconditioner */
 //   HYPRE_PCGSetPrecond(pcg_solver, (HYPRE_PtrToSolverFcn) HYPRE_BoomerAMGSolve,
 //	 (HYPRE_PtrToSolverFcn) HYPRE_BoomerAMGSetup, precond);
@@ -576,6 +577,46 @@ int main (int argc, char *argv[])
       PASE_ParVectorCreate( MPI_COMM_WORLD, N_H, block_size, NULL,  partitioning, &par_b_Hh);
    }
 
+
+
+   /* 对A_Hh进行对角化 */
+   int row, col;
+   hypre_CSRMatrix *bTy, *cTy, *yTBy;
+   bTy  = hypre_CSRMatrixCreate(block_size,  block_size,  block_size*block_size);
+   cTy  = hypre_CSRMatrixCreate(block_size,  block_size,  block_size*block_size);
+   yTBy = hypre_CSRMatrixCreate(block_size,  block_size,  block_size*block_size);
+   hypre_CSRMatrixInitialize( bTy );
+   hypre_CSRMatrixInitialize( cTy );
+   hypre_CSRMatrixInitialize( yTBy);
+   HYPRE_Int*  matrix_i = bTy->i;
+   HYPRE_Int*  matrix_j = bTy->j;
+   HYPRE_Real* matrix_data;
+   for (row = 0; row < block_size+1; ++row)
+   {
+      matrix_i[row] = row*block_size;
+   }
+   for ( row = 0; row < block_size; ++row)
+   {
+      for ( col = 0; col < block_size; ++col)
+      {
+	 matrix_j[col+row*block_size] = col;
+      }
+   }
+   hypre_CSRMatrixCopy(bTy, cTy,  0);
+   hypre_CSRMatrixCopy(bTy, yTBy, 0);
+
+   HYPRE_ParVector   *B_pvx_H;
+   mv_MultiVectorPtr B_eigenvectors_H = NULL;
+   {
+      B_eigenvectors_H = 
+	 mv_MultiVectorCreateFromSampleVector(interpreter_H, block_size, par_x_H);
+      mv_TempMultiVector* tmp = 
+	 (mv_TempMultiVector*) mv_MultiVectorGetData(B_eigenvectors_H);
+      B_pvx_H = (HYPRE_ParVector*)(tmp -> vector);
+   }
+
+   HYPRE_BoomerAMGSetup(precond, parcsr_A_H, par_x_H, par_b_H);
+
    /* 在循环外创建par_x_Hh, par_b_Hh */
    /* 从粗到细, 细解问题, 最粗特征值 */
    for ( level = num_levels-2; level >= 0; --level )
@@ -624,7 +665,7 @@ int main (int argc, char *argv[])
 	 /* LOBPCG for PASE */
 	 HYPRE_LOBPCGCreate(interpreter_Hh, &matvec_fn_Hh, &lobpcg_solver);
 	 /* 最粗+aux特征值问题的参数选取 */
-	 HYPRE_LOBPCGSetMaxIter(lobpcg_solver, 2);
+	 HYPRE_LOBPCGSetMaxIter(lobpcg_solver, 10);
 	 /* TODO: 搞清楚这是什么意思, 即是否可以以pvx_Hh为初值进行迭代 */
 	 /* use rhs as initial guess for inner pcg iterations */
 	 HYPRE_LOBPCGSetPrecondUsageMode(lobpcg_solver, 1);
@@ -633,6 +674,7 @@ int main (int argc, char *argv[])
 	 HYPRE_LOBPCGSetPrintLevel(lobpcg_solver, 0);
 	 PASE_LOBPCGSetup (lobpcg_solver, parcsr_A_Hh, par_b_Hh, par_x_Hh);
 	 PASE_LOBPCGSetupB(lobpcg_solver, parcsr_B_Hh, par_x_Hh);
+
       } 
       else
       {
@@ -642,17 +684,108 @@ int main (int argc, char *argv[])
 	       B_array[level], pvx, 0, U_array[num_levels-1], U_array[level] );
       }
 
-      for ( idx_eig = 0; idx_eig < block_size; ++idx_eig)
+      /* 对角化 */
       {
-	 PASE_ParVectorSetConstantValues(pvx_Hh[idx_eig], 0.0);
-	 pvx_Hh[idx_eig]->aux_h->data[idx_eig] = 1.0;
+	 /* 求解线性方程组 */
+	 for (idx_eig = 0; idx_eig < block_size; ++idx_eig)
+	 {
+	    HYPRE_BoomerAMGSolve(precond, parcsr_A_Hh->A_H, parcsr_A_Hh->aux_hH[idx_eig], pvx_H[idx_eig]);
+	 }
+	 
+	 /* bTy */
+	 matrix_data = bTy->data;
+	 for (row = 0; row < block_size; ++row)
+	 {
+	    for ( col = 0; col < block_size; ++col)
+	    {
+	       HYPRE_ParVectorInnerProd(parcsr_A_Hh->aux_hH[row],  pvx_H[col], &matrix_data[row*block_size+col]);
+	       parcsr_A_Hh->aux_hh->data[row*block_size+col] =
+		  parcsr_A_Hh->aux_hh->data[row*block_size+col] - matrix_data[row*block_size+col];
+	    }
+	 }
+	 /* cTy */
+	 matrix_data = cTy->data;
+	 for (row = 0; row < block_size; ++row)
+	 {
+	    for ( col = 0; col < block_size; ++col)
+	    {
+	       HYPRE_ParVectorInnerProd(parcsr_B_Hh->aux_hH[row],  pvx_H[col], &matrix_data[row*block_size+col]);
+	       parcsr_B_Hh->aux_hh->data[row*block_size+col] =
+		  parcsr_B_Hh->aux_hh->data[row*block_size+col] - matrix_data[row*block_size+col];
+	    }
+	 }
+	 for (row = 0; row < block_size; ++row)
+	 {
+	    for ( col = 0; col < block_size; ++col)
+	    {
+	       parcsr_B_Hh->aux_hh->data[row*block_size+col] =
+		  parcsr_B_Hh->aux_hh->data[row*block_size+col] - matrix_data[col*block_size+row];
+	    }
+	 }
+	 /* By */
+	 for (row = 0; row < block_size; ++row)
+	 {
+	    HYPRE_ParCSRMatrixMatvec ( 1.0, parcsr_B_Hh->A_H, pvx_H[row], 0.0, B_pvx_H[row] );
+	    HYPRE_ParVectorAxpy(-1.0, B_pvx_H[row], parcsr_B_Hh->aux_hH[row]);
+	 }
+	 /* yTBy */
+	 matrix_data = yTBy->data;
+	 for (row = 0; row < block_size; ++row)
+	 {
+	    for ( col = 0; col < block_size; ++col)
+	    {
+	       HYPRE_ParVectorInnerProd(B_pvx_H[row],  pvx_H[col], &matrix_data[row*block_size+col]);
+	       parcsr_B_Hh->aux_hh->data[row*block_size+col] =
+		  parcsr_B_Hh->aux_hh->data[row*block_size+col] + matrix_data[row*block_size+col];
+	    }
+	 }
+
+	 for ( idx_eig = 0; idx_eig < block_size; ++idx_eig)
+	 {
+	    PASE_ParVectorSetConstantValues(pvx_Hh[idx_eig], 0.0);
+	    HYPRE_ParVectorCopy(pvx_H[idx_eig], pvx_Hh[idx_eig]->b_H); 
+	    pvx_Hh[idx_eig]->aux_h->data[idx_eig] = 1.0;
+	 }
       }
+      /* 对角化 */
+
+
+
+
+
+
+
       /* LOBPCG eigensolver */
       if (myid==0)
       {
 	 printf ( "LOBPCG solve A_Hh U_Hh = lambda_Hh B_Hh U_Hh\n" );
       }
+
+      parcsr_A_Hh->diag = 1;
       HYPRE_LOBPCGSolve(0, lobpcg_solver, constraints_Hh, eigenvectors_Hh, eigenvalues);
+      parcsr_A_Hh->diag = 0;
+
+      for (idx_eig = 0; idx_eig < block_size-more; ++idx_eig)
+      {
+	 if (myid == 0)
+	 {
+	    printf ( "%d : eig = %1.16e, error = %e\n", idx_eig, eigenvalues[idx_eig]/h2, (eigenvalues[idx_eig]-exact_eigenvalues[idx_eig])/h2 );
+	 }
+      }
+
+      /* 对角化 */
+      {
+	 for (idx_eig = 0; idx_eig < block_size; ++idx_eig)
+	 {
+	    for (row = 0; row < block_size; ++row)
+	    {
+	       HYPRE_ParVectorAxpy(-(pvx_Hh[idx_eig]->aux_h->data[row]), pvx_H[row], pvx_Hh[idx_eig]->b_H);
+	    }
+	 }
+      }
+      /* 对角化 */
+
+
 
       /* 定义更细层的特征向量 */
       if (level == 0)
@@ -781,7 +914,6 @@ int main (int argc, char *argv[])
 #endif
    }
 
-
    for (idx_eig = 0; idx_eig < block_size-more; ++idx_eig)
    {
       HYPRE_ParCSRMatrixMatvec ( 1.0, A_array[0], pvx[idx_eig], 0.0, F_array[0] );
@@ -805,6 +937,7 @@ int main (int argc, char *argv[])
    }
 
 
+
    end_time = MPI_Wtime();
    if (myid==0)
    {
@@ -826,7 +959,6 @@ int main (int argc, char *argv[])
 ////      HYPRE_ParCSRPCGSetup(pcg_solver, A_array[0], F_array[0], U_array[0]);
 //      HYPRE_BoomerAMGSetup(amg_solver, A_array[0], F_array[0], U_array[0]);
 //   }
-
 
    num_conv  = 0;
    begin_idx = num_conv;
@@ -1011,6 +1143,22 @@ int main (int argc, char *argv[])
    HYPRE_BoomerAMGDestroy(amg_solver);
    HYPRE_BoomerAMGDestroy(precond);
    HYPRE_LOBPCGDestroy(lobpcg_solver);
+
+
+   /* 对角化 */
+   for ( idx_eig = 0; idx_eig < block_size; ++idx_eig)
+   {
+      HYPRE_ParVectorDestroy(B_pvx_H[idx_eig]);
+   }
+   hypre_TFree(B_pvx_H);
+   free((mv_TempMultiVector*) mv_MultiVectorGetData(B_eigenvectors_H));
+   hypre_TFree(B_eigenvectors_H);
+   hypre_CSRMatrixDestroy(bTy);
+   hypre_CSRMatrixDestroy(cTy);
+   hypre_CSRMatrixDestroy(yTBy);
+
+
+
 
    /* 销毁level==num_levels-2层的特征向量 */
    for ( idx_eig = 0; idx_eig < block_size; ++idx_eig)

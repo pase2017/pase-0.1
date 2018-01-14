@@ -65,6 +65,7 @@ HYPRE_Int PASE_ParCSRMatrixCreate( MPI_Comm comm ,
    (*matrix)->P   = P;
    
    (*matrix)->aux_hH = hypre_CTAlloc(HYPRE_ParVector, block_size);
+   (*matrix)->diag = 0;
 
 
    HYPRE_Int *partitioning;
@@ -397,38 +398,46 @@ HYPRE_Int PASE_ParCSRMatrixMatvec ( HYPRE_Real alpha, PASE_ParCSRMatrix A, PASE_
    HYPRE_Int col;
    HYPRE_Int block_size = A->block_size;
 
-   /* IMPROVEMENT for MPI */
-   MPI_Comm    comm = hypre_ParVectorComm(x->b_H);
-   MPI_Request request;
-   MPI_Status  status;
-   HYPRE_Real *inner_prod;
-   inner_prod = hypre_CTAlloc (HYPRE_Real,  block_size);
-   for (col = 0; col < block_size; ++col)
+   if (A->diag == 0)
    {
-      inner_prod[col] = hypre_SeqVectorInnerProd(
-	    hypre_ParVectorLocalVector(A->aux_hH[col]),  hypre_ParVectorLocalVector(x->b_H) );
-   }
-   MPI_Iallreduce(MPI_IN_PLACE, inner_prod, block_size, MPI_DOUBLE, MPI_SUM, comm, &request );
-   /* IMPROVEMENT for MPI */
+      /* IMPROVEMENT for MPI */
+      MPI_Comm    comm = hypre_ParVectorComm(x->b_H);
+      MPI_Request request;
+      MPI_Status  status;
+      HYPRE_Real *inner_prod;
+      inner_prod = hypre_CTAlloc (HYPRE_Real,  block_size);
+      for (col = 0; col < block_size; ++col)
+      {
+	 inner_prod[col] = hypre_SeqVectorInnerProd(
+	       hypre_ParVectorLocalVector(A->aux_hH[col]),  hypre_ParVectorLocalVector(x->b_H) );
+      }
+      MPI_Iallreduce(MPI_IN_PLACE, inner_prod, block_size, MPI_DOUBLE, MPI_SUM, comm, &request );
+      /* IMPROVEMENT for MPI */
 
-   /* y = alpha A x + beta y */
-   hypre_ParCSRMatrixMatvec( alpha , A->A_H , x->b_H , beta , y->b_H );
-   for (col = 0; col < block_size; ++col)
-   {
-      /* y = alpha x + y */
-      hypre_ParVectorAxpy(alpha*(x->aux_h->data[col]), A->aux_hH[col], y->b_H);
-   }
-   hypre_CSRMatrixMatvec( alpha , A->aux_hh , x->aux_h , beta , y->aux_h );
+      /* y = alpha A x + beta y */
+      hypre_ParCSRMatrixMatvec( alpha , A->A_H , x->b_H , beta , y->b_H );
+      for (col = 0; col < block_size; ++col)
+      {
+	 /* y = alpha x + y */
+	 hypre_ParVectorAxpy(alpha*(x->aux_h->data[col]), A->aux_hH[col], y->b_H);
+      }
+      hypre_CSRMatrixMatvec( alpha , A->aux_hh , x->aux_h , beta , y->aux_h );
 
-   /* IMPROVEMENT for MPI */
-   MPI_Wait(&request, &status);
-   for (col = 0; col < block_size; ++col)
-   {
-//      y->aux_h->data[col] += alpha * hypre_ParVectorInnerProd(A->aux_hH[col], x->b_H);
-      y->aux_h->data[col] += alpha * inner_prod[col];
+      /* IMPROVEMENT for MPI */
+      MPI_Wait(&request, &status);
+      for (col = 0; col < block_size; ++col)
+      {
+	 //      y->aux_h->data[col] += alpha * hypre_ParVectorInnerProd(A->aux_hH[col], x->b_H);
+	 y->aux_h->data[col] += alpha * inner_prod[col];
+      }
+      hypre_TFree(inner_prod);
+      /* IMPROVEMENT for MPI */
    }
-   hypre_TFree(inner_prod);
-   /* IMPROVEMENT for MPI */
+   else
+   {
+      hypre_ParCSRMatrixMatvec( alpha , A->A_H , x->b_H , beta , y->b_H );
+      hypre_CSRMatrixMatvec( alpha , A->aux_hh , x->aux_h , beta , y->aux_h );
+   }
    return 0;
 }
 

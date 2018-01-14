@@ -30,3 +30,8 @@ parPASE_ver04
 是对PASE软件包脱离hypre的一个尝试, 洪一直在进行中, 所以并不需要进行更新.
 pase_es, pase_mg中都有相应的结构体现.
 以后参考洪的程序进行再修改.
+
+parPASE_ver10
+对A_Hh矩阵进行对角化然后再用lobpcg进行求解.
+这样的话, 就可以设置precondition了, 也是分块的
+比如A_H部分利用AMG, aux_hh部分进行LU分解

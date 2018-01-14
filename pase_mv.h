@@ -50,6 +50,9 @@ typedef struct pase_ParCSRMatrix_struct
    /* blockSize*blockSize的数组 */
    hypre_CSRMatrix*      aux_hh;
 
+   /* 是否是块对角矩阵1, 则是 */
+   HYPRE_Int             diag;
+
 } pase_ParCSRMatrix;
 typedef struct pase_ParCSRMatrix_struct *PASE_ParCSRMatrix;
 

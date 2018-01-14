@@ -109,6 +109,13 @@ parPASE_ver06: parPASE_ver06.o
 
 
 
+########################################################################
+# Example 5 (Multi-Correction)
+########################################################################
+parPASE_ver10: parPASE_ver10.o
+	$(CC) -o $@ $^ $(LFLAGS)
+
+
 
 
 
@@ -116,5 +123,5 @@ parPASE_ver06: parPASE_ver06.o
 # Clean up
 ########################################################################
 clean:
-	rm -f $(ALLPROGS:=.o) cg lobpcg mv parPASE_ver01 parPASE_ver02 parPASE_ver06 serPASE_ver01
+	rm -f $(ALLPROGS:=.o) cg lobpcg mv parPASE_ver01 parPASE_ver02 parPASE_ver06 parPASE_ver10 serPASE_ver01
 	rm -f *\.[0-9] *\.aux
