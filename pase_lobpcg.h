@@ -20,8 +20,7 @@
 #define _pase_lobpcg_h_
 
 
-#include "pase_mv.h"
-#include "pase_pcg.h"
+#include "pase_int.h"
 
 #ifdef __cplusplus
 extern "C" {

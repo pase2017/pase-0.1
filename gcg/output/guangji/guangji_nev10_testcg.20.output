@@ -1,0 +1,7 @@
+filenameA: /home/student/JiusuoSoftCenter/guangji/guangji.stiff.mat.petsc.bin
+Getting matrix...
+Getting matrix... Done
+filenameB: /home/student/JiusuoSoftCenter/guangji/guangji.mass.mat.petsc.bin
+Getting matrix...
+Getting matrix... Done
+nev: 10, eigen_max_iter: 0, cg_max_iter: 100, eigen_tol: 1.000000e-04, cg_rate: 1.000000e-01

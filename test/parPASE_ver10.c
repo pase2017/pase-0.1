@@ -74,7 +74,7 @@ int main (int argc, char *argv[])
    int max_its = 20;/* 最大迭代次数 */
    double residual = 1.0;/* 残量 */
    double tolerance = 1E-8;/* 最小残量 */
-   double tol_lobpcg = 1E-8;/* 最小残量 */
+   double tol_lobpcg = 1E-6;/* 最小残量 */
 //   double tol_pcg = 1E-8;/* 最小残量 */
    double tol_amg = 1E-11;/* 最小残量 */
 //   double initial_res = 1E-6;/* 初始残差 */
@@ -665,13 +665,13 @@ int main (int argc, char *argv[])
 	 /* LOBPCG for PASE */
 	 HYPRE_LOBPCGCreate(interpreter_Hh, &matvec_fn_Hh, &lobpcg_solver);
 	 /* 最粗+aux特征值问题的参数选取 */
-	 HYPRE_LOBPCGSetMaxIter(lobpcg_solver, 10);
+	 HYPRE_LOBPCGSetMaxIter(lobpcg_solver, 100);
 	 /* TODO: 搞清楚这是什么意思, 即是否可以以pvx_Hh为初值进行迭代 */
 	 /* use rhs as initial guess for inner pcg iterations */
 	 HYPRE_LOBPCGSetPrecondUsageMode(lobpcg_solver, 1);
 	 HYPRE_LOBPCGSetTol (lobpcg_solver, tol_lobpcg);
 	 HYPRE_LOBPCGSetRTol(lobpcg_solver, tol_lobpcg);
-	 HYPRE_LOBPCGSetPrintLevel(lobpcg_solver, 0);
+	 HYPRE_LOBPCGSetPrintLevel(lobpcg_solver, 1);
 	 PASE_LOBPCGSetup (lobpcg_solver, parcsr_A_Hh, par_b_Hh, par_x_Hh);
 	 PASE_LOBPCGSetupB(lobpcg_solver, parcsr_B_Hh, par_x_Hh);
 

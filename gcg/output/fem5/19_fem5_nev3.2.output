@@ -1,0 +1,946 @@
+filenameA: /home/zhangning/slepc-3.7.3/src/eps/examples/tutorials/mat/fem5/FEM_Stiff_5.petsc.bin
+Getting matrix...
+Getting matrix... Done
+filenameB: /home/zhangning/slepc-3.7.3/src/eps/examples/tutorials/mat/fem5/FEM_Mass_5.petsc.bin
+Getting matrix...
+Getting matrix... Done
+nev: 3, eigen_max_iter: 50, cg_max_iter: 20, eigen_tol: 1.000000e-08, cg_rate: 1.000000e-03
+init vec: filename: /home/zhangning/slepc-3.7.3/src/eps/examples/tutorials/mat/fem5/randx_5.txt
+Reading vector...
+line 61
+nunlock(-1)= 3; max_res(-1)= 3.287275e+00; min_res(-1)= 1.418136e+00
+'in while, the iter: -2 LAPACKsyev:'
+'approx_eval[0] = 720.856108853510818, abosolute residual: 1.418136e+00'
+'approx_eval[1] = 8017.162328719561629, abosolute residual: 3.230704e+00'
+'approx_eval[2] = 8589.332373916051438, abosolute residual: 3.287275e+00'
+print_cg=1
+print_cg=1
+in CG, iter: 0, error:  0.040423790523472
+in CG, iter: 1, error:  0.056221569857968
+in CG, iter: 2, error:  0.075006281905815
+in CG, iter: 3, error:  0.086248688953353
+in CG, iter: 4, error:  0.115297648889776
+in CG, iter: 5, error:  0.109376753828048
+in CG, iter: 6, error:  0.067159165831006
+in CG, iter: 7, error:  0.044330898918274
+in CG, iter: 8, error:  0.048785932115087
+in CG, iter: 9, error:  0.064375593456846
+in CG, iter: 10, error:  0.060865128430967
+in CG, iter: 11, error:  0.040251266307949
+in CG, iter: 12, error:  0.029093819924543
+in CG, iter: 13, error:  0.028814601425398
+in CG, iter: 14, error:  0.033783489704904
+in CG, iter: 15, error:  0.028853774285698
+in CG, iter: 16, error:  0.019374810243040
+in CG, iter: 17, error:  0.013743967100769
+in CG, iter: 18, error:  0.011368647063943
+in CG, iter: 19, error:  0.009552779110139
+print_cg=1
+print_cg=1
+in CG, iter: 0, error:  0.016750944294666
+in CG, iter: 1, error:  0.012947709009162
+in CG, iter: 2, error:  0.011064246351624
+in CG, iter: 3, error:  0.009813000741605
+in CG, iter: 4, error:  0.008145832569825
+in CG, iter: 5, error:  0.007198885240431
+in CG, iter: 6, error:  0.005663314985442
+in CG, iter: 7, error:  0.004641051971279
+in CG, iter: 8, error:  0.003544661865709
+in CG, iter: 9, error:  0.003170845527464
+in CG, iter: 10, error:  0.002686764001102
+in CG, iter: 11, error:  0.002433088593850
+in CG, iter: 12, error:  0.002231146852589
+in CG, iter: 13, error:  0.002054766605486
+in CG, iter: 14, error:  0.001941937708338
+in CG, iter: 15, error:  0.001771196933229
+in CG, iter: 16, error:  0.001699325695716
+in CG, iter: 17, error:  0.001727648334674
+in CG, iter: 18, error:  0.001632790418359
+in CG, iter: 19, error:  0.001521388460762
+print_cg=1
+print_cg=1
+in CG, iter: 0, error:  0.017256662981877
+in CG, iter: 1, error:  0.012711882706842
+in CG, iter: 2, error:  0.010591246618962
+in CG, iter: 3, error:  0.009033694922758
+in CG, iter: 4, error:  0.007524672161883
+in CG, iter: 5, error:  0.006359388039206
+in CG, iter: 6, error:  0.004908594586003
+in CG, iter: 7, error:  0.004108459776773
+in CG, iter: 8, error:  0.003307063277011
+in CG, iter: 9, error:  0.002740144317129
+in CG, iter: 10, error:  0.002082635621394
+in CG, iter: 11, error:  0.001753499025763
+in CG, iter: 12, error:  0.001475683230988
+in CG, iter: 13, error:  0.001387081274057
+in CG, iter: 14, error:  0.001389226721005
+in CG, iter: 15, error:  0.001345793243729
+in CG, iter: 16, error:  0.001285189449045
+in CG, iter: 17, error:  0.001295057791917
+in CG, iter: 18, error:  0.001200909173930
+in CG, iter: 19, error:  0.001223150283289
+nunlock(0)= 3; max_res(0)= 3.374192e-01; min_res(0)= 1.634469e-02
+'in while, the iter: -1 LAPACKsyev:'
+'approx_eval[0] = 20.678369222718437, abosolute residual: 1.634469e-02'
+'approx_eval[1] = 214.991767159832875, abosolute residual: 3.088002e-01'
+'approx_eval[2] = 263.787107171609762, abosolute residual: 3.374192e-01'
+print_cg=1
+print_cg=1
+in CG, iter: 0, error:  0.021278598111200
+in CG, iter: 1, error:  0.029475603062481
+in CG, iter: 2, error:  0.023371011296135
+in CG, iter: 3, error:  0.019644148144172
+in CG, iter: 4, error:  0.018505513347102
+in CG, iter: 5, error:  0.015357251429658
+in CG, iter: 6, error:  0.013405820611335
+in CG, iter: 7, error:  0.010779370872717
+in CG, iter: 8, error:  0.008825387563250
+in CG, iter: 9, error:  0.005518881899886
+in CG, iter: 10, error:  0.004569730911450
+in CG, iter: 11, error:  0.003518666402802
+in CG, iter: 12, error:  0.003395305658088
+in CG, iter: 13, error:  0.003225158084686
+in CG, iter: 14, error:  0.002377077739320
+in CG, iter: 15, error:  0.002075024991670
+in CG, iter: 16, error:  0.002145827648953
+in CG, iter: 17, error:  0.002482875338943
+in CG, iter: 18, error:  0.003341518678767
+in CG, iter: 19, error:  0.003264352305029
+print_cg=1
+print_cg=1
+in CG, iter: 0, error:  0.037285066202513
+in CG, iter: 1, error:  0.025629461688145
+in CG, iter: 2, error:  0.023891598785366
+in CG, iter: 3, error:  0.022880668940918
+in CG, iter: 4, error:  0.023894508530745
+in CG, iter: 5, error:  0.023256517514578
+in CG, iter: 6, error:  0.021227865150732
+in CG, iter: 7, error:  0.017314525182441
+in CG, iter: 8, error:  0.013218394895256
+in CG, iter: 9, error:  0.010143134350122
+in CG, iter: 10, error:  0.008012746697953
+in CG, iter: 11, error:  0.006774840291913
+in CG, iter: 12, error:  0.006193772013568
+in CG, iter: 13, error:  0.005928583125048
+in CG, iter: 14, error:  0.005845429570420
+in CG, iter: 15, error:  0.005398484235680
+in CG, iter: 16, error:  0.004736214055063
+in CG, iter: 17, error:  0.004429615752064
+in CG, iter: 18, error:  0.003748036083412
+in CG, iter: 19, error:  0.003165320736161
+print_cg=1
+print_cg=1
+in CG, iter: 0, error:  0.035021206713162
+in CG, iter: 1, error:  0.023828719701284
+in CG, iter: 2, error:  0.022838151973569
+in CG, iter: 3, error:  0.021201845469366
+in CG, iter: 4, error:  0.022138360591601
+in CG, iter: 5, error:  0.019872570248405
+in CG, iter: 6, error:  0.016417990885150
+in CG, iter: 7, error:  0.012646767422139
+in CG, iter: 8, error:  0.010532197403167
+in CG, iter: 9, error:  0.008416716317932
+in CG, iter: 10, error:  0.007061560119390
+in CG, iter: 11, error:  0.006264178489469
+in CG, iter: 12, error:  0.006082244664696
+in CG, iter: 13, error:  0.006103894962337
+in CG, iter: 14, error:  0.006443479379368
+in CG, iter: 15, error:  0.005851128483666
+in CG, iter: 16, error:  0.004772872922581
+in CG, iter: 17, error:  0.003918808195530
+in CG, iter: 18, error:  0.002818282885121
+in CG, iter: 19, error:  0.002179270099062
+nunlock(1)= 3; max_res(1)= 1.110647e-01; min_res(1)= 3.051552e-03
+'in while, the iter: 0 LAPACKsyev:'
+'approx_eval[0] = 19.793802075333389, abosolute residual: 3.051552e-03'
+'approx_eval[1] = 80.556886134425682, abosolute residual: 8.914809e-02'
+'approx_eval[2] = 116.798053183235581, abosolute residual: 1.110647e-01'
+'iter: 0, time: iter total: 0.003853, get w: 0.002940, orth: 0.000518, rayleigh-ritz: 0.000176, get x: 0.000018, get p: 0.000014'
+print_cg=1
+print_cg=1
+in CG, iter: 0, error:  0.003168451828024
+in CG, iter: 1, error:  0.002813100987534
+in CG, iter: 2, error:  0.002137004562415
+in CG, iter: 3, error:  0.001368880267978
+in CG, iter: 4, error:  0.000884282140262
+in CG, iter: 5, error:  0.000734609388807
+in CG, iter: 6, error:  0.000608902199125
+in CG, iter: 7, error:  0.000501199051813
+in CG, iter: 8, error:  0.000549198803090
+in CG, iter: 9, error:  0.000528055204784
+in CG, iter: 10, error:  0.000430001561557
+in CG, iter: 11, error:  0.000305191798143
+in CG, iter: 12, error:  0.000261281901639
+in CG, iter: 13, error:  0.000211736937526
+in CG, iter: 14, error:  0.000151517070379
+in CG, iter: 15, error:  0.000123590492909
+in CG, iter: 16, error:  0.000101090703011
+in CG, iter: 17, error:  0.000079565661711
+in CG, iter: 18, error:  0.000058042945240
+in CG, iter: 19, error:  0.000042061602956
+print_cg=1
+print_cg=1
+in CG, iter: 0, error:  0.028870912662354
+in CG, iter: 1, error:  0.022385571784967
+in CG, iter: 2, error:  0.025702004069694
+in CG, iter: 3, error:  0.026363397272262
+in CG, iter: 4, error:  0.027342691633560
+in CG, iter: 5, error:  0.021964247766018
+in CG, iter: 6, error:  0.017191381502503
+in CG, iter: 7, error:  0.013886550633796
+in CG, iter: 8, error:  0.012886816575648
+in CG, iter: 9, error:  0.012503936698672
+in CG, iter: 10, error:  0.012715026771356
+in CG, iter: 11, error:  0.011242786592474
+in CG, iter: 12, error:  0.010117009415524
+in CG, iter: 13, error:  0.007879843154836
+in CG, iter: 14, error:  0.006565128331179
+in CG, iter: 15, error:  0.004853046966397
+in CG, iter: 16, error:  0.003819574253805
+in CG, iter: 17, error:  0.003366182787264
+in CG, iter: 18, error:  0.002903806603081
+in CG, iter: 19, error:  0.002487885013280
+print_cg=1
+print_cg=1
+in CG, iter: 0, error:  0.023238241316438
+in CG, iter: 1, error:  0.022474625062480
+in CG, iter: 2, error:  0.016527386136776
+in CG, iter: 3, error:  0.011835796677003
+in CG, iter: 4, error:  0.008274211480031
+in CG, iter: 5, error:  0.007012892280151
+in CG, iter: 6, error:  0.007104441077592
+in CG, iter: 7, error:  0.006175451228823
+in CG, iter: 8, error:  0.005515207820842
+in CG, iter: 9, error:  0.004575454242447
+in CG, iter: 10, error:  0.003548242316450
+in CG, iter: 11, error:  0.002468713332556
+in CG, iter: 12, error:  0.002554590101766
+in CG, iter: 13, error:  0.002221007893670
+in CG, iter: 14, error:  0.001666497258261
+in CG, iter: 15, error:  0.001156515161721
+in CG, iter: 16, error:  0.000856810445376
+in CG, iter: 17, error:  0.000620369408674
+in CG, iter: 18, error:  0.000447797332722
+in CG, iter: 19, error:  0.000390595332033
+nunlock(2)= 3; max_res(2)= 3.479009e-02; min_res(2)= 9.103753e-05
+'in while, the iter: 1 LAPACKsyev:'
+'approx_eval[0] = 19.786802238252605, abosolute residual: 9.103753e-05'
+'approx_eval[1] = 51.892058486801055, abosolute residual: 3.479009e-02'
+'approx_eval[2] = 100.191828094751216, abosolute residual: 2.479837e-02'
+'iter: 1, time: iter total: 0.003842, get w: 0.002967, orth: 0.000483, rayleigh-ritz: 0.000194, get x: 0.000016, get p: 0.000020'
+print_cg=1
+print_cg=1
+in CG, iter: 0, error:  0.000070474994371
+in CG, iter: 1, error:  0.000060527755978
+in CG, iter: 2, error:  0.000062820429100
+in CG, iter: 3, error:  0.000058010165922
+in CG, iter: 4, error:  0.000046639197232
+in CG, iter: 5, error:  0.000041576942579
+in CG, iter: 6, error:  0.000041972192807
+in CG, iter: 7, error:  0.000042986781887
+in CG, iter: 8, error:  0.000051953400157
+in CG, iter: 9, error:  0.000047167893034
+in CG, iter: 10, error:  0.000033692287900
+in CG, iter: 11, error:  0.000022340474282
+in CG, iter: 12, error:  0.000016503928764
+in CG, iter: 13, error:  0.000012934576903
+in CG, iter: 14, error:  0.000009779133928
+in CG, iter: 15, error:  0.000007679073565
+in CG, iter: 16, error:  0.000006664453991
+in CG, iter: 17, error:  0.000005760910457
+in CG, iter: 18, error:  0.000005023249630
+in CG, iter: 19, error:  0.000004071764149
+print_cg=1
+print_cg=1
+in CG, iter: 0, error:  0.015303782857080
+in CG, iter: 1, error:  0.012418566149705
+in CG, iter: 2, error:  0.013079577970685
+in CG, iter: 3, error:  0.011997043766444
+in CG, iter: 4, error:  0.010075930596263
+in CG, iter: 5, error:  0.007482670199186
+in CG, iter: 6, error:  0.005801978881582
+in CG, iter: 7, error:  0.005158105266669
+in CG, iter: 8, error:  0.005330561099535
+in CG, iter: 9, error:  0.004165352138345
+in CG, iter: 10, error:  0.003208306738283
+in CG, iter: 11, error:  0.002306772674309
+in CG, iter: 12, error:  0.002059538331793
+in CG, iter: 13, error:  0.001846772437391
+in CG, iter: 14, error:  0.001871960295727
+in CG, iter: 15, error:  0.001561185175885
+in CG, iter: 16, error:  0.001159127517104
+in CG, iter: 17, error:  0.000970452675325
+in CG, iter: 18, error:  0.000952332257530
+in CG, iter: 19, error:  0.000950016703017
+print_cg=1
+print_cg=1
+in CG, iter: 0, error:  0.005231088668319
+in CG, iter: 1, error:  0.003536618119673
+in CG, iter: 2, error:  0.002914709577333
+in CG, iter: 3, error:  0.002295646548330
+in CG, iter: 4, error:  0.001812890367102
+in CG, iter: 5, error:  0.001543580966700
+in CG, iter: 6, error:  0.001502895245775
+in CG, iter: 7, error:  0.001130288689229
+in CG, iter: 8, error:  0.000678750884593
+in CG, iter: 9, error:  0.000700798303343
+in CG, iter: 10, error:  0.000591362055236
+in CG, iter: 11, error:  0.000587675816444
+in CG, iter: 12, error:  0.000521785020996
+in CG, iter: 13, error:  0.000463573873380
+in CG, iter: 14, error:  0.000355522829161
+in CG, iter: 15, error:  0.000279932555793
+in CG, iter: 16, error:  0.000277758685248
+in CG, iter: 17, error:  0.000263393644321
+in CG, iter: 18, error:  0.000209191071987
+in CG, iter: 19, error:  0.000189303963028
+nunlock(3)= 3; max_res(3)= 1.831104e-01; min_res(3)= 2.139254e-05
+'in while, the iter: 2 LAPACKsyev:'
+'approx_eval[0] = 19.786792818080357, abosolute residual: 2.139254e-05'
+'approx_eval[1] = 49.716458957146642, abosolute residual: 9.259282e-03'
+'approx_eval[2] = 73.832441899142310, abosolute residual: 1.831104e-01'
+'iter: 2, time: iter total: 0.003335, get w: 0.002513, orth: 0.000457, rayleigh-ritz: 0.000168, get x: 0.000016, get p: 0.000019'
+print_cg=1
+print_cg=1
+in CG, iter: 0, error:  0.000017918689445
+in CG, iter: 1, error:  0.000014882975799
+in CG, iter: 2, error:  0.000014903587553
+in CG, iter: 3, error:  0.000013512732251
+in CG, iter: 4, error:  0.000010232186555
+in CG, iter: 5, error:  0.000008845426000
+in CG, iter: 6, error:  0.000008385412659
+in CG, iter: 7, error:  0.000008324830765
+in CG, iter: 8, error:  0.000010406435211
+in CG, iter: 9, error:  0.000007681101727
+in CG, iter: 10, error:  0.000006110869365
+in CG, iter: 11, error:  0.000005559005934
+in CG, iter: 12, error:  0.000005095237863
+in CG, iter: 13, error:  0.000004436641608
+in CG, iter: 14, error:  0.000003679245187
+in CG, iter: 15, error:  0.000003022897848
+in CG, iter: 16, error:  0.000002286428114
+in CG, iter: 17, error:  0.000001908572139
+in CG, iter: 18, error:  0.000001691939364
+in CG, iter: 19, error:  0.000001209418214
+print_cg=1
+print_cg=1
+in CG, iter: 0, error:  0.003269318715035
+in CG, iter: 1, error:  0.002452779380622
+in CG, iter: 2, error:  0.002231363701799
+in CG, iter: 3, error:  0.002050055306010
+in CG, iter: 4, error:  0.001733865509713
+in CG, iter: 5, error:  0.001377614338806
+in CG, iter: 6, error:  0.001046536392365
+in CG, iter: 7, error:  0.000770544792794
+in CG, iter: 8, error:  0.000645901571717
+in CG, iter: 9, error:  0.000500409888641
+in CG, iter: 10, error:  0.000365163082587
+in CG, iter: 11, error:  0.000279344110408
+in CG, iter: 12, error:  0.000233656219251
+in CG, iter: 13, error:  0.000182923057424
+in CG, iter: 14, error:  0.000176128278507
+in CG, iter: 15, error:  0.000169379669211
+in CG, iter: 16, error:  0.000147865739516
+in CG, iter: 17, error:  0.000112376288146
+in CG, iter: 18, error:  0.000097927352494
+in CG, iter: 19, error:  0.000081540847577
+print_cg=1
+print_cg=1
+in CG, iter: 0, error:  0.042431841935241
+in CG, iter: 1, error:  0.035180426279735
+in CG, iter: 2, error:  0.035203190373265
+in CG, iter: 3, error:  0.031065241389518
+in CG, iter: 4, error:  0.022695866546462
+in CG, iter: 5, error:  0.019329846704262
+in CG, iter: 6, error:  0.017799921521276
+in CG, iter: 7, error:  0.017414148594210
+in CG, iter: 8, error:  0.022415681292371
+in CG, iter: 9, error:  0.018537235845345
+in CG, iter: 10, error:  0.015616690802650
+in CG, iter: 11, error:  0.013104065664142
+in CG, iter: 12, error:  0.011377359632879
+in CG, iter: 13, error:  0.009853414291271
+in CG, iter: 14, error:  0.008475324927919
+in CG, iter: 15, error:  0.006901956527786
+in CG, iter: 16, error:  0.005076953383188
+in CG, iter: 17, error:  0.004165909735414
+in CG, iter: 18, error:  0.003586009322910
+in CG, iter: 19, error:  0.002632223884466
+nunlock(4)= 3; max_res(4)= 2.357426e-02; min_res(4)= 1.931652e-06
+'in while, the iter: 3 LAPACKsyev:'
+'approx_eval[0] = 19.786792333147723, abosolute residual: 1.931652e-06'
+'approx_eval[1] = 49.645426906603618, abosolute residual: 2.532901e-03'
+'approx_eval[2] = 50.063355057679814, abosolute residual: 2.357426e-02'
+'iter: 3, time: iter total: 0.003347, get w: 0.002531, orth: 0.000443, rayleigh-ritz: 0.000169, get x: 0.000016, get p: 0.000019'
+print_cg=1
+print_cg=1
+in CG, iter: 0, error:  0.000001723606047
+in CG, iter: 1, error:  0.000001343215324
+in CG, iter: 2, error:  0.000001229485875
+in CG, iter: 3, error:  0.000001029350135
+in CG, iter: 4, error:  0.000000735015216
+in CG, iter: 5, error:  0.000000563173038
+in CG, iter: 6, error:  0.000000453792029
+in CG, iter: 7, error:  0.000000409232260
+in CG, iter: 8, error:  0.000000517485559
+in CG, iter: 9, error:  0.000000393237113
+in CG, iter: 10, error:  0.000000336159473
+in CG, iter: 11, error:  0.000000287390711
+in CG, iter: 12, error:  0.000000247005621
+in CG, iter: 13, error:  0.000000190904734
+in CG, iter: 14, error:  0.000000148622392
+in CG, iter: 15, error:  0.000000105757182
+in CG, iter: 16, error:  0.000000074715542
+in CG, iter: 17, error:  0.000000055328023
+in CG, iter: 18, error:  0.000000044646522
+in CG, iter: 19, error:  0.000000044728193
+print_cg=1
+print_cg=1
+in CG, iter: 0, error:  0.001013835479453
+in CG, iter: 1, error:  0.000745322194297
+in CG, iter: 2, error:  0.000682692255202
+in CG, iter: 3, error:  0.000571185172849
+in CG, iter: 4, error:  0.000421092689517
+in CG, iter: 5, error:  0.000309106207175
+in CG, iter: 6, error:  0.000239982533057
+in CG, iter: 7, error:  0.000203520069578
+in CG, iter: 8, error:  0.000220796442458
+in CG, iter: 9, error:  0.000188157081492
+in CG, iter: 10, error:  0.000187961236398
+in CG, iter: 11, error:  0.000141189133234
+in CG, iter: 12, error:  0.000122187154395
+in CG, iter: 13, error:  0.000096234055259
+in CG, iter: 14, error:  0.000074949640560
+in CG, iter: 15, error:  0.000057869002786
+in CG, iter: 16, error:  0.000052392612615
+in CG, iter: 17, error:  0.000042362683966
+in CG, iter: 18, error:  0.000033900042446
+in CG, iter: 19, error:  0.000035063707456
+print_cg=1
+print_cg=1
+in CG, iter: 0, error:  0.008563556699218
+in CG, iter: 1, error:  0.006590858664428
+in CG, iter: 2, error:  0.006025638318450
+in CG, iter: 3, error:  0.005057105745625
+in CG, iter: 4, error:  0.003607278621415
+in CG, iter: 5, error:  0.002691469381019
+in CG, iter: 6, error:  0.002193073944536
+in CG, iter: 7, error:  0.001936439096554
+in CG, iter: 8, error:  0.002190055183628
+in CG, iter: 9, error:  0.001843184124658
+in CG, iter: 10, error:  0.001812749192332
+in CG, iter: 11, error:  0.001365504777457
+in CG, iter: 12, error:  0.001173852959598
+in CG, iter: 13, error:  0.000904827648613
+in CG, iter: 14, error:  0.000695722122712
+in CG, iter: 15, error:  0.000541591824619
+in CG, iter: 16, error:  0.000480373157414
+in CG, iter: 17, error:  0.000358140561685
+in CG, iter: 18, error:  0.000271870690930
+in CG, iter: 19, error:  0.000275280184827
+nunlock(5)= 3; max_res(5)= 3.609876e-03; min_res(5)= 1.199212e-07
+'in while, the iter: 4 LAPACKsyev:'
+'approx_eval[0] = 19.786792330562132, abosolute residual: 1.199212e-07'
+'approx_eval[1] = 49.583067725787487, abosolute residual: 3.609876e-03'
+'approx_eval[2] = 49.676355467196849, abosolute residual: 2.411105e-03'
+'iter: 4, time: iter total: 0.002965, get w: 0.002273, orth: 0.000373, rayleigh-ritz: 0.000140, get x: 0.000014, get p: 0.000019'
+print_cg=1
+print_cg=1
+in CG, iter: 0, error:  0.000000101776030
+in CG, iter: 1, error:  0.000000087574997
+in CG, iter: 2, error:  0.000000099990571
+in CG, iter: 3, error:  0.000000100518067
+in CG, iter: 4, error:  0.000000079777503
+in CG, iter: 5, error:  0.000000068510899
+in CG, iter: 6, error:  0.000000063016319
+in CG, iter: 7, error:  0.000000054208874
+in CG, iter: 8, error:  0.000000052270707
+in CG, iter: 9, error:  0.000000045612017
+in CG, iter: 10, error:  0.000000026171477
+in CG, iter: 11, error:  0.000000018480203
+in CG, iter: 12, error:  0.000000014968896
+in CG, iter: 13, error:  0.000000012817780
+in CG, iter: 14, error:  0.000000010322415
+in CG, iter: 15, error:  0.000000008005500
+in CG, iter: 16, error:  0.000000006456955
+in CG, iter: 17, error:  0.000000005671184
+in CG, iter: 18, error:  0.000000005454463
+in CG, iter: 19, error:  0.000000003916453
+print_cg=1
+print_cg=1
+in CG, iter: 0, error:  0.001283637391589
+in CG, iter: 1, error:  0.001113888300381
+in CG, iter: 2, error:  0.001237272921052
+in CG, iter: 3, error:  0.001225619860887
+in CG, iter: 4, error:  0.000989478267558
+in CG, iter: 5, error:  0.000838718133514
+in CG, iter: 6, error:  0.000776900506947
+in CG, iter: 7, error:  0.000699775843245
+in CG, iter: 8, error:  0.000662693120777
+in CG, iter: 9, error:  0.000614055861403
+in CG, iter: 10, error:  0.000351367316586
+in CG, iter: 11, error:  0.000220794392999
+in CG, iter: 12, error:  0.000152575955576
+in CG, iter: 13, error:  0.000125129391267
+in CG, iter: 14, error:  0.000101023017967
+in CG, iter: 15, error:  0.000075689187757
+in CG, iter: 16, error:  0.000062858205550
+in CG, iter: 17, error:  0.000058100167736
+in CG, iter: 18, error:  0.000054472415051
+in CG, iter: 19, error:  0.000042519246477
+print_cg=1
+print_cg=1
+in CG, iter: 0, error:  0.000841920084698
+in CG, iter: 1, error:  0.000723530299931
+in CG, iter: 2, error:  0.000804254799889
+in CG, iter: 3, error:  0.000801849795366
+in CG, iter: 4, error:  0.000647628867278
+in CG, iter: 5, error:  0.000550258317935
+in CG, iter: 6, error:  0.000510293169501
+in CG, iter: 7, error:  0.000458460538174
+in CG, iter: 8, error:  0.000433057974865
+in CG, iter: 9, error:  0.000402152649595
+in CG, iter: 10, error:  0.000233574392522
+in CG, iter: 11, error:  0.000147668617652
+in CG, iter: 12, error:  0.000102151703625
+in CG, iter: 13, error:  0.000082285934639
+in CG, iter: 14, error:  0.000065016304620
+in CG, iter: 15, error:  0.000047515115780
+in CG, iter: 16, error:  0.000038584533949
+in CG, iter: 17, error:  0.000035514848213
+in CG, iter: 18, error:  0.000034582612885
+in CG, iter: 19, error:  0.000026871766256
+nunlock(6)= 3; max_res(6)= 2.405687e-03; min_res(6)= 1.724323e-08
+'in while, the iter: 5 LAPACKsyev:'
+'approx_eval[0] = 19.786792330544834, abosolute residual: 1.724323e-08'
+'approx_eval[1] = 49.555623522382874, abosolute residual: 2.405687e-03'
+'approx_eval[2] = 49.668012909013186, abosolute residual: 1.120768e-03'
+'iter: 5, time: iter total: 0.003467, get w: 0.002738, orth: 0.000414, rayleigh-ritz: 0.000143, get x: 0.000014, get p: 0.000016'
+print_cg=1
+print_cg=1
+in CG, iter: 0, error:  0.000000012167913
+in CG, iter: 1, error:  0.000000009110464
+in CG, iter: 2, error:  0.000000008716423
+in CG, iter: 3, error:  0.000000006931308
+in CG, iter: 4, error:  0.000000004694107
+in CG, iter: 5, error:  0.000000003545526
+in CG, iter: 6, error:  0.000000003442216
+in CG, iter: 7, error:  0.000000003346651
+in CG, iter: 8, error:  0.000000003841093
+in CG, iter: 9, error:  0.000000003371885
+in CG, iter: 10, error:  0.000000002298451
+in CG, iter: 11, error:  0.000000001723522
+in CG, iter: 12, error:  0.000000001493236
+in CG, iter: 13, error:  0.000000001246684
+in CG, iter: 14, error:  0.000000000991460
+in CG, iter: 15, error:  0.000000000758430
+in CG, iter: 16, error:  0.000000000548102
+in CG, iter: 17, error:  0.000000000399984
+in CG, iter: 18, error:  0.000000000386278
+in CG, iter: 19, error:  0.000000000287376
+print_cg=1
+print_cg=1
+in CG, iter: 0, error:  0.000651227185609
+in CG, iter: 1, error:  0.000459994799839
+in CG, iter: 2, error:  0.000423060859719
+in CG, iter: 3, error:  0.000344400606500
+in CG, iter: 4, error:  0.000244332058686
+in CG, iter: 5, error:  0.000187516856427
+in CG, iter: 6, error:  0.000176124917304
+in CG, iter: 7, error:  0.000166321249288
+in CG, iter: 8, error:  0.000193229483474
+in CG, iter: 9, error:  0.000177282456647
+in CG, iter: 10, error:  0.000131340059071
+in CG, iter: 11, error:  0.000092639618477
+in CG, iter: 12, error:  0.000073857802665
+in CG, iter: 13, error:  0.000059510635052
+in CG, iter: 14, error:  0.000047230210927
+in CG, iter: 15, error:  0.000036829080753
+in CG, iter: 16, error:  0.000027574518655
+in CG, iter: 17, error:  0.000020220906048
+in CG, iter: 18, error:  0.000018994011845
+in CG, iter: 19, error:  0.000014231212216
+print_cg=1
+print_cg=1
+in CG, iter: 0, error:  0.000302231331543
+in CG, iter: 1, error:  0.000213007443453
+in CG, iter: 2, error:  0.000196229974944
+in CG, iter: 3, error:  0.000160142336317
+in CG, iter: 4, error:  0.000113598614390
+in CG, iter: 5, error:  0.000087208159034
+in CG, iter: 6, error:  0.000082149917522
+in CG, iter: 7, error:  0.000077637705704
+in CG, iter: 8, error:  0.000090127768135
+in CG, iter: 9, error:  0.000082363472067
+in CG, iter: 10, error:  0.000061014192654
+in CG, iter: 11, error:  0.000043018109592
+in CG, iter: 12, error:  0.000034317600313
+in CG, iter: 13, error:  0.000027707526718
+in CG, iter: 14, error:  0.000022032948702
+in CG, iter: 15, error:  0.000017157762818
+in CG, iter: 16, error:  0.000012801816485
+in CG, iter: 17, error:  0.000009388495196
+in CG, iter: 18, error:  0.000008847786442
+in CG, iter: 19, error:  0.000006653861913
+nunlock(7)= 2; max_res(7)= 2.354163e-04; min_res(7)= 5.531102e-10
+'in while, the iter: 6 LAPACKsyev:'
+'approx_eval[0] = 19.786792330544706, abosolute residual: 5.531102e-10'
+'approx_eval[1] = 49.552584123335791, abosolute residual: 2.354163e-04'
+'approx_eval[2] = 49.667373394355849, abosolute residual: 1.067549e-04'
+'iter: 6, time: iter total: 0.003497, get w: 0.002743, orth: 0.000407, rayleigh-ritz: 0.000144, get x: 0.000015, get p: 0.000029'
+print_cg=1
+print_cg=1
+in CG, iter: 0, error:  0.000091566123067
+in CG, iter: 1, error:  0.000073691936664
+in CG, iter: 2, error:  0.000066875659277
+in CG, iter: 3, error:  0.000058734858022
+in CG, iter: 4, error:  0.000044522252301
+in CG, iter: 5, error:  0.000031902711490
+in CG, iter: 6, error:  0.000028635158205
+in CG, iter: 7, error:  0.000025009958818
+in CG, iter: 8, error:  0.000022187695972
+in CG, iter: 9, error:  0.000024191168969
+in CG, iter: 10, error:  0.000022284538448
+in CG, iter: 11, error:  0.000014214325634
+in CG, iter: 12, error:  0.000010581666469
+in CG, iter: 13, error:  0.000007417335249
+in CG, iter: 14, error:  0.000005699169245
+in CG, iter: 15, error:  0.000004910767763
+in CG, iter: 16, error:  0.000004798329990
+in CG, iter: 17, error:  0.000004240297716
+in CG, iter: 18, error:  0.000003787476101
+in CG, iter: 19, error:  0.000002310136489
+print_cg=1
+print_cg=1
+in CG, iter: 0, error:  0.000041626101235
+in CG, iter: 1, error:  0.000033451905616
+in CG, iter: 2, error:  0.000030345658241
+in CG, iter: 3, error:  0.000026672169534
+in CG, iter: 4, error:  0.000020253181400
+in CG, iter: 5, error:  0.000014586169605
+in CG, iter: 6, error:  0.000013125355924
+in CG, iter: 7, error:  0.000011401995524
+in CG, iter: 8, error:  0.000010125783435
+in CG, iter: 9, error:  0.000011038224661
+in CG, iter: 10, error:  0.000010161060054
+in CG, iter: 11, error:  0.000006478145313
+in CG, iter: 12, error:  0.000004832677879
+in CG, iter: 13, error:  0.000003381034116
+in CG, iter: 14, error:  0.000002596781192
+in CG, iter: 15, error:  0.000002227735141
+in CG, iter: 16, error:  0.000002166776923
+in CG, iter: 17, error:  0.000001923868095
+in CG, iter: 18, error:  0.000001723805679
+in CG, iter: 19, error:  0.000001049559931
+nunlock(8)= 2; max_res(8)= 5.725160e-05; min_res(8)= 2.351906e-10
+'in while, the iter: 7 LAPACKsyev:'
+'approx_eval[0] = 19.786792330544689, abosolute residual: 2.351906e-10'
+'approx_eval[1] = 49.552530398347606, abosolute residual: 5.725160e-05'
+'approx_eval[2] = 49.667362231270985, abosolute residual: 2.621726e-05'
+'iter: 7, time: iter total: 0.002130, get w: 0.001636, orth: 0.000245, rayleigh-ritz: 0.000095, get x: 0.000011, get p: 0.000012'
+print_cg=1
+print_cg=1
+in CG, iter: 0, error:  0.000022617707995
+in CG, iter: 1, error:  0.000015107342515
+in CG, iter: 2, error:  0.000013794957309
+in CG, iter: 3, error:  0.000013649375903
+in CG, iter: 4, error:  0.000013002512536
+in CG, iter: 5, error:  0.000011668420664
+in CG, iter: 6, error:  0.000011005113586
+in CG, iter: 7, error:  0.000008742051566
+in CG, iter: 8, error:  0.000006645485664
+in CG, iter: 9, error:  0.000006411928224
+in CG, iter: 10, error:  0.000004193109056
+in CG, iter: 11, error:  0.000003267636670
+in CG, iter: 12, error:  0.000002538016550
+in CG, iter: 13, error:  0.000002066848118
+in CG, iter: 14, error:  0.000001561194585
+in CG, iter: 15, error:  0.000001207819377
+in CG, iter: 16, error:  0.000000937085548
+in CG, iter: 17, error:  0.000000927509937
+in CG, iter: 18, error:  0.000000862651794
+in CG, iter: 19, error:  0.000000624555427
+print_cg=1
+print_cg=1
+in CG, iter: 0, error:  0.000010365935671
+in CG, iter: 1, error:  0.000006918205719
+in CG, iter: 2, error:  0.000006318658741
+in CG, iter: 3, error:  0.000006247195217
+in CG, iter: 4, error:  0.000005951458804
+in CG, iter: 5, error:  0.000005343351380
+in CG, iter: 6, error:  0.000005037119404
+in CG, iter: 7, error:  0.000003994702488
+in CG, iter: 8, error:  0.000003039421715
+in CG, iter: 9, error:  0.000002933503940
+in CG, iter: 10, error:  0.000001917664674
+in CG, iter: 11, error:  0.000001502063838
+in CG, iter: 12, error:  0.000001166870888
+in CG, iter: 13, error:  0.000000949854269
+in CG, iter: 14, error:  0.000000715938618
+in CG, iter: 15, error:  0.000000552289025
+in CG, iter: 16, error:  0.000000426890764
+in CG, iter: 17, error:  0.000000423048529
+in CG, iter: 18, error:  0.000000393208073
+in CG, iter: 19, error:  0.000000285670239
+nunlock(9)= 2; max_res(9)= 1.674227e-05; min_res(9)= 2.390044e-10
+'in while, the iter: 8 LAPACKsyev:'
+'approx_eval[0] = 19.786792330544685, abosolute residual: 2.390044e-10'
+'approx_eval[1] = 49.552526519976730, abosolute residual: 1.674227e-05'
+'approx_eval[2] = 49.667361413392499, abosolute residual: 7.682644e-06'
+'iter: 8, time: iter total: 0.002176, get w: 0.001666, orth: 0.000266, rayleigh-ritz: 0.000090, get x: 0.000011, get p: 0.000010'
+print_cg=1
+print_cg=1
+in CG, iter: 0, error:  0.000005449184003
+in CG, iter: 1, error:  0.000004779628723
+in CG, iter: 2, error:  0.000004904462411
+in CG, iter: 3, error:  0.000004059142079
+in CG, iter: 4, error:  0.000002806984460
+in CG, iter: 5, error:  0.000002194822831
+in CG, iter: 6, error:  0.000002052461200
+in CG, iter: 7, error:  0.000001967535647
+in CG, iter: 8, error:  0.000001990194541
+in CG, iter: 9, error:  0.000001858030171
+in CG, iter: 10, error:  0.000001329512459
+in CG, iter: 11, error:  0.000001023032938
+in CG, iter: 12, error:  0.000000838382588
+in CG, iter: 13, error:  0.000000688924355
+in CG, iter: 14, error:  0.000000544060179
+in CG, iter: 15, error:  0.000000437572474
+in CG, iter: 16, error:  0.000000344433923
+in CG, iter: 17, error:  0.000000274970297
+in CG, iter: 18, error:  0.000000275141943
+in CG, iter: 19, error:  0.000000198149203
+print_cg=1
+print_cg=1
+in CG, iter: 0, error:  0.000002498358372
+in CG, iter: 1, error:  0.000002186721452
+in CG, iter: 2, error:  0.000002241582362
+in CG, iter: 3, error:  0.000001857816810
+in CG, iter: 4, error:  0.000001287070608
+in CG, iter: 5, error:  0.000001006466698
+in CG, iter: 6, error:  0.000000937979610
+in CG, iter: 7, error:  0.000000896734699
+in CG, iter: 8, error:  0.000000907596605
+in CG, iter: 9, error:  0.000000850482906
+in CG, iter: 10, error:  0.000000608145244
+in CG, iter: 11, error:  0.000000469637467
+in CG, iter: 12, error:  0.000000384229334
+in CG, iter: 13, error:  0.000000315480808
+in CG, iter: 14, error:  0.000000249568199
+in CG, iter: 15, error:  0.000000201298690
+in CG, iter: 16, error:  0.000000158262763
+in CG, iter: 17, error:  0.000000126338977
+in CG, iter: 18, error:  0.000000126163354
+in CG, iter: 19, error:  0.000000090817087
+nunlock(10)= 2; max_res(10)= 3.665290e-06; min_res(10)= 2.461585e-10
+'in while, the iter: 9 LAPACKsyev:'
+'approx_eval[0] = 19.786792330544678, abosolute residual: 2.461585e-10'
+'approx_eval[1] = 49.552526240504946, abosolute residual: 3.665290e-06'
+'approx_eval[2] = 49.667361354507904, abosolute residual: 1.687161e-06'
+'iter: 9, time: iter total: 0.002032, get w: 0.001526, orth: 0.000252, rayleigh-ritz: 0.000088, get x: 0.000011, get p: 0.000022'
+print_cg=1
+print_cg=1
+in CG, iter: 0, error:  0.000001254840001
+in CG, iter: 1, error:  0.000001114859315
+in CG, iter: 2, error:  0.000001088749207
+in CG, iter: 3, error:  0.000001008341336
+in CG, iter: 4, error:  0.000000859599559
+in CG, iter: 5, error:  0.000000715095816
+in CG, iter: 6, error:  0.000000690105498
+in CG, iter: 7, error:  0.000000598521873
+in CG, iter: 8, error:  0.000000554492029
+in CG, iter: 9, error:  0.000000486919354
+in CG, iter: 10, error:  0.000000417399213
+in CG, iter: 11, error:  0.000000263242460
+in CG, iter: 12, error:  0.000000176773008
+in CG, iter: 13, error:  0.000000129007481
+in CG, iter: 14, error:  0.000000101537122
+in CG, iter: 15, error:  0.000000084745992
+in CG, iter: 16, error:  0.000000081014957
+in CG, iter: 17, error:  0.000000074954580
+in CG, iter: 18, error:  0.000000067276254
+in CG, iter: 19, error:  0.000000042937916
+print_cg=1
+print_cg=1
+in CG, iter: 0, error:  0.000000576952386
+in CG, iter: 1, error:  0.000000512116246
+in CG, iter: 2, error:  0.000000499611447
+in CG, iter: 3, error:  0.000000462834300
+in CG, iter: 4, error:  0.000000394681914
+in CG, iter: 5, error:  0.000000328663717
+in CG, iter: 6, error:  0.000000317335476
+in CG, iter: 7, error:  0.000000274736731
+in CG, iter: 8, error:  0.000000254446975
+in CG, iter: 9, error:  0.000000223748308
+in CG, iter: 10, error:  0.000000192253646
+in CG, iter: 11, error:  0.000000121270315
+in CG, iter: 12, error:  0.000000081395142
+in CG, iter: 13, error:  0.000000059349631
+in CG, iter: 14, error:  0.000000046628199
+in CG, iter: 15, error:  0.000000038872005
+in CG, iter: 16, error:  0.000000037124083
+in CG, iter: 17, error:  0.000000034335404
+in CG, iter: 18, error:  0.000000030833230
+in CG, iter: 19, error:  0.000000019701739
+nunlock(11)= 2; max_res(11)= 1.485943e-06; min_res(11)= 2.374221e-10
+'in while, the iter: 10 LAPACKsyev:'
+'approx_eval[0] = 19.786792330544682, abosolute residual: 2.374221e-10'
+'approx_eval[1] = 49.552526221783445, abosolute residual: 1.485943e-06'
+'approx_eval[2] = 49.667361350533689, abosolute residual: 6.860160e-07'
+'iter: 10, time: iter total: 0.002059, get w: 0.001557, orth: 0.000251, rayleigh-ritz: 0.000087, get x: 0.000011, get p: 0.000021'
+print_cg=1
+print_cg=1
+in CG, iter: 0, error:  0.000000568926097
+in CG, iter: 1, error:  0.000000380882245
+in CG, iter: 2, error:  0.000000325080064
+in CG, iter: 3, error:  0.000000312800150
+in CG, iter: 4, error:  0.000000287135632
+in CG, iter: 5, error:  0.000000230087781
+in CG, iter: 6, error:  0.000000211973853
+in CG, iter: 7, error:  0.000000184347261
+in CG, iter: 8, error:  0.000000158508125
+in CG, iter: 9, error:  0.000000156940733
+in CG, iter: 10, error:  0.000000128523077
+in CG, iter: 11, error:  0.000000084238989
+in CG, iter: 12, error:  0.000000068837011
+in CG, iter: 13, error:  0.000000054729234
+in CG, iter: 14, error:  0.000000046399537
+in CG, iter: 15, error:  0.000000035195181
+in CG, iter: 16, error:  0.000000028421477
+in CG, iter: 17, error:  0.000000026374714
+in CG, iter: 18, error:  0.000000024720507
+in CG, iter: 19, error:  0.000000015519403
+print_cg=1
+print_cg=1
+in CG, iter: 0, error:  0.000000262455033
+in CG, iter: 1, error:  0.000000175670366
+in CG, iter: 2, error:  0.000000149952378
+in CG, iter: 3, error:  0.000000144318369
+in CG, iter: 4, error:  0.000000132471710
+in CG, iter: 5, error:  0.000000106151319
+in CG, iter: 6, error:  0.000000097792831
+in CG, iter: 7, error:  0.000000085021466
+in CG, iter: 8, error:  0.000000073089149
+in CG, iter: 9, error:  0.000000072404729
+in CG, iter: 10, error:  0.000000059307147
+in CG, iter: 11, error:  0.000000038866812
+in CG, iter: 12, error:  0.000000031774552
+in CG, iter: 13, error:  0.000000025263136
+in CG, iter: 14, error:  0.000000021425440
+in CG, iter: 15, error:  0.000000016249064
+in CG, iter: 16, error:  0.000000013114323
+in CG, iter: 17, error:  0.000000012170973
+in CG, iter: 18, error:  0.000000011406741
+in CG, iter: 19, error:  0.000000007159152
+nunlock(12)= 2; max_res(12)= 3.080617e-07; min_res(12)= 2.034474e-10
+'in while, the iter: 11 LAPACKsyev:'
+'approx_eval[0] = 19.786792330544664, abosolute residual: 2.034474e-10'
+'approx_eval[1] = 49.552526219597056, abosolute residual: 3.080617e-07'
+'approx_eval[2] = 49.667361350065541, abosolute residual: 1.430682e-07'
+'iter: 11, time: iter total: 0.002073, get w: 0.001586, orth: 0.000247, rayleigh-ritz: 0.000087, get x: 0.000011, get p: 0.000009'
+print_cg=1
+print_cg=1
+in CG, iter: 0, error:  0.000000118284976
+in CG, iter: 1, error:  0.000000090462411
+in CG, iter: 2, error:  0.000000082763152
+in CG, iter: 3, error:  0.000000066405091
+in CG, iter: 4, error:  0.000000050294363
+in CG, iter: 5, error:  0.000000037262996
+in CG, iter: 6, error:  0.000000029478550
+in CG, iter: 7, error:  0.000000024109220
+in CG, iter: 8, error:  0.000000022118561
+in CG, iter: 9, error:  0.000000022974812
+in CG, iter: 10, error:  0.000000017724496
+in CG, iter: 11, error:  0.000000015890519
+in CG, iter: 12, error:  0.000000011368999
+in CG, iter: 13, error:  0.000000009152219
+in CG, iter: 14, error:  0.000000007308601
+in CG, iter: 15, error:  0.000000006748762
+in CG, iter: 16, error:  0.000000005336763
+in CG, iter: 17, error:  0.000000004924653
+in CG, iter: 18, error:  0.000000004448034
+in CG, iter: 19, error:  0.000000003426465
+print_cg=1
+print_cg=1
+in CG, iter: 0, error:  0.000000054855881
+in CG, iter: 1, error:  0.000000041942281
+in CG, iter: 2, error:  0.000000038364066
+in CG, iter: 3, error:  0.000000030783382
+in CG, iter: 4, error:  0.000000023316957
+in CG, iter: 5, error:  0.000000017282185
+in CG, iter: 6, error:  0.000000013669856
+in CG, iter: 7, error:  0.000000011176019
+in CG, iter: 8, error:  0.000000010251667
+in CG, iter: 9, error:  0.000000010651143
+in CG, iter: 10, error:  0.000000008221330
+in CG, iter: 11, error:  0.000000007372686
+in CG, iter: 12, error:  0.000000005275240
+in CG, iter: 13, error:  0.000000004246945
+in CG, iter: 14, error:  0.000000003391687
+in CG, iter: 15, error:  0.000000003131889
+in CG, iter: 16, error:  0.000000002477049
+in CG, iter: 17, error:  0.000000002286374
+in CG, iter: 18, error:  0.000000002064927
+in CG, iter: 19, error:  0.000000001590264
+nunlock(13)= 2; max_res(13)= 3.872808e-08; min_res(13)= 1.979584e-10
+'in while, the iter: 12 LAPACKsyev:'
+'approx_eval[0] = 19.786792330544671, abosolute residual: 1.979584e-10'
+'approx_eval[1] = 49.552526219518057, abosolute residual: 3.872808e-08'
+'approx_eval[2] = 49.667361350048502, abosolute residual: 1.807168e-08'
+'iter: 12, time: iter total: 0.002054, get w: 0.001554, orth: 0.000247, rayleigh-ritz: 0.000087, get x: 0.000011, get p: 0.000021'
+print_cg=1
+print_cg=1
+in CG, iter: 0, error:  0.000000013881717
+in CG, iter: 1, error:  0.000000010608430
+in CG, iter: 2, error:  0.000000009353741
+in CG, iter: 3, error:  0.000000008160462
+in CG, iter: 4, error:  0.000000006144199
+in CG, iter: 5, error:  0.000000004401730
+in CG, iter: 6, error:  0.000000003410800
+in CG, iter: 7, error:  0.000000002590486
+in CG, iter: 8, error:  0.000000002495531
+in CG, iter: 9, error:  0.000000002343444
+in CG, iter: 10, error:  0.000000002063828
+in CG, iter: 11, error:  0.000000001861375
+in CG, iter: 12, error:  0.000000001278940
+in CG, iter: 13, error:  0.000000001071990
+in CG, iter: 14, error:  0.000000000839115
+in CG, iter: 15, error:  0.000000000714563
+in CG, iter: 16, error:  0.000000000673756
+in CG, iter: 17, error:  0.000000000543686
+in CG, iter: 18, error:  0.000000000470200
+in CG, iter: 19, error:  0.000000000360293
+print_cg=1
+print_cg=1
+in CG, iter: 0, error:  0.000000006466022
+in CG, iter: 1, error:  0.000000004939467
+in CG, iter: 2, error:  0.000000004354947
+in CG, iter: 3, error:  0.000000003801268
+in CG, iter: 4, error:  0.000000002861662
+in CG, iter: 5, error:  0.000000002051696
+in CG, iter: 6, error:  0.000000001590525
+in CG, iter: 7, error:  0.000000001207288
+in CG, iter: 8, error:  0.000000001162358
+in CG, iter: 9, error:  0.000000001091486
+in CG, iter: 10, error:  0.000000000962181
+in CG, iter: 11, error:  0.000000000868040
+in CG, iter: 12, error:  0.000000000597413
+in CG, iter: 13, error:  0.000000000500705
+in CG, iter: 14, error:  0.000000000391771
+in CG, iter: 15, error:  0.000000000333758
+in CG, iter: 16, error:  0.000000000314550
+in CG, iter: 17, error:  0.000000000253937
+in CG, iter: 18, error:  0.000000000219862
+in CG, iter: 19, error:  0.000000000168457
+nunlock(14)= 0; max_res(14)= 5.683359e-09; min_res(14)= 1.959480e-10
+'in while, the iter: 13 LAPACKsyev:'
+'approx_eval[0] = 19.786792330544664, abosolute residual: 1.959480e-10'
+'approx_eval[1] = 49.552526219517034, abosolute residual: 5.683359e-09'
+'approx_eval[2] = 49.667361350048324, abosolute residual: 2.666432e-09'
+'iter: 13, time: iter total: 0.001901, get w: 0.001426, orth: 0.000231, rayleigh-ritz: 0.000086, get x: 0.000010, get p: 0.000021'
+'in while, the iter: 14 LAPACKsyev:'
+'approx_eval[0] = 19.786792330544664, abosolute residual: 1.959480e-10'
+'approx_eval[1] = 49.552526219517034, abosolute residual: 5.683359e-09'
+'approx_eval[2] = 49.667361350048324, abosolute residual: 2.666432e-09'
+'total time: 0.043424, get w: 0.032442, orth: 0.005487, rayleigh-ritz: 0.002251, get x: 0.000207, get p: 0.000253'
+Total time: 0.043463

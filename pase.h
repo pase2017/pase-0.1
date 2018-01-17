@@ -21,11 +21,15 @@
 #define _pase_h_
 
 #include "pase_hypre.h"
+#include "pase_mg.h"
+
 #include "pase_mv.h"
+#include "pase_int.h"
 #include "pase_pcg.h"
 #include "pase_lobpcg.h"
 
-
+#include "pase_ls.h"
+#include "pase_es.h"
 
 #ifdef __cplusplus
 extern "C" {

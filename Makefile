@@ -58,7 +58,7 @@ LFLAGS90 =
 # List of all source
 ########################################################################
 LIB = libpase.a
-OBJS = pase_mv.o pase_pcg.o pase_lobpcg.o
+OBJS = pase_mv.o pase_int.o pase_pcg.o pase_lobpcg.o pase_mg.o pase_es.o pase_ls.o
 
 ############################################################
 RM = /bin/rm

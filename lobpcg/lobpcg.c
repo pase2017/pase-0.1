@@ -659,6 +659,14 @@ es" argument */
 /* ***** end of added code ***** */
 
     if ( !noTFlag ) {
+//       /* W = lambda BX, AR = W */
+//       mv_MultiVectorByDiagonal( blockVectorBX, 
+//	     activeMask, sizeX, 
+//	     utilities_FortranMatrixValues( lambda ),
+//	     blockVectorW );
+//      mv_MultiVectorCopy( blockVectorX, blockVectorR );
+//      operatorT( operatorTData, mv_MultiVectorGetData(blockVectorW), 
+//                 mv_MultiVectorGetData(blockVectorR) );
       operatorT( operatorTData, mv_MultiVectorGetData(blockVectorR), 
                  mv_MultiVectorGetData(blockVectorW) );
       mv_MultiVectorCopy( blockVectorW, blockVectorR );

@@ -41,8 +41,8 @@
  * 本函数主要是对PASE_ParCSRMatrix的成员赋值, 检查哪些是指针哪些需要malloc
  *
  */
-PASE_Int PASE_ParCSRMatrixCreate( MPI_Comm comm , 
-                                   PASE_Int block_size,
+HYPRE_Int PASE_ParCSRMatrixCreate( MPI_Comm comm , 
+                                   HYPRE_Int block_size,
                                    HYPRE_ParCSRMatrix A_H, 
                                    HYPRE_ParCSRMatrix P,
                                    HYPRE_ParCSRMatrix A_h, 
@@ -53,7 +53,7 @@ PASE_Int PASE_ParCSRMatrixCreate( MPI_Comm comm ,
 				   )
 {
 
-   PASE_Int row, col;
+   HYPRE_Int row, col;
    /* calloc并返回一个(pase_ParCSRMatrix *)的指针 */
    (*matrix) = hypre_CTAlloc(pase_ParCSRMatrix, 1);
    /* 是否需要为调用成员给出一个宏 */
@@ -68,7 +68,7 @@ PASE_Int PASE_ParCSRMatrixCreate( MPI_Comm comm ,
    (*matrix)->diag = 0;
 
 
-   PASE_Int *partitioning;
+   HYPRE_Int *partitioning;
    partitioning = hypre_ParVectorPartitioning(workspace_H);
    /* 创建并行向量 */
    for (col = 0; col < block_size; ++col)
@@ -80,15 +80,15 @@ PASE_Int PASE_ParCSRMatrixCreate( MPI_Comm comm ,
 
    (*matrix)->aux_Hh = (*matrix)->aux_hH;
 
-   PASE_Int   num_nonzeros = block_size*block_size;
+   HYPRE_Int   num_nonzeros = block_size*block_size;
    (*matrix)->aux_hh = hypre_CSRMatrixCreate(block_size, block_size, num_nonzeros);
    hypre_CSRMatrixInitialize( (*matrix)->aux_hh );
 
 
-   PASE_Int*  matrix_i = (*matrix)->aux_hh->i;
+   HYPRE_Int*  matrix_i = (*matrix)->aux_hh->i;
    /*第row行的非零元列号 matrix_j[ matrix_i[row] ]到matrix_j[ matrix_i[row+1] ] */
-   PASE_Int*  matrix_j = (*matrix)->aux_hh->j;
-   PASE_Real* matrix_data = (*matrix)->aux_hh->data;
+   HYPRE_Int*  matrix_j = (*matrix)->aux_hh->j;
+   HYPRE_Real* matrix_data = (*matrix)->aux_hh->data;
 
 
    for (row = 0; row < block_size+1; ++row)
@@ -187,20 +187,20 @@ PASE_Int PASE_ParCSRMatrixCreate( MPI_Comm comm ,
  *
  * @return 
  */
-PASE_Int PASE_ParCSRMatrixSetAuxSpace( MPI_Comm      comm, 
+HYPRE_Int PASE_ParCSRMatrixSetAuxSpace( MPI_Comm      comm, 
 				   PASE_ParCSRMatrix  matrix, 
-                                   PASE_Int          block_size,
+                                   HYPRE_Int          block_size,
                                    HYPRE_ParCSRMatrix P,
                                    HYPRE_ParCSRMatrix A_h, 
 				   HYPRE_ParVector*   u_h, 
-				   PASE_Int          begin_idx,
+				   HYPRE_Int          begin_idx,
 				   HYPRE_ParVector    workspace_H, 
 				   HYPRE_ParVector    workspace_h
 				   )
 {
 /*  
-   PASE_Int row, col;
-   PASE_Real* matrix_data = matrix->aux_hh->data;
+   HYPRE_Int row, col;
+   HYPRE_Real* matrix_data = matrix->aux_hh->data;
    for (row = 0; row < block_size; ++row)
    {
       hypre_ParCSRMatrixMatvec(1.0, A_h, u_h[row], 0.0, workspace_h);
@@ -222,8 +222,8 @@ PASE_Int PASE_ParCSRMatrixSetAuxSpace( MPI_Comm      comm,
    MPI_Status   status;
    MPI_Request *requests;
    requests = hypre_CTAlloc (MPI_Request, block_size);
-   PASE_Int row, col, start;
-   PASE_Real* matrix_data = matrix->aux_hh->data;
+   HYPRE_Int row, col, start;
+   HYPRE_Real* matrix_data = matrix->aux_hh->data;
    for (row = 0; row < block_size; ++row)
    {
       /* TODO: 可以保存A_h u_h[row], row<begin_idx部分 */
@@ -276,7 +276,7 @@ PASE_Int PASE_ParCSRMatrixSetAuxSpace( MPI_Comm      comm,
  * 将各个成员, 若是指针则置为NULL, 若有malloc则free
  *
  */
-PASE_Int PASE_ParCSRMatrixDestroy( PASE_ParCSRMatrix matrix )
+HYPRE_Int PASE_ParCSRMatrixDestroy( PASE_ParCSRMatrix matrix )
 {
 
    int col;
@@ -302,9 +302,9 @@ PASE_Int PASE_ParCSRMatrixDestroy( PASE_ParCSRMatrix matrix )
    return 0;
 }
 
-PASE_Int PASE_ParCSRMatrixPrint( PASE_ParCSRMatrix matrix , const char *file_name )
+HYPRE_Int PASE_ParCSRMatrixPrint( PASE_ParCSRMatrix matrix , const char *file_name )
 {
-   PASE_Int col, myid;
+   HYPRE_Int col, myid;
    MPI_Comm_rank(matrix->comm, &myid);
    char new_file_name[80];
    hypre_ParCSRMatrixPrint(matrix->A_H, file_name);
@@ -322,9 +322,9 @@ PASE_Int PASE_ParCSRMatrixPrint( PASE_ParCSRMatrix matrix , const char *file_nam
 }
 
 
-PASE_Int PASE_ParVectorPrint( PASE_ParVector vector , const char *file_name )
+HYPRE_Int PASE_ParVectorPrint( PASE_ParVector vector , const char *file_name )
 {
-   PASE_Int myid;
+   HYPRE_Int myid;
    MPI_Comm_rank(vector->comm, &myid);
    char new_file_name[80];
    hypre_ParVectorPrint(vector->b_H, file_name);
@@ -337,10 +337,10 @@ PASE_Int PASE_ParVectorPrint( PASE_ParVector vector , const char *file_name )
 }
 
 
-PASE_Int PASE_ParVectorGetParVector( HYPRE_ParCSRMatrix P, PASE_Int block_size, 
+HYPRE_Int PASE_ParVectorGetParVector( HYPRE_ParCSRMatrix P, HYPRE_Int block_size, 
       HYPRE_ParVector *vector_h, PASE_ParVector vector_Hh, HYPRE_ParVector vector )
 {
-   PASE_Int k;
+   HYPRE_Int k;
    if ( P == NULL )
    {
       HYPRE_ParVectorCopy ( vector_Hh->b_H, vector );
@@ -382,7 +382,7 @@ PASE_Int PASE_ParVectorGetParVector( HYPRE_ParCSRMatrix P, PASE_Int block_size,
  *
  * 为了提高并行效率, 先计算
  * A->aux_hH[col]与x->b_H进行内积: 
- * 每个进程进行局部向量的内积, 存储到tmp[col]里(PASE_Real数组)
+ * 每个进程进行局部向量的内积, 存储到tmp[col]里(HYPRE_Real数组)
  * 然后进行MPI_Iallreduce进行非阻塞全局归约
  * 之后, 进行与tmp无关的其它运算:
  * y->b_H = alpha A->A_H x->b_H + beta y->b_H
@@ -392,11 +392,11 @@ PASE_Int PASE_ParVectorGetParVector( HYPRE_ParCSRMatrix P, PASE_Int block_size,
  * 
  * y->aux_h->data[col] += alpha * tmp;
  */
-PASE_Int PASE_ParCSRMatrixMatvec ( PASE_Real alpha, PASE_ParCSRMatrix A, PASE_ParVector x, PASE_Real beta, PASE_ParVector y )
+HYPRE_Int PASE_ParCSRMatrixMatvec ( HYPRE_Real alpha, PASE_ParCSRMatrix A, PASE_ParVector x, HYPRE_Real beta, PASE_ParVector y )
 {
 
-   PASE_Int col;
-   PASE_Int block_size = A->block_size;
+   HYPRE_Int col;
+   HYPRE_Int block_size = A->block_size;
 
    if (A->diag == 0)
    {
@@ -404,8 +404,8 @@ PASE_Int PASE_ParCSRMatrixMatvec ( PASE_Real alpha, PASE_ParCSRMatrix A, PASE_Pa
       MPI_Comm    comm = hypre_ParVectorComm(x->b_H);
       MPI_Request request;
       MPI_Status  status;
-      PASE_Real *inner_prod;
-      inner_prod = hypre_CTAlloc (PASE_Real,  block_size);
+      HYPRE_Real *inner_prod;
+      inner_prod = hypre_CTAlloc (HYPRE_Real,  block_size);
       for (col = 0; col < block_size; ++col)
       {
 	 inner_prod[col] = hypre_SeqVectorInnerProd(
@@ -456,21 +456,21 @@ PASE_Int PASE_ParCSRMatrixMatvec ( PASE_Real alpha, PASE_ParCSRMatrix A, PASE_Pa
  * 判断矩阵和向量之间是否可以进行运算
  *
  */
-PASE_Int PASE_ParCSRMatrixMatvecT( PASE_Real alpha, PASE_ParCSRMatrix A, PASE_ParVector x, PASE_Real beta, PASE_ParVector y )
+HYPRE_Int PASE_ParCSRMatrixMatvecT( HYPRE_Real alpha, PASE_ParCSRMatrix A, PASE_ParVector x, HYPRE_Real beta, PASE_ParVector y )
 {
 
    PASE_ParCSRMatrixMatvec ( alpha, A, x, beta, y );
    return 0;
 }
 
-PASE_Int PASE_ParVectorCopy(PASE_ParVector x, PASE_ParVector y)
+HYPRE_Int PASE_ParVectorCopy(PASE_ParVector x, PASE_ParVector y)
 {
    hypre_ParVectorCopy(x->b_H, y->b_H);
    hypre_SeqVectorCopy(x->aux_h, y->aux_h);
    return 0;
 }
 
-PASE_Int PASE_ParVectorInnerProd( PASE_ParVector x, PASE_ParVector y, PASE_Real *prod)
+HYPRE_Int PASE_ParVectorInnerProd( PASE_ParVector x, PASE_ParVector y, HYPRE_Real *prod)
 {
    /* TODO:可进行提升, 并行内积过程中计算aux_h的内积 */
    *prod = hypre_ParVectorInnerProd(x->b_H, y->b_H);
@@ -479,7 +479,7 @@ PASE_Int PASE_ParVectorInnerProd( PASE_ParVector x, PASE_ParVector y, PASE_Real 
 }
 
 /* y = a x + y */
-PASE_Int PASE_ParVectorAxpy( PASE_Real alpha , PASE_ParVector x , PASE_ParVector y )
+HYPRE_Int PASE_ParVectorAxpy( HYPRE_Real alpha , PASE_ParVector x , PASE_ParVector y )
 {
    hypre_ParVectorAxpy(alpha, x->b_H, y->b_H); 
    hypre_SeqVectorAxpy(alpha, x->aux_h, y->aux_h); 
@@ -487,14 +487,14 @@ PASE_Int PASE_ParVectorAxpy( PASE_Real alpha , PASE_ParVector x , PASE_ParVector
 }
 
 
-PASE_Int PASE_ParVectorSetConstantValues( PASE_ParVector v , PASE_Real value )
+HYPRE_Int PASE_ParVectorSetConstantValues( PASE_ParVector v , HYPRE_Real value )
 {
    hypre_ParVectorSetConstantValues( v->b_H , value );
    hypre_SeqVectorSetConstantValues( v->aux_h, value );
    return 0;
 }
 
-PASE_Int PASE_ParVectorSetRandomValues( PASE_ParVector v, PASE_Int seed )
+HYPRE_Int PASE_ParVectorSetRandomValues( PASE_ParVector v, HYPRE_Int seed )
 {
    hypre_ParVectorSetRandomValues( v->b_H, seed );
    /* 这里因为每个进程是独立完成下述随机赋值, 但是由于seed重新给出, 
@@ -514,7 +514,7 @@ PASE_Int PASE_ParVectorSetRandomValues( PASE_ParVector v, PASE_Int seed )
 
 
 
-PASE_Int PASE_ParVectorScale ( PASE_Real alpha , PASE_ParVector y )
+HYPRE_Int PASE_ParVectorScale ( HYPRE_Real alpha , PASE_ParVector y )
 {
    hypre_ParVectorScale ( alpha , y->b_H );
    hypre_SeqVectorScale ( alpha , y->aux_h );
@@ -541,24 +541,24 @@ PASE_Int PASE_ParVectorScale ( PASE_Real alpha , PASE_ParVector y )
  * 一定要注意的是, 这里x, y的分布式存储和A的分布式存储完全不同.
  *
  */
-PASE_Int PASE_ParCSRMatrixMatvec_HYPRE_ParVector ( PASE_Real alpha, PASE_ParCSRMatrix A, HYPRE_ParVector x, PASE_Real beta, HYPRE_ParVector y )
+HYPRE_Int PASE_ParCSRMatrixMatvec_HYPRE_ParVector ( HYPRE_Real alpha, PASE_ParCSRMatrix A, HYPRE_ParVector x, HYPRE_Real beta, HYPRE_ParVector y )
 {
 
    return 0;
 }
 
-PASE_Int PASE_ParCSRMatrixMatvec_HYPRE_Vector ( PASE_Real alpha, PASE_ParCSRMatrix A, HYPRE_Vector x, PASE_Real beta, HYPRE_Vector y )
+HYPRE_Int PASE_ParCSRMatrixMatvec_HYPRE_Vector ( HYPRE_Real alpha, PASE_ParCSRMatrix A, HYPRE_Vector x, HYPRE_Real beta, HYPRE_Vector y )
 {
 
    return 0;
 }
 
 
-PASE_Int PASE_ParVectorCreate(    MPI_Comm comm , 
-                                   PASE_Int N_H,
-                                   PASE_Int block_size,
+HYPRE_Int PASE_ParVectorCreate(    MPI_Comm comm , 
+                                   HYPRE_Int N_H,
+                                   HYPRE_Int block_size,
                                    HYPRE_ParVector    b_H, 
-				   PASE_Int *partitioning, 
+				   HYPRE_Int *partitioning, 
 				   PASE_ParVector*    vector
 				   )
 {
@@ -591,7 +591,7 @@ PASE_Int PASE_ParVectorCreate(    MPI_Comm comm ,
    return 0;
 }
 
-PASE_Int PASE_ParVectorDestroy( PASE_ParVector vector )
+HYPRE_Int PASE_ParVectorDestroy( PASE_ParVector vector )
 {
    hypre_SeqVectorDestroy(vector->aux_h);
    vector->aux_h = NULL;
@@ -634,10 +634,10 @@ PASE_Int PASE_ParVectorDestroy( PASE_ParVector vector )
  *
  * @return 
  */
-PASE_Int
+HYPRE_Int
 PASE_ParCSRMatrixSetAuxSpaceByPASE_ParCSRMatrix( MPI_Comm comm , 
 				   PASE_ParCSRMatrix   matrix, 
-                                   PASE_Int           block_size,
+                                   HYPRE_Int           block_size,
                                    HYPRE_ParCSRMatrix  P,
                                    PASE_ParCSRMatrix   A_h, 
 				   PASE_ParVector*     u_h, 
@@ -645,8 +645,8 @@ PASE_ParCSRMatrixSetAuxSpaceByPASE_ParCSRMatrix( MPI_Comm comm ,
 				   PASE_ParVector      workspace_hH
 				   )
 {
-   PASE_Int row, col;
-   PASE_Real* matrix_data = matrix->aux_hh->data;
+   HYPRE_Int row, col;
+   HYPRE_Real* matrix_data = matrix->aux_hh->data;
    for (row = 0; row < block_size; ++row)
    {
       /* y = alpha*A*x + beta*y */
@@ -685,9 +685,9 @@ PASE_ParCSRMatrixSetAuxSpaceByPASE_ParCSRMatrix( MPI_Comm comm ,
  *
  * @return 
  */
-PASE_Int 
+HYPRE_Int 
 PASE_ParCSRMatrixCreateByPASE_ParCSRMatrix( MPI_Comm comm , 
-                                   PASE_Int block_size,
+                                   HYPRE_Int block_size,
                                    HYPRE_ParCSRMatrix A_H, 
                                    HYPRE_ParCSRMatrix P,
                                    PASE_ParCSRMatrix A_h, 
@@ -698,7 +698,7 @@ PASE_ParCSRMatrixCreateByPASE_ParCSRMatrix( MPI_Comm comm ,
 				   )
 {
 
-   PASE_Int row, col;
+   HYPRE_Int row, col;
    /* calloc并返回一个(pase_ParCSRMatrix *)的指针 */
    (*matrix) = hypre_CTAlloc(pase_ParCSRMatrix, 1);
    /* 是否需要为调用成员给出一个宏 */
@@ -713,7 +713,7 @@ PASE_ParCSRMatrixCreateByPASE_ParCSRMatrix( MPI_Comm comm ,
    (*matrix)->aux_hH = hypre_CTAlloc(HYPRE_ParVector, block_size);
 
 
-   PASE_Int *partitioning;
+   HYPRE_Int *partitioning;
    partitioning = hypre_ParVectorPartitioning(workspace_H);
    /* 创建并行向量 */
    for (col = 0; col < block_size; ++col)
@@ -725,15 +725,15 @@ PASE_ParCSRMatrixCreateByPASE_ParCSRMatrix( MPI_Comm comm ,
 
    (*matrix)->aux_Hh = (*matrix)->aux_hH;
 
-   PASE_Int   num_nonzeros = block_size*block_size;
+   HYPRE_Int   num_nonzeros = block_size*block_size;
    (*matrix)->aux_hh = hypre_CSRMatrixCreate(block_size, block_size, num_nonzeros);
    hypre_CSRMatrixInitialize( (*matrix)->aux_hh );
 
 
-   PASE_Int*  matrix_i = (*matrix)->aux_hh->i;
+   HYPRE_Int*  matrix_i = (*matrix)->aux_hh->i;
    /*第row行的非零元列号 matrix_j[ matrix_i[row] ]到matrix_j[ matrix_i[row+1] ] */
-   PASE_Int*  matrix_j = (*matrix)->aux_hh->j;
-   PASE_Real* matrix_data = (*matrix)->aux_hh->data;
+   HYPRE_Int*  matrix_j = (*matrix)->aux_hh->j;
+   HYPRE_Real* matrix_data = (*matrix)->aux_hh->data;
 
 
    for (row = 0; row < block_size+1; ++row)

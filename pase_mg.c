@@ -1,20 +1,24 @@
-HYPRE_Int PASE_MultiGridCreate(PASE_MultiGrid* multi_grid, HYPRE_Int max_levels,
+#include <stdlib.h>
+#include <math.h>
+#include "pase_mg.h"
+
+PASE_Int PASE_MultiGridCreate(PASE_MultiGrid* multi_grid, PASE_Int max_levels,
    HYPRE_ParCSRMatrix parcsr_A, HYPRE_ParCSRMatrix parcsr_B,
    HYPRE_ParVector par_x, HYPRE_ParVector par_b)
 {
+   PASE_Int num_levels, level, num_procs;
+   MPI_Comm_size((*multi_grid)->comm,  &num_procs);
+
    (*multi_grid) = hypre_CTAlloc(pase_MultiGrid, 1);
-   HYPRE_Solver amg_solver = multi_grid->amg_solver;
+   HYPRE_Solver amg_solver = (*multi_grid)->amg_solver;
    /* Using AMG to get multilevel matrix */
    //hypre_ParAMGData   *amg_data;
 
-   hypre_ParCSRMatrix **A_array;
    hypre_ParCSRMatrix **B_array;
    hypre_ParCSRMatrix **P_array;
    /* P0P1P2  P1P2  P2 */
    hypre_ParCSRMatrix **Q_array;
    /* rhs and x */
-   hypre_ParVector    **F_array;
-   hypre_ParVector    **U_array;
    
   /* -------------------------- 利用AMG生成各个层的矩阵------------------ */
 
@@ -39,23 +43,11 @@ HYPRE_Int PASE_MultiGridCreate(PASE_MultiGrid* multi_grid, HYPRE_Int max_levels,
 
    //amg_data = pase_MultiGridDataAMG   (multi_grid);
    /* 这是将指针赋予对应的指针 */   
-   A_array  = pase_MultiGridDataAArray(multi_grid);
-   P_array  = pase_MultiGridDataPArray(multi_grid);
-   F_array  = pase_MultiGridDataFArray(multi_grid);
-   U_array  = pase_MultiGridDataUArray(multi_grid);
+   P_array  = pase_MultiGridDataPArray(*multi_grid);
+   B_array  = pase_MultiGridDataBArray(*multi_grid);
+   Q_array  = pase_MultiGridDataQArray(*multi_grid);
    
-   B_array  = pase_MultiGridDataBArray(multi_grid);
-   Q_array  = pase_MultiGridDataQArray(multi_grid);
-   
-   
-   // amg_data = (hypre_ParAMGData*) amg_solver;  
-   // A_array = hypre_ParAMGDataAArray(amg_data);
-   // P_array = hypre_ParAMGDataPArray(amg_data);
-   // F_array = hypre_ParAMGDataFArray(amg_data);
-   // U_array = hypre_ParAMGDataUArray(amg_data);
-
-   //num_levels = hypre_ParAMGDataNumLevels(amg_data);
-   num_levels = pase_MultiGridDataNumLevels(multi_grid);
+   num_levels = pase_MultiGridDataNumLevels(*multi_grid);
    printf ( "The number of levels = %d\n", num_levels );
 
    B_array = hypre_CTAlloc(hypre_ParCSRMatrix*,  num_levels);
@@ -89,9 +81,9 @@ HYPRE_Int PASE_MultiGridCreate(PASE_MultiGrid* multi_grid, HYPRE_Int max_levels,
 }
 
 
-HYPRE_Int PASE_MultiGridDestroy(PASE_MultiGrid multi_grid)
+PASE_Int PASE_MultiGridDestroy(PASE_MultiGrid multi_grid)
 {
-   HYPRE_Int level, num_levels;
+   PASE_Int level, num_levels;
    hypre_ParCSRMatrix **B_array;
    hypre_ParCSRMatrix **Q_array;
    HYPRE_Solver amg_solver = multi_grid->amg_solver;  
@@ -108,7 +100,6 @@ HYPRE_Int PASE_MultiGridDestroy(PASE_MultiGrid multi_grid)
    {
       hypre_ParCSRMatrixDestroy(Q_array[level]);
    }
-   
    
    hypre_TFree(B_array);
    hypre_TFree(Q_array);	
