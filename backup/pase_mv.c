@@ -123,40 +123,43 @@ HYPRE_Int PASE_ParCSRMatrixCreate( MPI_Comm comm ,
 //      }
 //   }
 
-   /* MPI IMPROVEMENT */
-   MPI_Status   status;
-   MPI_Request *requests;
-   requests = hypre_CTAlloc (MPI_Request, block_size);
-   for (row = 0; row < block_size; ++row)
+   if (u_h!=NULL)
    {
-      hypre_ParCSRMatrixMatvec(1.0, A_h, u_h[row], 0.0, workspace_h);
-      for ( col = row; col < block_size; ++col)
+      /* MPI IMPROVEMENT */
+      MPI_Status   status;
+      MPI_Request *requests;
+      requests = hypre_CTAlloc (MPI_Request, block_size);
+      for (row = 0; row < block_size; ++row)
       {
-	 matrix_data[row*block_size+col] = hypre_SeqVectorInnerProd(
-	       hypre_ParVectorLocalVector(workspace_h), hypre_ParVectorLocalVector(u_h[col]) );
-      }
-      MPI_Iallreduce( MPI_IN_PLACE, &matrix_data[row*block_size+row], block_size-row, MPI_DOUBLE, MPI_SUM, comm, &requests[row] );
+	 hypre_ParCSRMatrixMatvec(1.0, A_h, u_h[row], 0.0, workspace_h);
+	 for ( col = row; col < block_size; ++col)
+	 {
+	    matrix_data[row*block_size+col] = hypre_SeqVectorInnerProd(
+		  hypre_ParVectorLocalVector(workspace_h), hypre_ParVectorLocalVector(u_h[col]) );
+	 }
+	 MPI_Iallreduce( MPI_IN_PLACE, &matrix_data[row*block_size+row], block_size-row, MPI_DOUBLE, MPI_SUM, comm, &requests[row] );
 
-      if ( P == NULL )
-      {
-	 hypre_ParVectorCopy(workspace_h, (*matrix)->aux_hH[row]);
-      } 
-      else 
-      {
-	 hypre_ParCSRMatrixMatvecT(1.0, P, workspace_h, 0.0, (*matrix)->aux_hH[row]);
+	 if ( P == NULL )
+	 {
+	    hypre_ParVectorCopy(workspace_h, (*matrix)->aux_hH[row]);
+	 } 
+	 else 
+	 {
+	    hypre_ParCSRMatrixMatvecT(1.0, P, workspace_h, 0.0, (*matrix)->aux_hH[row]);
+	 }
       }
-   }
-   /* 从列开始 */
-   for ( col = 0; col < block_size; ++col)
-   {
-      MPI_Wait(&requests[col], &status);
-      for (row = col+1; row < block_size; ++row)
+      /* 从列开始 */
+      for ( col = 0; col < block_size; ++col)
       {
-	 matrix_data[row*block_size+col] = matrix_data[col*block_size+row];
+	 MPI_Wait(&requests[col], &status);
+	 for (row = col+1; row < block_size; ++row)
+	 {
+	    matrix_data[row*block_size+col] = matrix_data[col*block_size+row];
+	 }
       }
+      hypre_TFree(requests);
+      /* MPI IMPROVEMENT */
    }
-   hypre_TFree(requests);
-   /* MPI IMPROVEMENT */
    return 0;
 }
 

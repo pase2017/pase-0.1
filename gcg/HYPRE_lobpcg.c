@@ -598,7 +598,7 @@ HYPRE_LOBPCGSetPrecond( HYPRE_Solver         solver,
 {
    return( hypre_LOBPCGSetPrecond( (void *) solver,
                                    (HYPRE_Int (*)(void*, void*, void*, void*))precond,
-								   (HYPRE_Int (*)(void*, void*, void*, void*))precond_setup,
+				   (HYPRE_Int (*)(void*, void*, void*, void*))precond_setup,
                                    (void *) precond_solver ) );
 }
 

@@ -1,0 +1,35 @@
+=============================================================
+PASE (Parallel Auxiliary Space Eigen-solver), parallel version
+Please contact liyu@lsec.cc.ac.cn, if there is any bugs.
+=============================================================
+The number of levels = 3
+level = 1
+level = 2
+0 : eig = 1.9784627309542461e+01 
+---------------------------initial-----------
+0: 1.9742391544913392e+01
+----------------------------------------------
+0: 1.9737617359020383e+01
+----------------------------------------------
+Out of memory trying to allocate -536860528 bytes
+Out of memory trying to allocate -536860528 bytes
+begin_idx = 0, num_conv = 0
+begin_idx = 0, num_conv = 0
+begin_idx = 0, num_conv = 0
+begin_idx = 0, num_conv = 0
+begin_idx = 0, num_conv = 0
+begin_idx = 0, num_conv = 0
+begin_idx = 0, num_conv = 0
+begin_idx = 0, num_conv = 0
+begin_idx = 0, num_conv = 0
+begin_idx = 0, num_conv = 0
+0 : eig = 1.9737617358775001e+01, error = 1.056009e-09
+=============================================
+Solve phase times:
+=============================================
+PASE Solve:
+  wall clock time = 3.060000 seconds
+  wall MFLOPS     = 0.000000
+  cpu clock time  = 3.063369 seconds
+  cpu MFLOPS      = 0.000000
+

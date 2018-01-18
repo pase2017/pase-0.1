@@ -579,7 +579,7 @@ int main (int argc, char *argv[])
 
 
 
-   /* 对A_Hh进行对角化 */
+   /* 对A_Hh进行 对角化 */
    int row, col;
    hypre_CSRMatrix *bTy, *cTy, *yTBy;
    bTy  = hypre_CSRMatrixCreate(block_size,  block_size,  block_size*block_size);
