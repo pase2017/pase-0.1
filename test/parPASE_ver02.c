@@ -75,7 +75,7 @@ int main (int argc, char *argv[])
    double residual = 1.0;/* 残量 */
    double tolerance = 1E-8;/* 最小残量 */
    double tol_lobpcg = 1E-8;/* 最小残量 */
-//   double tol_pcg = 1E-8;/* 最小残量 */
+   double tol_pcg = 1E-8;/* 最小残量 */
    double tol_amg = 1E-11;/* 最小残量 */
 //   double initial_res = 1E-6;/* 初始残差 */
    double min_gap = 1E-3;/* 不同特征值的最小距离 */
@@ -104,7 +104,7 @@ int main (int argc, char *argv[])
    /* -------------------------求解器声明---------------------- */ 
    HYPRE_Solver amg, precond;
    HYPRE_Solver amg_solver, lobpcg_solver;
-//   HYPRE_Solver pcg_solver, lobpcg_solver;
+   PASE_Solver  pcg_solver;
 
    /* Using AMG to get multilevel matrix */
    hypre_ParAMGData   *amg_data;
@@ -468,14 +468,14 @@ int main (int argc, char *argv[])
    HYPRE_ParCSRSetupInterpreter(interpreter);
 
    /* Create PCG solver */
-//   HYPRE_ParCSRPCGCreate(MPI_COMM_WORLD, &pcg_solver);
+   PASE_ParCSRPCGCreate(MPI_COMM_WORLD, &pcg_solver);
 
    /* Set some parameters (See Reference Manual for more parameters) */
-//   HYPRE_PCGSetMaxIter(pcg_solver, 2); /* max iterations */
-//   HYPRE_PCGSetTol(pcg_solver, tol_pcg); /* conv. tolerance */
-//   HYPRE_PCGSetTwoNorm(pcg_solver, 1); /* use the two norm as the stopping criteria */
-//   HYPRE_PCGSetPrintLevel(pcg_solver, 0); /* print solve info */
-//   HYPRE_PCGSetLogging(pcg_solver, 1); /* needed to get run info later */
+   HYPRE_PCGSetMaxIter(pcg_solver, 5); /* max iterations */
+   HYPRE_PCGSetTol(pcg_solver, tol_pcg); /* conv. tolerance */
+   HYPRE_PCGSetTwoNorm(pcg_solver, 1); /* use the two norm as the stopping criteria */
+   HYPRE_PCGSetPrintLevel(pcg_solver, 0); /* print solve info */
+   HYPRE_PCGSetLogging(pcg_solver, 1); /* needed to get run info later */
 
    HYPRE_BoomerAMGCreate(&amg_solver);
    /* Set some parameters (See Reference Manual for more parameters) */
@@ -631,6 +631,9 @@ int main (int argc, char *argv[])
 	 HYPRE_LOBPCGSetTol (lobpcg_solver, tol_lobpcg);
 	 HYPRE_LOBPCGSetRTol(lobpcg_solver, tol_lobpcg);
 	 HYPRE_LOBPCGSetPrintLevel(lobpcg_solver, 0);
+
+	 PASE_LOBPCGSetPrecond(lobpcg_solver, (PASE_PtrToSolverFcn) PASE_ParCSRPCGSolve,
+	       (PASE_PtrToSolverFcn) PASE_ParCSRPCGSetup, pcg_solver);
 	 PASE_LOBPCGSetup (lobpcg_solver, parcsr_A_Hh, par_b_Hh, par_x_Hh);
 	 PASE_LOBPCGSetupB(lobpcg_solver, parcsr_B_Hh, par_x_Hh);
       } 
@@ -652,7 +655,8 @@ int main (int argc, char *argv[])
       {
 	 printf ( "LOBPCG solve A_Hh U_Hh = lambda_Hh B_Hh U_Hh\n" );
       }
-      HYPRE_LOBPCGSolve(0, lobpcg_solver, constraints_Hh, eigenvectors_Hh, eigenvalues);
+//      HYPRE_LOBPCGSolve(0, lobpcg_solver, constraints_Hh, eigenvectors_Hh, eigenvalues);
+      PASE_LOBPCGSolve(0, lobpcg_solver, constraints_Hh, eigenvectors_Hh, eigenvalues);
 
       /* 定义更细层的特征向量 */
       if (level == 0)
@@ -871,7 +875,8 @@ int main (int argc, char *argv[])
       {
 	 printf ( "LOBPCG solve A_Hh U_Hh = lambda_Hh B_Hh U_Hh\n" );
       }
-      HYPRE_LOBPCGSolve(num_conv, lobpcg_solver, constraints_Hh, eigenvectors_Hh, eigenvalues);
+//      HYPRE_LOBPCGSolve(num_conv, lobpcg_solver, constraints_Hh, eigenvectors_Hh, eigenvalues);
+      PASE_LOBPCGSolve(num_conv, lobpcg_solver, constraints_Hh, eigenvectors_Hh, eigenvalues);
 
       /* 将pvx_Hh插值到0层 */
       for (idx_eig = num_conv; idx_eig < block_size; ++idx_eig)
@@ -1007,7 +1012,8 @@ int main (int argc, char *argv[])
    }
    
    /* Destroy PCG solver and preconditioner */
-//   HYPRE_ParCSRPCGDestroy(pcg_solver);
+   PASE_ParCSRPCGDestroy(pcg_solver);
+
    HYPRE_BoomerAMGDestroy(amg_solver);
    HYPRE_BoomerAMGDestroy(precond);
    HYPRE_LOBPCGDestroy(lobpcg_solver);

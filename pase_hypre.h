@@ -43,8 +43,74 @@ extern "C" {
 #endif
 
 
+
 HYPRE_Int hypre_LOBPCGSetup( void *pcg_vdata, void *A, void *b, void *x );
 HYPRE_Int hypre_LOBPCGSetupB( void *pcg_vdata, void *B, void *x );
+HYPRE_Int hypre_LOBPCGSolve( HYPRE_Int num_lock, void *vdata, 
+      mv_MultiVectorPtr con, mv_MultiVectorPtr vec, HYPRE_Real* val );
+HYPRE_Int hypre_LOBPCGSetPrecond( void  *pcg_vdata,
+      HYPRE_Int  (*precond)(void*,void*,void*,void*),
+      HYPRE_Int  (*precond_setup)(void*,void*,void*,void*),
+      void  *precond_data );
+
+
+typedef struct
+{
+   HYPRE_Int    (*Precond)(void*,void*,void*,void*);
+   HYPRE_Int    (*PrecondSetup)(void*,void*,void*,void*);
+
+} hypre_LOBPCGPrecond;
+
+typedef struct
+{
+   lobpcg_Tolerance              tolerance;
+   HYPRE_Int                           maxIterations;
+   HYPRE_Int                           verbosityLevel;
+   HYPRE_Int                           precondUsageMode;
+   HYPRE_Int                           iterationNumber;
+   utilities_FortranMatrix*      eigenvaluesHistory;
+   utilities_FortranMatrix*      residualNorms;
+   utilities_FortranMatrix*      residualNormsHistory;
+
+} lobpcg_Data;
+
+#define lobpcg_tolerance(data)            ((data).tolerance)
+#define lobpcg_absoluteTolerance(data)    ((data).tolerance.absolute)
+#define lobpcg_relativeTolerance(data)    ((data).tolerance.relative)
+#define lobpcg_maxIterations(data)        ((data).maxIterations)
+#define lobpcg_verbosityLevel(data)       ((data).verbosityLevel)
+#define lobpcg_precondUsageMode(data)     ((data).precondUsageMode)
+#define lobpcg_iterationNumber(data)      ((data).iterationNumber)
+#define lobpcg_eigenvaluesHistory(data)   ((data).eigenvaluesHistory)
+#define lobpcg_residualNorms(data)        ((data).residualNorms)
+#define lobpcg_residualNormsHistory(data) ((data).residualNormsHistory)
+
+typedef struct
+{
+
+   lobpcg_Data                   lobpcgData;
+
+   mv_InterfaceInterpreter*      interpreter;
+
+   void*                         A;
+   void*                         matvecData;
+   void*                         precondData;
+
+   void*                         B;
+   void*                         matvecDataB;
+   void*                         T;
+   void*                         matvecDataT;
+
+   hypre_LOBPCGPrecond           precondFunctions;
+
+   HYPRE_MatvecFunctions*        matvecFunctions;
+
+} hypre_LOBPCGData;
+
+
+
+
+
 
 #ifdef __cplusplus
 }

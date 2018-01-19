@@ -28,10 +28,27 @@
 extern "C" {
 #endif
 
+typedef PASE_Int (*PASE_PtrToSolverFcn)(PASE_Solver,
+                                        PASE_ParCSRMatrix,
+                                        PASE_ParVector,
+                                        PASE_ParVector);
+
 PASE_Int
-PASE_ParCSRPCGCreate( MPI_Comm comm, HYPRE_Solver *solver );
+PASE_ParCSRPCGCreate( MPI_Comm comm, PASE_Solver *solver );
 PASE_Int
-PASE_ParCSRPCGDestroy( HYPRE_Solver solver );
+PASE_ParCSRPCGDestroy( PASE_Solver solver );
+PASE_Int 
+PASE_ParCSRPCGSetup( PASE_Solver solver,
+                     PASE_ParCSRMatrix A,
+                     PASE_ParVector b,
+                     PASE_ParVector x);
+PASE_Int 
+PASE_ParCSRPCGSolve( PASE_Solver solver,
+                     PASE_ParCSRMatrix A,
+                     PASE_ParVector b,
+                     PASE_ParVector x);
+	
+
 
 #ifdef __cplusplus
 }

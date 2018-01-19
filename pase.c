@@ -322,7 +322,7 @@ PASE_Int pase_FullMultiGridSolve( HYPRE_Solver      solver,
       B_pvx_H = (HYPRE_ParVector*)(tmp -> vector);
    }
 
-   HYPRE_BoomerAMGSetup(precond, pase_data->A_hypre, pase_data->x_hypre, pase_data->b_hypre);
+   HYPRE_BoomerAMGSetup(precond, pase_data->A_hypre, pase_data->b_hypre, pase_data->x_hypre);
 
 
 

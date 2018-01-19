@@ -90,3 +90,21 @@ PASE_ParCSRPCGDestroy( HYPRE_Solver solver )
 
    return(hypre_error_flag);
 }
+
+PASE_Int 
+PASE_ParCSRPCGSetup( PASE_Solver solver,
+                      PASE_ParCSRMatrix A,
+                      PASE_ParVector b,
+                      PASE_ParVector x)
+{
+   return( hypre_PCGSetup( (void*)solver, (void*) A, (void*)b, (void*)x ) );
+}
+PASE_Int 
+PASE_ParCSRPCGSolve( PASE_Solver solver,
+                     PASE_ParCSRMatrix A,
+                     PASE_ParVector b,
+                     PASE_ParVector x)
+{
+   return( hypre_PCGSolve( (void*)solver, (void*) A, (void*)b, (void*)x ) );
+}
+	 

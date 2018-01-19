@@ -21,10 +21,11 @@
 #define _pase_h_
 
 #include "pase_hypre.h"
-#include "pase_mg.h"
 
 #include "pase_mv.h"
 #include "pase_int.h"
+#include "pase_diag.h"
+#include "pase_mg.h"
 #include "pase_pcg.h"
 #include "pase_lobpcg.h"
 
@@ -67,36 +68,6 @@ typedef struct
 
 typedef struct
 {
-   hypre_CSRMatrix *bTy;
-   hypre_CSRMatrix *cTy; 
-   hypre_CSRMatrix *yTBy;
-   
-} hypre_PASEDiag;
-
-/* 
- * (S^T A_Hh S) S^-1  x_Hh  = lambda (S^T B S) S^-1 x_Hh
- *
- * S = E   -y
- *     0    E
- *
- * y = A^-1 b
- *
- * A    b      A    0
- * b^T  a  --> 0^T  a-b^T y
- *
- * B    c      B          c-By
- * c^T  f  --> (c-By)^T   f-c^T y - y^T c + y^T B y      
- *
- *
- * S x = x_Hh
- *
- * E  -y   z   =   z - ym
- * 0   E   m       m
- *
- * */
-
-typedef struct
-{
    
    PASE_MultiGrid              multi_grid;
 
@@ -112,7 +83,7 @@ typedef struct
 
    hypre_PASEFunctions         pase_functions;
 
-   hypre_PASEDiag              pase_diag;
+//   hypre_PASEDiag              pase_diag;
 
    PASE_ParCSRMatrix           A_pase;
    PASE_ParCSRMatrix           B_pase;

@@ -406,7 +406,7 @@ hypre_LOBPCGSolve( HYPRE_Int num_lock,
 	           void *vdata, 
 		   mv_MultiVectorPtr con, 
 		   mv_MultiVectorPtr vec, 
-		   HYPRE_Real* val, HYPRE_Int num_lock )
+		   HYPRE_Real* val )
 {
    hypre_LOBPCGData* data = (hypre_LOBPCGData*)vdata;
    HYPRE_Int (*precond)(void*,void*,void*,void*) = (data->precondFunctions).Precond;
