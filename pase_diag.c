@@ -152,12 +152,12 @@ hypre_PASEDiagChange(hypre_PASEDiag*  diag_data,
    HYPRE_BoomerAMGCreate(&precond);
 
    HYPRE_BoomerAMGSetOldDefault(precond);
-   HYPRE_BoomerAMGSetRelaxType (precond,  3);   /*  G-S/Jacobi hybrid relaxation */
-   HYPRE_BoomerAMGSetRelaxOrder(precond,  1);   /*  uses C/F relaxation */
+   HYPRE_BoomerAMGSetRelaxType (precond,  3);    /* G-S/Jacobi hybrid relaxation */
+   HYPRE_BoomerAMGSetRelaxOrder(precond,  1);    /* uses C/F relaxation */
    HYPRE_BoomerAMGSetNumSweeps (precond,  1);
-   HYPRE_BoomerAMGSetTol       (precond,  1E-12); /*  conv. tolerance zero */
-   HYPRE_BoomerAMGSetMaxIter   (precond,  30); /*  do only one iteration! */
-   HYPRE_BoomerAMGSetPrintLevel(precond,  0); /*  print amg solution info */
+   HYPRE_BoomerAMGSetTol       (precond,  1E-12);/* conv. tolerance zero */
+   HYPRE_BoomerAMGSetMaxIter   (precond,  20);   /* do only one iteration! */
+   HYPRE_BoomerAMGSetPrintLevel(precond,  0);    /* print amg solution info */
 
    HYPRE_BoomerAMGSetup(precond, parcsr_A->A_H, parcsr_A->aux_hH[0], Z[0]);
 
