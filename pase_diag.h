@@ -13,6 +13,8 @@ extern "C" {
 typedef struct
 {
    HYPRE_Int       block_size;
+   HYPRE_Solver    precond;
+
    hypre_CSRMatrix *XZ;
    hypre_CSRMatrix *YZ; 
    hypre_CSRMatrix *ZBZ;

@@ -125,6 +125,35 @@ hypre_PASEDiagCreate(hypre_PASEDiag* diag_data,
 
    }
 
+
+
+   HYPRE_BoomerAMGCreate(&(diag_data->precond));
+
+   HYPRE_Solver precond = diag_data->precond;
+
+   HYPRE_BoomerAMGSetOldDefault(precond);
+   HYPRE_BoomerAMGSetRelaxType (precond,  3);    /* G-S/Jacobi hybrid relaxation */
+   HYPRE_BoomerAMGSetRelaxOrder(precond,  1);    /* uses C/F relaxation */
+   HYPRE_BoomerAMGSetNumSweeps (precond,  1);
+   HYPRE_BoomerAMGSetTol       (precond,  1E-14);/* conv. tolerance zero */
+   HYPRE_BoomerAMGSetMaxIter   (precond,  20);   /* do only one iteration! */
+   HYPRE_BoomerAMGSetPrintLevel(precond,  0);    /* print amg solution info */
+
+   HYPRE_BoomerAMGSetup(precond, parcsr_A->A_H, parcsr_A->aux_hH[0], Z[0]);
+
+
+//   HYPRE_ParCSRPCGCreate(MPI_COMM_WORLD, &(diag_data->precond));
+//   HYPRE_Solver precond = diag_data->precond;
+//
+//   HYPRE_PCGSetMaxIter   (precond, 50);     /*  max iterations */
+//   HYPRE_PCGSetTol       (precond, 1E-14);  /*  conv. tolerance */
+//   HYPRE_PCGSetTwoNorm   (precond, 1);      /*  use the two norm as the stopping criteria */
+//   HYPRE_PCGSetLogging   (precond, 1); 
+//   HYPRE_PCGSetPrintLevel(precond, 2);
+//
+//   HYPRE_ParCSRPCGSetup(precond, parcsr_A->A_H, parcsr_A->aux_hH[0], Z[0]);
+
+
    return 0;
 }
 
@@ -147,19 +176,7 @@ hypre_PASEDiagChange(hypre_PASEDiag*  diag_data,
    ZF  = diag_data->ZF;
    BZ  = diag_data->BZ;
 
-   HYPRE_Solver precond;
-
-   HYPRE_BoomerAMGCreate(&precond);
-
-   HYPRE_BoomerAMGSetOldDefault(precond);
-   HYPRE_BoomerAMGSetRelaxType (precond,  3);    /* G-S/Jacobi hybrid relaxation */
-   HYPRE_BoomerAMGSetRelaxOrder(precond,  1);    /* uses C/F relaxation */
-   HYPRE_BoomerAMGSetNumSweeps (precond,  1);
-   HYPRE_BoomerAMGSetTol       (precond,  1E-12);/* conv. tolerance zero */
-   HYPRE_BoomerAMGSetMaxIter   (precond,  20);   /* do only one iteration! */
-   HYPRE_BoomerAMGSetPrintLevel(precond,  0);    /* print amg solution info */
-
-   HYPRE_BoomerAMGSetup(precond, parcsr_A->A_H, parcsr_A->aux_hH[0], Z[0]);
+   HYPRE_Solver precond = diag_data->precond;
 
    HYPRE_Int row, col, block_size;
    block_size = diag_data->block_size;
@@ -168,15 +185,24 @@ hypre_PASEDiagChange(hypre_PASEDiag*  diag_data,
    for (row = 0; row < block_size; ++row)
    {
       HYPRE_BoomerAMGSolve(precond, parcsr_A->A_H, parcsr_A->aux_hH[row], Z[row]);
+//      HYPRE_ParCSRPCGSolve(precond, parcsr_A->A_H, parcsr_A->aux_hH[row], Z[row]);
    }
    /* XZ */
    matrix_data = XZ->data;
    for (row = 0; row < block_size; ++row)
    {
-      for ( col = 0; col < block_size; ++col)
+      for (col = row; col < block_size; ++col)
       {
-	 HYPRE_ParVectorInnerProd(parcsr_A->aux_hH[row],  Z[col], &matrix_data[row*block_size+col]);
+	 HYPRE_ParVectorInnerProd(parcsr_A->aux_hH[row], Z[col], &matrix_data[row*block_size+col]);
 	 parcsr_A->aux_hh->data[row*block_size+col] -= matrix_data[row*block_size+col];
+      }
+   }
+   for (row = 0; row < block_size; ++row)
+   {
+      for (col = 0; col < row; ++col)
+      {
+	 parcsr_A->aux_hh->data[row*block_size+col] = parcsr_A->aux_hh->data[col*block_size+row];
+	 matrix_data[row*block_size+col] = matrix_data[col*block_size+row];
       }
    }
    parcsr_A->diag = 1;
@@ -189,7 +215,7 @@ hypre_PASEDiagChange(hypre_PASEDiag*  diag_data,
       {
 	 for ( col = 0; col < block_size; ++col)
 	 {
-	    HYPRE_ParVectorInnerProd(parcsr_B->aux_hH[row],  Z[col], &matrix_data[row*block_size+col]);
+	    HYPRE_ParVectorInnerProd(parcsr_B->aux_hH[row], Z[col], &matrix_data[row*block_size+col]);
 	    parcsr_B->aux_hh->data[row*block_size+col] -= matrix_data[row*block_size+col];
 	 }
       }
@@ -210,10 +236,18 @@ hypre_PASEDiagChange(hypre_PASEDiag*  diag_data,
       matrix_data = ZBZ->data;
       for (row = 0; row < block_size; ++row)
       {
-	 for ( col = 0; col < block_size; ++col)
+	 for ( col = row; col < block_size; ++col)
 	 {
-	    HYPRE_ParVectorInnerProd(BZ[row],  Z[col], &matrix_data[row*block_size+col]);
+	    HYPRE_ParVectorInnerProd(BZ[row], Z[col], &matrix_data[row*block_size+col]);
 	    parcsr_B->aux_hh->data[row*block_size+col] += matrix_data[row*block_size+col];
+	 }
+      }
+      for (row = 0; row < block_size; ++row)
+      {
+	 for (col = 0; col < row; ++col)
+	 {
+	    parcsr_B->aux_hh->data[row*block_size+col] = parcsr_B->aux_hh->data[col*block_size+row];
+	    matrix_data[row*block_size+col] = matrix_data[col*block_size+row];
 	 }
       }
 
@@ -245,7 +279,6 @@ hypre_PASEDiagChange(hypre_PASEDiag*  diag_data,
       hypre_SeqVectorAxpy(-1.0, ZF, par_b->aux_h);
    }
 
-   HYPRE_BoomerAMGDestroy(precond);
    return 0;
 }
 
@@ -307,6 +340,11 @@ hypre_PASEDiagBack(hypre_PASEDiag* diag_data,
    }
    if (parcsr_B!=NULL)
    {
+      /* +BZ */
+      for (row = 0; row < block_size; ++row)
+      {
+	 HYPRE_ParVectorAxpy(1.0, BZ[row], parcsr_B->aux_hH[row]);
+      }
       /* +YZ+ZY-ZBZ */
       for (row = 0; row < block_size; ++row)
       {
@@ -315,11 +353,6 @@ hypre_PASEDiagBack(hypre_PASEDiag* diag_data,
 	    parcsr_B->aux_hh->data[row*block_size+col] += 
 	       (YZ->data)[row*block_size+col]+(YZ->data)[col*block_size+row]-(ZBZ->data)[row*block_size+col];
 	 }
-      }
-      /* +BZ */
-      for (row = 0; row < block_size; ++row)
-      {
-	 HYPRE_ParVectorAxpy(1.0, BZ[row], parcsr_B->aux_hH[row]);
       }
    }
 
@@ -360,6 +393,8 @@ hypre_PASEDiagDestroy(hypre_PASEDiag* diag_data)
    {
       hypre_SeqVectorDestroy(diag_data->ZF);
    }
+   HYPRE_BoomerAMGDestroy(diag_data->precond);
+//   HYPRE_ParCSRPCGDestroy(diag_data->precond);
 
    return 0;
 }

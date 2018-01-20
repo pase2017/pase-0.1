@@ -27,7 +27,7 @@
 
 #include "pase.h"
 
-
+#if 0
 static int partition( HYPRE_Int *part,  HYPRE_Real *array, HYPRE_Int size, HYPRE_Real min_gap)
 {   
    int nparts, start, pre_start;
@@ -46,6 +46,7 @@ static int partition( HYPRE_Int *part,  HYPRE_Real *array, HYPRE_Int size, HYPRE
    part[ nparts ] = size;
    return nparts;
 }
+#endif
 
 static int cmp( const void *a ,  const void *b )
 {   return *(double *)a > *(double *)b ? 1 : -1; }
@@ -70,17 +71,23 @@ int main (int argc, char *argv[])
    int block_size = 20;        /* 特征值求解个数 */
    int max_levels = 5;         /* 最大网格层数 */
    int n          = 100;       /* 单维剖分个数 */
-   int more       = 0;         /* 多算的特征值数 */
+   int more       = 10;        /* 多算的特征值数 */
    int iter       = 0;         /* 迭代次数 */
    int num_conv   = 0;         /* 收敛个数 */
    int max_its    = 20;        /* 最大迭代次数 */
-   int num_iters  = 0;         /* 迭代次数 */
-   double residual    = 1.0;   /* 残量 */
-   double tolerance   = 1E-8;  /* 最小残量 */
-   double tol_lobpcg  = 1E-8;  /* 最小残量 */
-   double tol_pcg     = 1E-8;  /* 最小残量 */
-   double tol_amg     = 1E-11; /* 最小残量 */
-   double min_gap     = 1E-3;  /* 不同特征值的相对最小距离 */
+   int diag_flag  = 1;         /* PASE矩阵做对角化 */
+   int nits_precond = 1;       /* 预条件迭代次数 */
+   int nits_ls      = 5;       /* 线性求解器迭代次数 */
+   int nits_lobpcg  = 55;       /* lobpcg迭代次数 */
+   int verb_amg     = 0;
+   int verb_ls      = 0;
+   int verb_precond = 0;
+   int verb_lobpcg  = 0;
+   double residual    = 1.0;     /* 残量 */
+   double tolerance   = 1.0E-9;  /* 最小残量 */
+   double tol_lobpcg  = 1.0E-9;  /* 最小残量 */
+   double tol_ls      = 1.0E-10; /* 最小残量 */
+   double min_gap     = 1.0E-3;  /* 不同特征值的相对最小距离 */
 
    /* ------------------------矩阵向量, 求解器---------------------- */ 
 
@@ -105,11 +112,11 @@ int main (int argc, char *argv[])
    /* AMG求解器, 生成多重网格 */ 
    HYPRE_Solver       amg; 
    /* AMG求解器求解线性问题, 特征值求解器求解特征值问题 */
-   HYPRE_Solver       amg_solver,   lobpcg_solver;
+   HYPRE_Solver       ls_hypre,   lobpcg_solver;
    /* HYPRE_Solver的AMG预条件子 */
-   HYPRE_Solver       precond;
+   HYPRE_Solver       precond_hypre;
    /* PASE_Solver lobpcg的pcg预条件子 */
-   PASE_Solver        pcg_solver;
+   PASE_Solver        precond_pase;
 
    /* ------------------------AMG各层矩阵向量---------------------- */ 
 
@@ -144,6 +151,9 @@ int main (int argc, char *argv[])
    mv_MultiVectorPtr eigenvectors_h   = NULL;
    mv_MultiVectorPtr tmp_eigenvectors = NULL;
    mv_InterfaceInterpreter *interpreter;
+
+   /* PASE对角化 */
+   hypre_PASEDiag  diag_data;
 
    /* -------------------------------------------------------------------- */
 
@@ -186,6 +196,11 @@ int main (int argc, char *argv[])
 	    arg_index++;
 	    tolerance = atof(argv[arg_index++]);
 	 }
+	 else if ( strcmp(argv[arg_index], "-diag") == 0 )
+	 {
+	    arg_index++;
+	    diag_flag = atof(argv[arg_index++]);
+	 }
 	 else if ( strcmp(argv[arg_index], "-help") == 0 )
 	 {
 	    print_usage = 1;
@@ -205,6 +220,7 @@ int main (int argc, char *argv[])
 	 printf("  -block_size <n>  : eigenproblem block size (default: 10)\n");
 	 printf("  -max_levels <n>  : max levels of AMG (default: 5)\n");
 	 printf("  -tol        <n>  : max tolerance of cycle (default: 1.e-8)\n");
+	 printf("  -diag       <n>  : diagonalization (default: 1)\n");
 	 printf("\n");
       }
       if (print_usage)
@@ -215,7 +231,7 @@ int main (int argc, char *argv[])
    }
 
    /* 多算more个特征值 */
-   more = (block_size<10)?(block_size):(10);
+   more = (block_size<more)?(block_size):(more);
    block_size += more;
 
    /* Preliminaries: want at least one processor per row */
@@ -378,7 +394,14 @@ int main (int argc, char *argv[])
    /* Create solver */
    HYPRE_BoomerAMGCreate(&amg);
    /* hypre_BoomerAMGSetup详细介绍各种参数表示的意义 */
-   HYPRE_BoomerAMGSetPrintLevel (amg, 1);
+   if (myid == 0)
+   {
+      HYPRE_BoomerAMGSetPrintLevel(amg, verb_amg);
+   }
+   else
+   {
+      HYPRE_BoomerAMGSetPrintLevel(amg, 0);
+   }
    HYPRE_BoomerAMGSetInterpType (amg, 0);
    HYPRE_BoomerAMGSetPMaxElmts  (amg, 0);
    HYPRE_BoomerAMGSetCoarsenType(amg, 6);
@@ -450,37 +473,76 @@ int main (int argc, char *argv[])
 
    /* -----------------------PASE LOBPCG 预条件子---------------------- */
 
-   PASE_ParCSRPCGCreate(MPI_COMM_WORLD, &pcg_solver);
-   HYPRE_PCGSetPrintLevel(pcg_solver, 0);       /* print solve info */
-   HYPRE_PCGSetTwoNorm   (pcg_solver, 1);       /* use the two norm as the stopping criteria */
-   HYPRE_PCGSetLogging   (pcg_solver, 1);       /* needed to get run info later */
-   HYPRE_PCGSetMaxIter   (pcg_solver, 5);       /* max iterations */
-   HYPRE_PCGSetTol       (pcg_solver, tol_pcg); /* conv. tolerance */
+   PASE_ParCSRPCGCreate(MPI_COMM_WORLD, &precond_pase);
+   if (myid==0)
+   {
+      HYPRE_PCGSetPrintLevel(precond_pase, verb_precond);       /* print solve info */
+   }
+   else
+   {
+      HYPRE_PCGSetPrintLevel(precond_pase, 0);       /* print solve info */
+   }
+   HYPRE_PCGSetTwoNorm   (precond_pase, 1);       /* use the two norm as the stopping criteria */
+   HYPRE_PCGSetLogging   (precond_pase, 1);       /* needed to get run info later */
+   HYPRE_PCGSetMaxIter   (precond_pase, nits_precond);       /* max iterations */
+   HYPRE_PCGSetTol       (precond_pase, 0.0);     /* conv. tolerance */
 
    /* -----------------------HYPRE 线性求解器---------------------- */
 
-   HYPRE_BoomerAMGCreate(&amg_solver);
-   HYPRE_BoomerAMGSetPrintLevel (amg_solver, 0);       /* print solve info + parameters */
-   HYPRE_BoomerAMGSetInterpType (amg_solver, 0);
-   HYPRE_BoomerAMGSetPMaxElmts  (amg_solver, 0);
-   HYPRE_BoomerAMGSetCoarsenType(amg_solver, 6);
-   HYPRE_BoomerAMGSetRelaxType  (amg_solver, 3);       /* G-S/Jacobi hybrid relaxation */
-   HYPRE_BoomerAMGSetRelaxOrder (amg_solver, 1);       /* uses C/F relaxation */
-   HYPRE_BoomerAMGSetNumSweeps  (amg_solver, 1);       /* Sweeeps on each level */
-   HYPRE_BoomerAMGSetMaxIter    (amg_solver, 10);
-   HYPRE_BoomerAMGSetTol        (amg_solver, tol_amg); /*  conv. tolerance */
+
+#if 0
+   HYPRE_ParCSRPCGCreate(MPI_COMM_WORLD,  &ls_hypre);
+
+   HYPRE_PCGSetMaxIter   (ls_hypre,  nits_ls);      /* max iterations */
+   HYPRE_PCGSetTol       (ls_hypre,  tol_ls); /* conv. tolerance */
+   HYPRE_PCGSetTwoNorm   (ls_hypre,  1);      /* use the two norm as the stopping criteria */
+
+   if (myid==0)
+   {
+      HYPRE_PCGSetPrintLevel(ls_hypre, verb_ls);      /* print solve info */
+   }
+   else
+   {
+      HYPRE_PCGSetPrintLevel(ls_hypre, 0);      /* print solve info */
+   }
+   HYPRE_PCGSetLogging   (ls_hypre,  1);      /* needed to get run info later */
+#endif
+   HYPRE_BoomerAMGCreate(&ls_hypre);
+   if (myid == 0)
+   {
+      HYPRE_BoomerAMGSetPrintLevel (ls_hypre, verb_ls);       /* print solve info + parameters */
+   }
+   else
+   {
+      HYPRE_BoomerAMGSetPrintLevel (ls_hypre, 0);       /* print solve info + parameters */
+   }
+   HYPRE_BoomerAMGSetInterpType (ls_hypre, 0);
+   HYPRE_BoomerAMGSetPMaxElmts  (ls_hypre, 0);
+   HYPRE_BoomerAMGSetCoarsenType(ls_hypre, 6);
+   HYPRE_BoomerAMGSetRelaxType  (ls_hypre, 3);       /* G-S/Jacobi hybrid relaxation */
+   HYPRE_BoomerAMGSetRelaxOrder (ls_hypre, 1);       /* uses C/F relaxation */
+   HYPRE_BoomerAMGSetNumSweeps  (ls_hypre, 1);       /* Sweeeps on each level */
+   HYPRE_BoomerAMGSetMaxIter    (ls_hypre, nits_ls);
+   HYPRE_BoomerAMGSetTol        (ls_hypre, tol_ls); /*  conv. tolerance */
 
    /* -----------------------HYPRE LOBPCG 预条件子---------------------- */
 
-   HYPRE_BoomerAMGCreate(&precond);
-   HYPRE_BoomerAMGSetPrintLevel (precond, 0);   /* print amg solution info */
-   HYPRE_BoomerAMGSetInterpType (precond, 0);
-   HYPRE_BoomerAMGSetPMaxElmts  (precond, 0);
-   HYPRE_BoomerAMGSetCoarsenType(precond, 6);
-   HYPRE_BoomerAMGSetRelaxType  (precond, 6);   /* Sym G.S./Jacobi hybrid */
-   HYPRE_BoomerAMGSetNumSweeps  (precond, 2);
-   HYPRE_BoomerAMGSetTol        (precond, 0.0); /* conv. tolerance zero */
-   HYPRE_BoomerAMGSetMaxIter    (precond, 1);   /* do only one iteration! */
+   HYPRE_BoomerAMGCreate(&precond_hypre);
+   if (myid==0)
+   {
+      HYPRE_BoomerAMGSetPrintLevel (precond_hypre, verb_precond);   /* print amg solution info */
+   }
+   else
+   {
+      HYPRE_BoomerAMGSetPrintLevel (precond_hypre, 0);   /* print amg solution info */
+   }
+   HYPRE_BoomerAMGSetInterpType (precond_hypre, 0);
+   HYPRE_BoomerAMGSetPMaxElmts  (precond_hypre, 0);
+   HYPRE_BoomerAMGSetCoarsenType(precond_hypre, 6);
+   HYPRE_BoomerAMGSetRelaxType  (precond_hypre, 6);   /* Sym G.S./Jacobi hybrid */
+   HYPRE_BoomerAMGSetNumSweeps  (precond_hypre, 1);
+   HYPRE_BoomerAMGSetTol        (precond_hypre, 0.0); /* conv. tolerance zero */
+   HYPRE_BoomerAMGSetMaxIter    (precond_hypre, nits_precond);   /* do only one iteration! */
 
    end_time = MPI_Wtime();
    if (myid==0)
@@ -508,22 +570,25 @@ int main (int argc, char *argv[])
       }
       /* LOBPCG for HYPRE */
       HYPRE_LOBPCGCreate(interpreter_H, &matvec_fn_H, &lobpcg_solver);
-      HYPRE_LOBPCGSetMaxIter         (lobpcg_solver, 50); /* 最粗层特征值问题的参数选取 */
-      HYPRE_LOBPCGSetPrecondUsageMode(lobpcg_solver, 1);  /* 求解残量方程的初值, 用残量本身 */
-      HYPRE_LOBPCGSetPrintLevel      (lobpcg_solver, 0);
-      HYPRE_LOBPCGSetTol             (lobpcg_solver, tol_lobpcg);
-      HYPRE_LOBPCGSetRTol            (lobpcg_solver, tol_lobpcg);
+      HYPRE_LOBPCGSetMaxIter         (lobpcg_solver, nits_lobpcg); /* 最粗层特征值问题的参数选取 */
+      HYPRE_LOBPCGSetPrecondUsageMode(lobpcg_solver, 1);           /* 求解残量方程的初值, 用残量本身 */
+      if (myid==0)
+      {
+	 HYPRE_LOBPCGSetPrintLevel(lobpcg_solver, verb_lobpcg);
+      }
+      else
+      {
+	 HYPRE_LOBPCGSetPrintLevel(lobpcg_solver, 0);
+      }
+      HYPRE_LOBPCGSetTol (lobpcg_solver, tol_lobpcg);
+      HYPRE_LOBPCGSetRTol(lobpcg_solver, tol_lobpcg);
 
       HYPRE_LOBPCGSetPrecond(lobpcg_solver, (HYPRE_PtrToSolverFcn) HYPRE_BoomerAMGSolve,
-	    (HYPRE_PtrToSolverFcn) HYPRE_BoomerAMGSetup, precond);
+	    (HYPRE_PtrToSolverFcn) HYPRE_BoomerAMGSetup, precond_hypre);
       /* 这里(HYPRE_Matrix)的存在意义是变成一个空结构 */
       HYPRE_LOBPCGSetup (lobpcg_solver, (HYPRE_Matrix)parcsr_A_H, (HYPRE_Vector)par_b_H, (HYPRE_Vector)par_x_H);
       HYPRE_LOBPCGSetupB(lobpcg_solver, (HYPRE_Matrix)parcsr_B_H, (HYPRE_Vector)par_x_H);
       HYPRE_LOBPCGSolve (0, lobpcg_solver, constraints_H, eigenvectors_H, eigenvalues );
-      if (myid==0)
-      {
-	 printf ( "num_iters = %d for lobpcg in the coarsest mesh.\n", HYPRE_LOBPCGIterations(lobpcg_solver) );
-      }
       HYPRE_LOBPCGDestroy(lobpcg_solver);
    }
 
@@ -555,6 +620,10 @@ int main (int argc, char *argv[])
       PASE_ParVectorCreate( MPI_COMM_WORLD, N_H, block_size, NULL,  partitioning, &par_x_Hh);
       PASE_ParVectorCreate( MPI_COMM_WORLD, N_H, block_size, NULL,  partitioning, &par_b_Hh);
    }
+
+//   HYPRE_PCGSetPrecond(ls_hypre, (HYPRE_PtrToSolverFcn) HYPRE_BoomerAMGSolve, 
+//	 (HYPRE_PtrToSolverFcn) HYPRE_BoomerAMGSetup, precond_hypre);
+
    /* 从粗到细, 细解问题, 最粗特征值 */
    for ( level = num_levels-2; level >= 0; --level )
    {
@@ -563,17 +632,14 @@ int main (int argc, char *argv[])
       {
 	 printf ( "PCG solve A_h U = lambda_Hh B_h U_Hh\n" );
       }
-      HYPRE_BoomerAMGSetup(amg_solver, A_array[level], F_array[level], U_array[level]);
-      for (idx_eig = 0; idx_eig < block_size-more; ++idx_eig)
+//      HYPRE_ParCSRPCGSetup(ls_hypre, A_array[level], F_array[level], U_array[level]);
+      HYPRE_BoomerAMGSetup(ls_hypre, A_array[level], F_array[level], U_array[level]);
+      for (idx_eig = 0; idx_eig < block_size; ++idx_eig)
       {
 	 /* 生成右端项 y = alpha*A*x + beta*y */
 	 HYPRE_ParCSRMatrixMatvec (eigenvalues[idx_eig], B_array[level], pvx[idx_eig], 0.0, F_array[level]);
-	 HYPRE_BoomerAMGSolve     (amg_solver, A_array[level], F_array[level], pvx[idx_eig]);
-	 HYPRE_BoomerAMGGetNumIterations(amg_solver, &num_iters);
-	 if (myid==0)
-	 {
-	    printf ( "num_iters = %d for amg for %d eigenvale in level %d.\n", num_iters, idx_eig, level );
-	 }
+//	 HYPRE_ParCSRPCGSolve     (ls_hypre, A_array[level], F_array[level], pvx[idx_eig]);
+	 HYPRE_BoomerAMGSolve     (ls_hypre, A_array[level], F_array[level], pvx[idx_eig]);
       }
       if (myid==0)
       {
@@ -595,16 +661,28 @@ int main (int argc, char *argv[])
 	 }
 	 /* LOBPCG for PASE */
 	 HYPRE_LOBPCGCreate(interpreter_Hh, &matvec_fn_Hh, &lobpcg_solver);
-	 HYPRE_LOBPCGSetPrintLevel      (lobpcg_solver, 0);
+	 if (myid==0)
+	 {
+	    HYPRE_LOBPCGSetPrintLevel(lobpcg_solver, verb_lobpcg);
+	 }
+	 else
+	 {
+	    HYPRE_LOBPCGSetPrintLevel(lobpcg_solver, 0);
+	 }
 	 HYPRE_LOBPCGSetPrecondUsageMode(lobpcg_solver, 1);
-	 HYPRE_LOBPCGSetMaxIter         (lobpcg_solver, 10);
+	 HYPRE_LOBPCGSetMaxIter         (lobpcg_solver, nits_lobpcg);
 	 HYPRE_LOBPCGSetTol             (lobpcg_solver, tol_lobpcg);
 	 HYPRE_LOBPCGSetRTol            (lobpcg_solver, tol_lobpcg);
 	 /* LOBPCG 设置pcg为求解残量方程的线性求解器 */
 	 PASE_LOBPCGSetPrecond(lobpcg_solver, (PASE_PtrToSolverFcn) PASE_ParCSRPCGSolve,
-	       (PASE_PtrToSolverFcn) PASE_ParCSRPCGSetup, pcg_solver);
+	       (PASE_PtrToSolverFcn) PASE_ParCSRPCGSetup, precond_pase);
 	 PASE_LOBPCGSetup (lobpcg_solver, parcsr_A_Hh, par_b_Hh, par_x_Hh);
 	 PASE_LOBPCGSetupB(lobpcg_solver, parcsr_B_Hh, par_x_Hh);
+	 /* 对角化创建 */
+	 if (diag_flag==1)
+	 {
+	    hypre_PASEDiagCreate(&diag_data, parcsr_A_Hh, parcsr_B_Hh, NULL, NULL, pvx_H, par_x_H);
+	 }
       } 
       else
       {
@@ -623,7 +701,16 @@ int main (int argc, char *argv[])
       {
 	 printf ( "LOBPCG solve A_Hh U_Hh = lambda_Hh B_Hh U_Hh\n" );
       }
-      PASE_LOBPCGSolve(0, lobpcg_solver, constraints_Hh, eigenvectors_Hh, eigenvalues);
+      if (diag_flag==1)
+      {
+	 hypre_PASEDiagChange(&diag_data, parcsr_A_Hh, parcsr_B_Hh, pvx_Hh, NULL, NULL);
+	 HYPRE_LOBPCGSolve(0, lobpcg_solver, constraints_Hh, eigenvectors_Hh, eigenvalues);
+	 hypre_PASEDiagBack  (&diag_data, parcsr_A_Hh, parcsr_B_Hh, pvx_Hh, NULL, NULL);
+      }
+      else
+      {
+	 HYPRE_LOBPCGSolve(0, lobpcg_solver, constraints_Hh, eigenvectors_Hh, eigenvalues);
+      }
       /* 定义更细层的特征向量 */
       if (level == 0)
       {
@@ -666,37 +753,51 @@ int main (int argc, char *argv[])
       eigenvectors = eigenvectors_h;
    }
 
-   /* 瑞利商 */
-   sum_error = 0;
+   /* 求残差 */
    for (idx_eig = 0; idx_eig < block_size-more; ++idx_eig)
    {
-      HYPRE_ParCSRMatrixMatvec(1.0, A_array[0], pvx[idx_eig], 0.0, F_array[0] );
-      HYPRE_ParVectorInnerProd(F_array[0], pvx[idx_eig], &eigenvalues[idx_eig]);
       HYPRE_ParCSRMatrixMatvec(1.0, B_array[0], pvx[idx_eig], 0.0, F_array[0] );
       HYPRE_ParVectorInnerProd(F_array[0], pvx[idx_eig], &tmp_double);
-      eigenvalues[idx_eig] = eigenvalues[idx_eig] / tmp_double;
-
       HYPRE_ParCSRMatrixMatvec(1.0, A_array[0], pvx[idx_eig], -eigenvalues[idx_eig], F_array[0] );
       HYPRE_ParVectorInnerProd(F_array[0], F_array[0], &residual);
       residual = sqrt(residual/tmp_double);
-
-      HYPRE_ParVectorScale(1/sqrt(tmp_double), pvx[idx_eig]);
-
-      if (myid == 0)
+      /* TODO:收敛准则的科学性 */
+      if (myid==0)
       {
 	 printf ( "%d : eig = %1.16e, error = %e, residual = %e\n", 
 	       idx_eig, eigenvalues[idx_eig]/h2, (eigenvalues[idx_eig]-exact_eigenvalues[idx_eig])/h2, residual );
-	 sum_error += fabs(eigenvalues[idx_eig]-exact_eigenvalues[idx_eig])/h2;
+      }
+      if (residual < tolerance+tolerance*eigenvalues[idx_eig])
+      {
+	 ++num_conv;
+      }
+      else 
+      {
+	 break;
       }
    }
-   if (myid == 0)
+   if (num_conv > 0 && num_conv < block_size-more)
    {
-      printf ( "the sum of error for eigenvalues = %e\n", sum_error ); 
+      /* 比较已收敛的特征值与后一个特征值是否是重根, 若是则再往前寻找特征子空间的开始 */
+      if ( fabs(eigenvalues[num_conv-1]-eigenvalues[num_conv]) 
+	    < min_gap*fabs(eigenvalues[num_conv-1]) )
+      {
+	 for (i = num_conv-2; i >= 0; --i)
+	 {
+	    if ( fabs(eigenvalues[num_conv-1]-eigenvalues[i]) 
+		  > min_gap*fabs(eigenvalues[num_conv-1]) )
+	    {
+	       num_conv = i+1;
+	       break;
+	    }
+	 }
+      }
    }
 
    end_time = MPI_Wtime();
    if (myid==0)
    {
+      printf ( "num_conv = %d\n", num_conv );
       printf ( "Full MC time %f \n", end_time-start_time );
    }
 
@@ -710,9 +811,12 @@ int main (int argc, char *argv[])
 	 (mv_TempMultiVector*) mv_MultiVectorGetData(eigenvectors_h);
       pvx_pre = (HYPRE_ParVector*)(tmp -> vector);
    }
+   for (idx_eig = 0; idx_eig < num_conv; ++idx_eig)
+   {
+      HYPRE_ParVectorCopy(pvx[idx_eig], pvx_pre[idx_eig]);
+   }
 
-   num_conv  = 0;
-   begin_idx = num_conv;
+   begin_idx = 0;
    while (iter < max_its && num_conv < block_size-more)
    {
       /* 只从不收敛的特征值开始求解线性问题 */
@@ -724,12 +828,8 @@ int main (int argc, char *argv[])
       {
 	 /* 生成右端项 y = alpha*A*x + beta*y */
 	 HYPRE_ParCSRMatrixMatvec ( eigenvalues[idx_eig], B_array[0], pvx[idx_eig], 0.0, F_array[0] );
-	 HYPRE_BoomerAMGSolve(amg_solver, A_array[0], F_array[0], pvx[idx_eig]);
-	 HYPRE_BoomerAMGGetNumIterations(amg_solver, &num_iters);
-	 if (myid==0)
-	 {
-	    printf ( "num_iters = %d for amg for %d eigenvale.\n", num_iters, idx_eig );
-	 }
+//	 HYPRE_ParCSRPCGSolve(ls_hypre, A_array[0], F_array[0], pvx[idx_eig]);
+	 HYPRE_BoomerAMGSolve(ls_hypre, A_array[0], F_array[0], pvx[idx_eig]);
       }
       /* 这里设置了begin_idx这个参数, 使得特征子空间已整体收敛 */
       if (myid==0)
@@ -750,9 +850,18 @@ int main (int argc, char *argv[])
       {
 	 printf ( "LOBPCG solve A_Hh U_Hh = lambda_Hh B_Hh U_Hh\n" );
       }
-      PASE_LOBPCGSolve(num_conv, lobpcg_solver, constraints_Hh, eigenvectors_Hh, eigenvalues);
+      if (diag_flag==1)
+      {
+	 hypre_PASEDiagChange(&diag_data, parcsr_A_Hh, parcsr_B_Hh, pvx_Hh, NULL, NULL);
+	 HYPRE_LOBPCGSolve(begin_idx, lobpcg_solver, constraints_Hh, eigenvectors_Hh, eigenvalues);
+	 hypre_PASEDiagBack  (&diag_data, parcsr_A_Hh, parcsr_B_Hh, pvx_Hh, NULL, NULL);
+      }
+      else
+      {
+	 HYPRE_LOBPCGSolve(0, lobpcg_solver, constraints_Hh, eigenvectors_Hh, eigenvalues);
+      }
       /* 将pvx_Hh插值到0层 */
-      for (idx_eig = num_conv; idx_eig < block_size; ++idx_eig)
+      for (idx_eig = begin_idx; idx_eig < block_size; ++idx_eig)
       {
 	 PASE_ParVectorGetParVector( Q_array[0], block_size, pvx, pvx_Hh[idx_eig], pvx_pre[idx_eig] );
       }
@@ -777,17 +886,28 @@ int main (int argc, char *argv[])
 	 }
 	 else 
 	 {
+	    if (myid==0)
+	    {
+	       printf ( "%d : eig = %1.16e, error = %e, residual = %e\n", 
+		     idx_eig, eigenvalues[idx_eig]/h2, (eigenvalues[idx_eig]-exact_eigenvalues[idx_eig])/h2, residual );
+	    }
 	    break;
 	 }
       }
       if (num_conv > 0 && num_conv < block_size-more)
       {
 	 /* 比较已收敛的特征值与后一个特征值是否是重根, 若是则再往前寻找特征子空间的开始 */
-	 if ( fabs(eigenvalues[num_conv-1]-eigenvalues[num_conv]) < min_gap*fabs(eigenvalues[num_conv-1]) )
+	 if ( fabs(eigenvalues[num_conv-1]-eigenvalues[num_conv]) 
+	       < min_gap*fabs(eigenvalues[num_conv-1]) )
 	 {
 	    for (i = num_conv-2; i >= begin_idx-1; --i)
 	    {
-	       if ( fabs(eigenvalues[num_conv-1]-eigenvalues[i]) > min_gap*fabs(eigenvalues[num_conv-1]) )
+	       if (i==-1)
+	       {
+		  num_conv = 0;
+	       }
+	       else if ( fabs(eigenvalues[num_conv-1]-eigenvalues[i]) 
+		     > min_gap*fabs(eigenvalues[num_conv-1]) )
 	       {
 		  num_conv = i+1;
 		  break;
@@ -855,7 +975,7 @@ int main (int argc, char *argv[])
    hypre_PrintTiming("Solve phase times", MPI_COMM_WORLD);
    hypre_FinalizeTiming(global_time_index);
    hypre_ClearTiming();
-
+#if 0
    if (myid==0)
    {
       int nparts, *part;
@@ -877,14 +997,20 @@ int main (int argc, char *argv[])
       }
       hypre_TFree(part);
    }
-   
+#endif 
    /* --------------------------销毁各类------------------------- */
    /* Destroy solver */
-   PASE_ParCSRPCGDestroy(pcg_solver);
-   HYPRE_BoomerAMGDestroy(amg_solver);
-   HYPRE_BoomerAMGDestroy(precond);
-   HYPRE_LOBPCGDestroy(lobpcg_solver);
+//   HYPRE_ParCSRPCGDestroy(ls_hypre);
+   HYPRE_BoomerAMGDestroy(ls_hypre);
+   HYPRE_BoomerAMGDestroy(precond_hypre);
+   PASE_ParCSRPCGDestroy (precond_pase);
+   HYPRE_LOBPCGDestroy   (lobpcg_solver);
 
+   /* 销毁对角化 */
+   if (diag_flag==1)
+   {
+      hypre_PASEDiagDestroy(&diag_data);
+   }
    /* 销毁level==num_levels-2层的特征向量 */
    for ( idx_eig = 0; idx_eig < block_size; ++idx_eig)
    {
@@ -954,4 +1080,3 @@ int main (int argc, char *argv[])
 
    return(0);
 }
-
